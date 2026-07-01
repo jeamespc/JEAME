@@ -163,7 +163,7 @@
     }
     .spine-sq{
       position:absolute;
-      top:calc(120px + clamp(19px, 2.49vw, 48px) * 0.55); left:5.4vw;
+      top:calc(120px + clamp(24px, 3.11vw, 60px) * 0.55); left:5.4vw;
       width:clamp(20px,1.9vw,36px);height:clamp(20px,1.9vw,36px);
       transform:translate(-50%,-50%);
       background:var(--dot-color, #1d1d1b);
@@ -212,7 +212,7 @@
     }
     .cat-preview{
       position:absolute; right:0; top:100%; z-index:5;
-      width:345px; height:253px;
+      width:300px; height:220px;
       display:flex; align-items:center; justify-content:center;
       opacity:0; transform:translateY(-20%) scale(.96);
       transform-origin:right center;
@@ -231,7 +231,7 @@
     section.cat h2{
       font-family:'Arial Black', 'Arial', sans-serif;
       font-weight:900; /* Arial Black */
-      font-size:clamp(19px, 2.49vw, 48px);
+      font-size:clamp(24px, 3.11vw, 60px);
       color: var(--black);
       letter-spacing:-0.02em;
       text-transform:uppercase;
@@ -349,8 +349,8 @@
     .row-upcoming .icon-btn:hover, .row-upcoming .icon-btn:focus-visible{transform:none;filter:none;}
     .row-upcoming .tt, .row-upcoming .row-desc, .row-upcoming .yr, .row-upcoming .row-swatch{opacity:0.55;}
 
-    /* ---------- Index rows: swatch layout (matches supplied layout ref, measured from a 1920px-wide mockup) ---------- */
-    .index .row{
+    /* ---------- Interior index rows: swatch layout (matches supplied layout ref, measured from a 1920px-wide mockup) ---------- */
+    #interior .index .row{
       --swatch-size:clamp(56px,4.33vw,84px);
       grid-template-columns:var(--swatch-size) 1fr auto;
       align-items:start;
@@ -359,46 +359,44 @@
       text-decoration:none;
       color:inherit;
     }
-    .row-swatch{
+    #interior .row-swatch{
       width:var(--swatch-size);
       height:var(--swatch-size);
       background:var(--swatch-color,#1d1d1b);
       transition:opacity .25s ease;
     }
-    .row:hover .row-swatch{ opacity:0.85; }
+    #interior .row:hover .row-swatch{ opacity:0.85; }
     /* Title pinned to the swatch's top edge, description pinned to its
        bottom edge — titleblock is stretched to the swatch's height and
        the two are pushed to opposite ends of it. */
-    .row .titleblock{
+    #interior .row .titleblock{
       min-height:var(--swatch-size);
       display:flex;
       flex-direction:column;
       justify-content:space-between;
     }
-    .row .titleblock .tt{
+    #interior .row .titleblock .tt{
       display:flex;
       align-items:center;
-      gap:clamp(5px,0.33vw,6px);
-      font-size:clamp(15px,1.35vw,26px);
+      gap:clamp(6px,0.41vw,8px);
+      font-size:clamp(18px,1.54vw,30px);
     }
-    .row .titleblock .tt svg{
-      width:clamp(14px,1.01vw,20px);
-      height:clamp(14px,1.01vw,20px);
+    #interior .row .titleblock .tt svg{
+      width:clamp(16px,1.15vw,22px);
+      height:clamp(16px,1.15vw,22px);
       flex:none;
       display:block;
     }
-    .row .titleblock .row-desc{
+    #interior .row .titleblock .row-desc{
       font-size:clamp(11px,0.61vw,12px);
       line-height:1.4;
       margin-top:0;
     }
-    .row .yr{
+    #interior .row .yr{
       align-self:center;
       font-size:clamp(9px,0.54vw,11px);
     }
-    .row-upcoming .row-swatch{ background:#1d1d1b; }
-
-
+    #interior .row-upcoming .row-swatch{ background:#1d1d1b; }
 
     /* The old per-row preview is no longer shown in place — it now just
        carries the image src/alt/fallback that the section's single shared
@@ -647,8 +645,8 @@
 <section class="cat" id="interior" style="--dot-color:#283583;">
   <span class="spine-dot"></span>
   <span class="spine-sq"></span>
-  <div class="num">01</div>
-  <div class="cat-head"><h2>Interior</h2><div class="cat-preview" id="catPreview-interior"><img alt=""></div></div>
+  <div class="num">01 / 05</div>
+  <div class="cat-head"><h2>Interior Design</h2><div class="cat-preview" id="catPreview-interior"><img alt=""></div></div>
   <p class="desc">Spaces built like sets — where furniture acts as an extension of architecture, and the people who move through it become an extension of the space. Bathrooms, bedrooms, mobile homes: each one engineered to provoke a specific feeling.</p>
   <p class="cat-hint">Hover a project for a sketch. Click the mark to open it.</p>
 
@@ -732,130 +730,25 @@
 <section class="cat" id="product" style="--dot-color:#ab3744;">
   <span class="spine-dot"></span>
   <span class="spine-sq"></span>
-  <div class="num">02</div>
-  <div class="cat-head"><h2>Product</h2><div class="cat-preview" id="catPreview-product"><img alt=""></div></div>
+  <div class="num">02 / 05</div>
+  <div class="cat-head"><h2>Product Design</h2><div class="cat-preview" id="catPreview-product"><img alt=""></div></div>
   <p class="desc">Objects that carry a story. Designed the way a scene is staged — with materials, light, and proportion working together to elicit one deliberate emotion.</p>
 
   <div class="index">
-    <div class="row" style="--swatch-color:#0A0A0A;">
-      <div class="row-swatch"></div>
+    <div class="row">
+      <div class="icon-btn" tabindex="0">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect fill="#0A0A0A" width="100" height="100"/>
+        </svg>
+      </div>
       <div class="titleblock">
-        <div class="tt">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <rect fill="#0A0A0A" width="24" height="24"/>
-          </svg>
-          <span>Amoreux</span>
-        </div>
+        <div class="tt">Amoreux</div>
         <div class="row-desc">A single object built around one gesture — restraint as the design language.</div>
       </div>
-      <div class="yr">2024 <b>Solo</b></div>
-      <div class="preview" data-fallback="Add sketch: renders/amoreux.png">
+      <div class="yr">2024 · Solo</div>
+      <div class="arrow">→</div>
+          <div class="preview" data-fallback="Add sketch: renders/amoreux.png">
         <img src="renders/amoreux.png" alt="Amoreux — sketch" onerror="this.style.display='none';this.parentElement.classList.add('no-img');">
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="cat" id="urban" style="--dot-color:#14672f;">
-  <span class="spine-dot"></span>
-  <span class="spine-sq"></span>
-  <div class="num">03</div>
-  <div class="cat-head"><h2>Urban and Spatial</h2><div class="cat-preview" id="catPreview-urban"><img alt=""></div></div>
-  <p class="desc">Collaborative work at the scale of a neighborhood — reading existing conditions on the ground, then redesigning circulation, shade, and gathering space around the people who actually use it.</p>
-
-  <div class="index">
-    <div class="row" style="--swatch-color:#14672F;">
-      <div class="row-swatch"></div>
-      <div class="titleblock">
-        <div class="tt">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <rect fill="#14672F" width="24" height="24"/>
-          </svg>
-          <span>RML Link</span>
-        </div>
-        <div class="row-desc">Reworking circulation and gathering space at neighborhood scale.</div>
-      </div>
-      <div class="yr">2025/26 <b>Collaboration</b></div>
-      <div class="preview" data-fallback="Add sketch: renders/rml-link.png">
-        <img src="renders/rml-link.png" alt="RML Link — sketch" onerror="this.style.display='none';this.parentElement.classList.add('no-img');">
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="cat" id="stories" style="--dot-color:#f79e20;">
-  <span class="spine-dot"></span>
-  <span class="spine-sq"></span>
-  <div class="num">04</div>
-  <div class="cat-head"><h2>Stories</h2><div class="cat-preview" id="catPreview-stories"><img alt=""></div></div>
-  <p class="desc">Identity systems, layouts, written notes, and visual research — an instinct-driven collection of sketches and concepts that happen before any physical form is built. The underlying philosophy, stories, and raw visual language sitting directly underneath the physical works.</p>
-
-  <div class="index">
-    <div class="row" style="--swatch-color:#283583;">
-      <div class="row-swatch"></div>
-      <div class="titleblock">
-        <div class="tt">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <rect fill="#283583" width="24" height="24"/>
-          </svg>
-          <span>JEAME Identity</span>
-        </div>
-        <div class="row-desc">The brand system itself — mark, type, and the rules that hold it together.</div>
-      </div>
-      <div class="yr">Brand</div>
-      <div class="preview" data-fallback="Add sketch: renders/jeame-identity.png">
-        <img src="renders/jeame-identity.png" alt="JEAME Identity — sketch" onerror="this.style.display='none';this.parentElement.classList.add('no-img');">
-      </div>
-    </div>
-
-    <div class="row" style="--swatch-color:#AD3745;">
-      <div class="row-swatch"></div>
-      <div class="titleblock">
-        <div class="tt">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <rect fill="#AD3745" width="24" height="24"/>
-          </svg>
-          <span>Sketchbook</span>
-        </div>
-        <div class="row-desc">Raw, unedited drawings — the first pass before any idea is justified.</div>
-      </div>
-      <div class="yr">Coming soon</div>
-      <div class="preview" data-fallback="Add sketch: renders/sketchbook.png">
-        <img src="renders/sketchbook.png" alt="Sketchbook — sketch" onerror="this.style.display='none';this.parentElement.classList.add('no-img');">
-      </div>
-    </div>
-
-    <div class="row" style="--swatch-color:#AD3745;">
-      <div class="row-swatch"></div>
-      <div class="titleblock">
-        <div class="tt">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <rect fill="#AD3745" width="24" height="24"/>
-          </svg>
-          <span>Studies</span>
-        </div>
-        <div class="row-desc">Smaller exercises and references that feed into the larger projects.</div>
-      </div>
-      <div class="yr">Coming soon</div>
-      <div class="preview" data-fallback="Add sketch: renders/studies.png">
-        <img src="renders/studies.png" alt="Studies — sketch" onerror="this.style.display='none';this.parentElement.classList.add('no-img');">
-      </div>
-    </div>
-
-    <div class="row" style="--swatch-color:#F59D23;">
-      <div class="row-swatch"></div>
-      <div class="titleblock">
-        <div class="tt">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <rect fill="#F59D23" width="24" height="24"/>
-          </svg>
-          <span>Essays &amp; Notes</span>
-        </div>
-        <div class="row-desc">The written thinking behind the work — philosophy before form.</div>
-      </div>
-      <div class="yr">Coming soon</div>
-      <div class="preview" data-fallback="Add sketch: renders/essays-notes.png">
-        <img src="renders/essays-notes.png" alt="Essays & Notes — sketch" onerror="this.style.display='none';this.parentElement.classList.add('no-img');">
       </div>
     </div>
   </div>
@@ -864,59 +757,164 @@
 <section class="cat" id="people" style="--dot-color:#1d1d1b;">
   <span class="spine-dot"></span>
   <span class="spine-sq"></span>
-  <div class="num">05</div>
+  <div class="num">03 / 05</div>
   <div class="cat-head"><h2>People &amp; Characters</h2><div class="cat-preview" id="catPreview-people"><img alt=""></div></div>
   <p class="desc">The people a space is built around, treated as characters in their own right. Habits, postures, and quiet rituals observed and translated back into the design — the human half of the equation that every interior and object ultimately answers to.</p>
 
   <div class="index">
-    <div class="row" style="--swatch-color:#0A0A0A;">
-      <div class="row-swatch"></div>
+    <div class="row">
+      <div class="icon-btn" tabindex="0">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect fill="#0A0A0A" width="100" height="100"/>
+        </svg>
+      </div>
       <div class="titleblock">
-        <div class="tt">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <rect fill="#0A0A0A" width="24" height="24"/>
-          </svg>
-          <span>Character Studies</span>
-        </div>
+        <div class="tt">Character Studies</div>
         <div class="row-desc">Observed gestures and postures, recorded as the starting point for a space.</div>
       </div>
       <div class="yr">Coming soon</div>
-      <div class="preview" data-fallback="Add sketch: renders/character-studies.png">
+      <div class="arrow">→</div>
+          <div class="preview" data-fallback="Add sketch: renders/character-studies.png">
         <img src="renders/character-studies.png" alt="Character Studies — sketch" onerror="this.style.display='none';this.parentElement.classList.add('no-img');">
       </div>
     </div>
 
-    <div class="row" style="--swatch-color:#AD3745;">
-      <div class="row-swatch"></div>
+    <div class="row">
+      <div class="icon-btn" tabindex="0">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect fill="#AD3745" width="100" height="100"/>
+        </svg>
+      </div>
       <div class="titleblock">
-        <div class="tt">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <rect fill="#AD3745" width="24" height="24"/>
-          </svg>
-          <span>Habits &amp; Rituals</span>
-        </div>
+        <div class="tt">Habits &amp; Rituals</div>
         <div class="row-desc">The small, repeated routines that quietly dictate how a room should work.</div>
       </div>
       <div class="yr">Coming soon</div>
-      <div class="preview" data-fallback="Add sketch: renders/habits-rituals.png">
+      <div class="arrow">→</div>
+          <div class="preview" data-fallback="Add sketch: renders/habits-rituals.png">
         <img src="renders/habits-rituals.png" alt="Habits & Rituals — sketch" onerror="this.style.display='none';this.parentElement.classList.add('no-img');">
       </div>
     </div>
 
-    <div class="row" style="--swatch-color:#F59D23;">
-      <div class="row-swatch"></div>
+    <div class="row">
+      <div class="icon-btn" tabindex="0">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect fill="#F59D23" width="100" height="100"/>
+        </svg>
+      </div>
       <div class="titleblock">
-        <div class="tt">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <rect fill="#F59D23" width="24" height="24"/>
-          </svg>
-          <span>Portraits</span>
-        </div>
+        <div class="tt">Portraits</div>
         <div class="row-desc">Studies of the people each project is, ultimately, built for.</div>
       </div>
       <div class="yr">Coming soon</div>
-      <div class="preview" data-fallback="Add sketch: renders/portraits.png">
+      <div class="arrow">→</div>
+          <div class="preview" data-fallback="Add sketch: renders/portraits.png">
         <img src="renders/portraits.png" alt="Portraits — sketch" onerror="this.style.display='none';this.parentElement.classList.add('no-img');">
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cat" id="stories" style="--dot-color:#f79e20;">
+  <span class="spine-dot"></span>
+  <span class="spine-sq"></span>
+  <div class="num">04 / 05</div>
+  <div class="cat-head"><h2>Stories</h2><div class="cat-preview" id="catPreview-stories"><img alt=""></div></div>
+  <p class="desc">Identity systems, layouts, written notes, and visual research — an instinct-driven collection of sketches and concepts that happen before any physical form is built. The underlying philosophy, stories, and raw visual language sitting directly underneath the physical works.</p>
+
+  <div class="index">
+    <div class="row">
+      <div class="icon-btn" tabindex="0">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect fill="#283583" width="100" height="100"/>
+        </svg>
+      </div>
+      <div class="titleblock">
+        <div class="tt">JEAME Identity</div>
+        <div class="row-desc">The brand system itself — mark, type, and the rules that hold it together.</div>
+      </div>
+      <div class="yr">Brand</div>
+      <div class="arrow">→</div>
+          <div class="preview" data-fallback="Add sketch: renders/jeame-identity.png">
+        <img src="renders/jeame-identity.png" alt="JEAME Identity — sketch" onerror="this.style.display='none';this.parentElement.classList.add('no-img');">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="icon-btn" tabindex="0">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect fill="#AD3745" width="100" height="100"/>
+        </svg>
+      </div>
+      <div class="titleblock">
+        <div class="tt">Sketchbook</div>
+        <div class="row-desc">Raw, unedited drawings — the first pass before any idea is justified.</div>
+      </div>
+      <div class="yr">Coming soon</div>
+      <div class="arrow">→</div>
+          <div class="preview" data-fallback="Add sketch: renders/sketchbook.png">
+        <img src="renders/sketchbook.png" alt="Sketchbook — sketch" onerror="this.style.display='none';this.parentElement.classList.add('no-img');">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="icon-btn" tabindex="0">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect fill="#AD3745" width="100" height="100"/>
+        </svg>
+      </div>
+      <div class="titleblock">
+        <div class="tt">Studies</div>
+        <div class="row-desc">Smaller exercises and references that feed into the larger projects.</div>
+      </div>
+      <div class="yr">Coming soon</div>
+      <div class="arrow">→</div>
+          <div class="preview" data-fallback="Add sketch: renders/studies.png">
+        <img src="renders/studies.png" alt="Studies — sketch" onerror="this.style.display='none';this.parentElement.classList.add('no-img');">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="icon-btn" tabindex="0">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect fill="#F59D23" width="100" height="100"/>
+        </svg>
+      </div>
+      <div class="titleblock">
+        <div class="tt">Essays &amp; Notes</div>
+        <div class="row-desc">The written thinking behind the work — philosophy before form.</div>
+      </div>
+      <div class="yr">Coming soon</div>
+      <div class="arrow">→</div>
+          <div class="preview" data-fallback="Add sketch: renders/essays-notes.png">
+        <img src="renders/essays-notes.png" alt="Essays & Notes — sketch" onerror="this.style.display='none';this.parentElement.classList.add('no-img');">
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cat" id="urban" style="--dot-color:#14672f;">
+  <span class="spine-dot"></span>
+  <span class="spine-sq"></span>
+  <div class="num">05 / 05</div>
+  <div class="cat-head"><h2>Urban &amp; Spatial Design</h2><div class="cat-preview" id="catPreview-urban"><img alt=""></div></div>
+  <p class="desc">Collaborative work at the scale of a neighborhood — reading existing conditions on the ground, then redesigning circulation, shade, and gathering space around the people who actually use it.</p>
+
+  <div class="index">
+    <div class="row">
+      <div class="icon-btn" tabindex="0">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect fill="#14672F" width="100" height="100"/>
+        </svg>
+      </div>
+      <div class="titleblock">
+        <div class="tt">RML Link</div>
+        <div class="row-desc">Reworking circulation and gathering space at neighborhood scale.</div>
+      </div>
+      <div class="yr">2025/26 · Collaboration</div>
+      <div class="arrow">→</div>
+          <div class="preview" data-fallback="Add sketch: renders/rml-link.png">
+        <img src="renders/rml-link.png" alt="RML Link — sketch" onerror="this.style.display='none';this.parentElement.classList.add('no-img');">
       </div>
     </div>
   </div>
