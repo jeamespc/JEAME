@@ -119,7 +119,11 @@
     /* ---------- CUSTOM CURSOR ---------- */
     @media (pointer:fine){
       body{ cursor:none; }
-      a, button, .shape, [tabindex]{ cursor:none; }
+      /* !important: many interactive elements set their own cursor:pointer
+         with higher selector specificity (e.g. .hero-draw-btn, .po-gallery-tile.has-img)
+         further down the stylesheet, which would otherwise win over this rule
+         and bring back the native pointer/hand cursor on hover. */
+      *{ cursor:none !important; }
       #jeame-cursor{
         position:fixed;
         top:0; left:0;
@@ -339,6 +343,22 @@
       text-transform:uppercase;color:#bbb;text-align:center;display:none;
     }
     .cat-preview.no-img::after{ display:block; }
+    /* Desktop/hover devices: the preview detaches from the title row and
+       floats next to the cursor instead (position driven every frame by JS
+       in the SHARED SECTION PREVIEW script). Scoped to min-width:901px so it
+       never fights the static mobile/tablet layout below, which touch
+       devices rely on via tap-to-preview. */
+    @media (min-width:901px){
+      body.cursor-preview-mode .cat-preview{
+        position:fixed; top:0; left:0; right:auto;
+        width:300px; height:200px;
+        opacity:0;
+        transform:translate3d(-9999px,-9999px,0);
+        transition:opacity .18s ease;
+        will-change:transform;
+      }
+      body.cursor-preview-mode .cat-preview.show{ opacity:1; }
+    }
     @media (max-width:900px){
       .cat-preview{
         position:static; z-index:auto;
@@ -1383,6 +1403,12 @@
       <!-- blue square with knockout circle -->
       <a href="#interior" aria-label="Interior Design" class="nav-trigger">
         <g class="shape pop" tabindex="0" style="--shape-color:#283583;" data-label="lbl-interior">
+          <!-- The visible path below is a square with the center circle cut out
+               (nonzero fill-rule), so by default the browser only registers
+               hover/click hits on the painted ring, not the hollow middle.
+               This invisible rect spans the full square bounding box so the
+               hole is clickable too, matching the other solid shapes. -->
+          <rect x="168.27" y="162.37" width="139.64" height="139.78" fill="transparent" pointer-events="all"/>
           <path class="fill" data-shape="square" d="M238.09,272.93c-22.43,0-40.61-18.18-40.61-40.61s18.18-40.61,40.61-40.61,40.6,18.18,40.6,40.61-18.18,40.61-40.6,40.61M168.27,302.15h139.64v-139.78h-139.64v139.78Z" style="animation-delay:240ms;"/>
           <path class="screen-texture" d="M238.09,272.93c-22.43,0-40.61-18.18-40.61-40.61s18.18-40.61,40.61-40.61,40.6,18.18,40.6,40.61-18.18,40.61-40.6,40.61M168.27,302.15h139.64v-139.78h-139.64v139.78Z" style="animation-delay:240ms;"/>
         </g>
@@ -1860,6 +1886,10 @@
   // same, already-lit row lets the navigation through.
   const isTouchDevice = window.matchMedia('(hover: none)').matches
     || ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+  // Devices with real hover get the preview floating next to the cursor
+  // (see the min-width:901px .cursor-preview-mode rules above); touch
+  // devices keep the static tap-to-preview panel near the section title.
+  if(!isTouchDevice) document.body.classList.add('cursor-preview-mode');
   document.querySelectorAll('section.cat').forEach(section => {
     const catPreview = section.querySelector('.cat-preview');
     const indexEl = section.querySelector('.index');
@@ -1867,6 +1897,52 @@
     const previewImg = catPreview.querySelector('img');
     let hideTimer = null;
     let currentRow = null;
+    let targetX = 0, targetY = 0, currentX = 0, currentY = 0, followRafId = null;
+
+    // The follow behavior only actually applies once the CSS has switched
+    // .cat-preview to position:fixed (body.cursor-preview-mode above
+    // min-width:901px - see the CSS). Below that width it's back to the
+    // static mobile-style panel, and an inline transform would just yank it
+    // off its normal document-flow position, so check the real computed
+    // position rather than duplicating the breakpoint here.
+    function isFollowingCursor(){
+      return getComputedStyle(catPreview).position === 'fixed';
+    }
+
+    // Eases the preview toward the cursor position instead of snapping to it
+    // every mousemove, which is what gives it the trailing/floating feel.
+    function followLoop(){
+      if(!isFollowingCursor()){
+        catPreview.style.transform = '';
+        followRafId = null;
+        return;
+      }
+      currentX += (targetX - currentX) * 0.22;
+      currentY += (targetY - currentY) * 0.22;
+      catPreview.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+      if(catPreview.classList.contains('show')){
+        followRafId = requestAnimationFrame(followLoop);
+      } else {
+        followRafId = null;
+      }
+    }
+
+    function setPreviewTarget(clientX, clientY, snap){
+      if(!isFollowingCursor()) return;
+      const margin = 16;
+      const rect = catPreview.getBoundingClientRect();
+      const w = rect.width || 300, h = rect.height || 200;
+      // Sits just to the right of the cursor, vertically centered on it;
+      // clamped so it can never run off the edge of the viewport.
+      targetX = Math.min(Math.max(clientX + 28, margin), window.innerWidth - w - margin);
+      targetY = Math.min(Math.max(clientY - h / 2, margin), window.innerHeight - h - margin);
+      if(snap){
+        currentX = targetX;
+        currentY = targetY;
+        catPreview.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+      }
+      if(followRafId == null) followRafId = requestAnimationFrame(followLoop);
+    }
 
     function showPreviewFor(row){
       if(!row || row === currentRow) return;
@@ -1910,7 +1986,16 @@
         // swatch, the title, the description...) even while staying inside
         // the same row. showPreviewFor() already no-ops on an unchanged row,
         // which was the main source of hover lag.
-        if(row) showPreviewFor(row);
+        if(!row) return;
+        const isNewRow = row !== currentRow;
+        showPreviewFor(row);
+        // Snap straight to the cursor on the row it just entered, so the
+        // image doesn't visibly fly in from wherever it last was.
+        setPreviewTarget(e.clientX, e.clientY, isNewRow);
+      });
+
+      indexEl.addEventListener('mousemove', e => {
+        if(currentRow) setPreviewTarget(e.clientX, e.clientY, false);
       });
 
       indexEl.addEventListener('mouseout', e => {
@@ -1950,7 +2035,6 @@
     }
   });
 
-  const logoWrap = document.getElementById('logoWrap');
   const groups = Array.from(document.querySelectorAll('.shape'));
 
 
@@ -2794,53 +2878,147 @@
 
   // Checks renders/{key}-{n} against image extensions first, then video
   // extensions, so a gallery slot can be either a photo or an mp4 clip.
+  // The extensions within each group are probed in parallel (each is already
+  // an independent network request) rather than one-at-a-time, since only
+  // one of them will ever actually exist - probing serially just meant
+  // waiting out a 404 round trip for every wrong guess before the real one.
   async function resolveGalleryItem(key, n){
-    for(const ext of GALLERY_EXTENSIONS){
+    const imgHits = await Promise.all(GALLERY_EXTENSIONS.map(async ext => {
       const src = 'renders/' + key + '-' + n + '.' + ext;
-      if(await probeImage(src)) return {src, type: 'image'};
-    }
-    for(const ext of GALLERY_VIDEO_EXTENSIONS){
+      return (await probeImage(src)) ? {src, type: 'image'} : null;
+    }));
+    const imgHit = imgHits.find(Boolean);
+    if(imgHit) return imgHit;
+    const vidHits = await Promise.all(GALLERY_VIDEO_EXTENSIONS.map(async ext => {
       const src = 'renders/' + key + '-' + n + '.' + ext;
-      if(await probeVideo(src)) return {src, type: 'video'};
-    }
-    return null;
+      return (await probeVideo(src)) ? {src, type: 'video'} : null;
+    }));
+    return vidHits.find(Boolean) || null;
   }
 
+  // Resolved cover-image / gallery-item lookups are cached per project key so
+  // that hovering a project row (see the preloadProject() listener below) and
+  // then actually opening it share the same probe/download instead of
+  // re-fetching everything from scratch the moment the overlay opens.
+  const coverSrcCache = new Map();
+  const galleryItemsCache = new Map();
+
   // One optional wide header photo per project: renders/{key}-cover.{ext}.
-  async function loadCover(coverEl, coverImg, key, loadToken){
-    for(const ext of GALLERY_EXTENSIONS){
-      const src = 'renders/' + key + '-cover.' + ext;
-      if(coverEl.dataset.loadToken !== loadToken) return;
-      if(await probeImage(src)){
-        if(coverEl.dataset.loadToken !== loadToken) return;
-        coverImg.src = src;
-        coverImg.alt = '';
-        coverEl.classList.add('show');
-        return;
-      }
+  function getCoverSrc(key){
+    if(!coverSrcCache.has(key)){
+      coverSrcCache.set(key, (async () => {
+        for(const ext of GALLERY_EXTENSIONS){
+          const src = 'renders/' + key + '-cover.' + ext;
+          if(await probeImage(src)) return src;
+        }
+        return null;
+      })());
     }
+    return coverSrcCache.get(key);
+  }
+
+  async function loadCover(coverEl, coverImg, key, loadToken){
+    const src = await getCoverSrc(key);
+    if(coverEl.dataset.loadToken !== loadToken) return;
+    if(src){
+      coverImg.src = src;
+      coverImg.alt = '';
+      coverEl.classList.add('show');
+    }
+  }
+
+  // Every numbered slot up to GALLERY_MAX_CHECK is probed at once (instead of
+  // awaiting each one before starting the next) so a full gallery resolves in
+  // roughly one round trip instead of one per image - this is what used to
+  // make opening a project feel slow, since each probe was also a real image
+  // download that gated the next probe from even starting.
+  function getGalleryItems(key){
+    if(!galleryItemsCache.has(key)){
+      galleryItemsCache.set(key, (async () => {
+        const slots = await Promise.all(
+          Array.from({length: GALLERY_MAX_CHECK}, (_, i) => resolveGalleryItem(key, i + 1))
+        );
+        const found = [];
+        let misses = 0;
+        for(const item of slots){
+          if(item){
+            found.push(item);
+            misses = 0;
+          } else {
+            misses++;
+            // Give up sooner if we haven't found anything at all yet; a bit
+            // more patient once we're already mid-sequence, in case of a
+            // one-off gap.
+            if(misses >= (found.length ? 2 : 3)) break;
+          }
+        }
+        return found;
+      })());
+    }
+    return galleryItemsCache.get(key);
   }
 
   async function loadGallery(galleryEl, key, accent, loadToken){
-    const found = [];
-    let misses = 0;
-    for(let n = 1; n <= GALLERY_MAX_CHECK; n++){
-      // Bail out silently if the person has since opened a different project.
-      if(galleryEl.dataset.loadToken !== loadToken) return;
-      const item = await resolveGalleryItem(key, n);
-      if(item){
-        found.push(item);
-        misses = 0;
-      } else {
-        misses++;
-        // Give up sooner if we haven't found anything at all yet; a bit more
-        // patient once we're already mid-sequence, in case of a one-off gap.
-        if(misses >= (found.length ? 2 : 3)) break;
-      }
-    }
+    const found = await getGalleryItems(key);
+    // Bail out silently if the person has since opened a different project.
     if(galleryEl.dataset.loadToken !== loadToken) return;
     renderGalleryTiles(galleryEl, found, accent);
   }
+
+  // ---- Preload on intent: warm the cover + gallery caches as soon as a
+  // visitor shows interest in a project row (hover, keyboard focus, or a
+  // touch making contact), well before the click/tap actually lands. By the
+  // time renderProject() runs, the images are already downloading or fully
+  // cached, so the overlay opens with them ready instead of blank.
+  // Each project's probe can be up to ~70 requests (24 slots x 3 extensions),
+  // so speculative preloading is capped to 2 projects in flight at once -
+  // skimming past several rows in a row shouldn't queue up bursts for every
+  // one of them and end up delaying the images for whichever project the
+  // person actually opens. This cap only applies to the speculative path:
+  // loadGallery()/loadCover() (used when a project overlay actually opens)
+  // always call straight through regardless of how many preloads are active.
+  const MAX_CONCURRENT_PRELOADS = 2;
+  let activePreloads = 0;
+  function preloadProject(key){
+    if(!PROJECTS[key]) return;
+    const alreadyWarm = coverSrcCache.has(key) || galleryItemsCache.has(key);
+    if(!alreadyWarm && activePreloads >= MAX_CONCURRENT_PRELOADS) return;
+    activePreloads++;
+    Promise.allSettled([getCoverSrc(key), getGalleryItems(key)])
+      .finally(() => { activePreloads--; });
+  }
+  // Debounced so a quick pass across a long list of rows - a mouse just
+  // travelling toward something else, or a Tab key held down to skip
+  // through several rows - doesn't fire a full probe burst (up to ~70
+  // speculative requests per row) for every row it happens to cross. A
+  // genuine ~120ms pause on one row is treated as real intent to preload.
+  let preloadTimer = null;
+  function schedulePreload(key){
+    clearTimeout(preloadTimer);
+    preloadTimer = setTimeout(() => preloadProject(key), 120);
+  }
+  document.addEventListener('pointerover', e => {
+    const row = e.target.closest('a.row');
+    if(row) schedulePreload((row.getAttribute('href') || '').replace('#',''));
+  }, {passive:true});
+  document.addEventListener('pointerout', e => {
+    const row = e.target.closest('a.row');
+    if(!row) return;
+    const related = e.relatedTarget && e.relatedTarget.closest ? e.relatedTarget.closest('a.row') : null;
+    if(related === row) return;
+    clearTimeout(preloadTimer);
+  }, {passive:true});
+  document.addEventListener('focusin', e => {
+    const row = e.target.closest('a.row');
+    if(row) schedulePreload((row.getAttribute('href') || '').replace('#',''));
+  });
+  document.addEventListener('focusout', e => {
+    const row = e.target.closest('a.row');
+    if(!row) return;
+    const related = e.relatedTarget && e.relatedTarget.closest ? e.relatedTarget.closest('a.row') : null;
+    if(related === row) return;
+    clearTimeout(preloadTimer);
+  });
 
   function renderGalleryTiles(galleryEl, items, accent){
     galleryEl.innerHTML = '';
@@ -3369,7 +3547,13 @@
       });
     }
 
+    // Bumped on every call so a book opened earlier - still mid-flight at its
+    // `await` when a different book is clicked next (the reader itself never
+    // closes in between, just swaps content) - can tell it's been superseded
+    // and bail instead of overwriting the newer book's state once it resolves.
+    let openBookToken = 0;
     async function openBook(book){
+      const token = ++openBookToken;
       reader.classList.add('show');
       reader.setAttribute('aria-hidden', 'false');
       currentStoryBook = null;
@@ -3384,7 +3568,7 @@
         pageNextBtn.style.visibility = 'hidden';
 
         await new Promise(requestAnimationFrame); // let the empty spread paint so we can measure it
-        if(!reader.classList.contains('show')) return; // closed while loading
+        if(token !== openBookToken || !reader.classList.contains('show')) return; // superseded, or closed while loading
         const rect = pageRight.getBoundingClientRect();
         currentPages = paginateBlocks(book.chapters, rect.width, rect.height);
         currentStoryBook = book;
@@ -3402,7 +3586,7 @@
         pageNextBtn.style.visibility = 'hidden';
 
         const found = await detectPages(book.pageBase);
-        if(!reader.classList.contains('show')) return; // closed while loading
+        if(token !== openBookToken || !reader.classList.contains('show')) return; // superseded, or closed while loading
         if(found.length){
           currentPages = found.map(src => ({ type:'img', src }));
           renderSpread(0);
