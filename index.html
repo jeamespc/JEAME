@@ -3096,6 +3096,19 @@
   window.addEventListener('hashchange', syncProjectOverlay);
   syncProjectOverlay();
 
+  // Esc acts like the browser's own back button: since opening a project
+  // (row click, "Next" link, or the back/brand links above) always changes
+  // location.hash and thus pushes a history entry, history.back() lands
+  // exactly where the visitor came from - a prior scroll position, a
+  // different project, whatever. Skips this when the gallery lightbox is
+  // open on top, since that has its own Esc handler to close first.
+  window.addEventListener('keydown', e => {
+    if(e.key !== 'Escape') return;
+    if(document.body.classList.contains('lb-open')) return;
+    if(!document.getElementById('project-overlay').classList.contains('show')) return;
+    history.back();
+  });
+
   // ---- CV overlay: shows whenever the hash is #cv, same pattern as the project overlay. ----
   function syncCvOverlay(){
     const overlay = document.getElementById('cv-overlay');
