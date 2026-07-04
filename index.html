@@ -132,35 +132,25 @@
         z-index:9999;
         transform:translate(-100px,-100px);
       }
-      /* No will-change:transform here on purpose - it promotes the element to
-         its own GPU compositing layer, which isolates it from the page
-         content behind it and breaks mix-blend-mode below from blending with
-         anything (it ends up just painting its plain source color). */
-      /* Always white + difference-blended, rather than a solid color: against
-         a black background that renders white, against white it renders
-         black, and against anything in between it renders the inverse of
-         whatever's underneath - so it stays legible with no need to track
-         which specific zones of the page count as "dark" (that used to be a
-         hardcoded selector list, which meant any new dark background - like
-         the sketchbook's spotlight vignette - would make the cursor vanish
-         until someone remembered to add it to the list). */
+      /* Color is decided in JS (see CUSTOM CURSOR script below) by sampling
+         the actual background color under the cursor every frame and picking
+         whichever of black/white contrasts with it - mix-blend-mode looked
+         like the simpler way to get this (no need to sample anything, the
+         browser just inverts whatever's underneath), but it depends on the
+         cursor compositing directly against the page's own paint, which
+         turned out not to render reliably here. Explicit color assignment
+         has no such dependency. */
       #jeame-cursor .dot{
         position:absolute;
         top:-7px; left:-7px;
         width:14px; height:14px;
         border-radius:50%;
-        background:#fff;
-        mix-blend-mode:difference;
+        background:var(--black);
         transform:scale(1);
         transition:background-color .2s ease, transform .15s cubic-bezier(.34,1.56,.64,1);
       }
       #jeame-cursor.active .dot{
         transform:scale(1.8);
-      }
-      /* The one deliberate exception: hovering a hero shape camouflages the
-         cursor into that shape's own color instead of contrasting with it. */
-      #jeame-cursor.blend-shape .dot{
-        mix-blend-mode:normal;
       }
     }
     .shape .fill{
@@ -2278,8 +2268,39 @@
     wrap.appendChild(dot);
     document.body.appendChild(wrap);
 
+    // Picks black or white, whichever contrasts with whatever's actually
+    // behind the cursor right now - found by walking up from elementFromPoint
+    // until something declares a non-transparent background-color (falling
+    // back to the page's own paper background if nothing does). Run once per
+    // animation frame rather than on every raw mousemove event, since it's
+    // real layout/style work and mousemove can fire far faster than that.
+    var lastX = 0, lastY = 0, contrastRafId = null;
+    function backgroundUnderPoint(x, y){
+      var el = document.elementFromPoint(x, y);
+      while(el){
+        var bg = getComputedStyle(el).backgroundColor;
+        var m = bg.match(/rgba?\(([^)]+)\)/);
+        if(m){
+          var parts = m[1].split(',').map(Number);
+          if(parts[3] !== 0) return parts;
+        }
+        el = el.parentElement;
+      }
+      return [250, 250, 247]; // --paper, if nothing else along the way had a color
+    }
+    function updateContrast(){
+      contrastRafId = null;
+      if(wrap.classList.contains('blend-shape')) return; // shape camouflage wins instead
+      var rgb = backgroundUnderPoint(lastX, lastY);
+      var luminance = 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2];
+      dot.style.background = luminance < 128 ? '#fff' : 'var(--black)';
+    }
+
     window.addEventListener('mousemove', function(e){
       wrap.style.transform = 'translate(' + e.clientX + 'px,' + e.clientY + 'px)';
+      lastX = e.clientX;
+      lastY = e.clientY;
+      if(contrastRafId == null) contrastRafId = requestAnimationFrame(updateContrast);
     }, {passive:true});
 
     var activeTarget = null;
@@ -2294,13 +2315,12 @@
       wrap.classList.add('active');
       if(target.classList.contains('shape')){
         // Hero shapes: camouflage the cursor into the shape's own color,
-        // the one deliberate exception to the difference-blend contrast
-        // rule used for every other interactive element on the site.
+        // the one deliberate exception to the contrast rule used for every
+        // other interactive element on the site.
         var shapeColor = getComputedStyle(target).getPropertyValue('--shape-color').trim();
         dot.style.background = shapeColor || 'var(--black)';
         wrap.classList.add('blend-shape');
       } else {
-        dot.style.background = '';
         wrap.classList.remove('blend-shape');
       }
     });
@@ -2313,7 +2333,7 @@
       activeTarget = null;
       wrap.classList.remove('active');
       wrap.classList.remove('blend-shape');
-      dot.style.background = '';
+      updateContrast();
     });
   })();
 </script>
