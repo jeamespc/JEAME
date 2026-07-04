@@ -133,25 +133,26 @@
         transform:translate(-100px,-100px);
         will-change:transform;
       }
+      /* Always white + difference-blended, rather than a solid color: against
+         a black background that renders white, against white it renders
+         black, and against anything in between it renders the inverse of
+         whatever's underneath - so it stays legible with no need to track
+         which specific zones of the page count as "dark" (that used to be a
+         hardcoded selector list, which meant any new dark background - like
+         the sketchbook's spotlight vignette - would make the cursor vanish
+         until someone remembered to add it to the list). */
       #jeame-cursor .dot{
         position:absolute;
         top:-7px; left:-7px;
         width:14px; height:14px;
         border-radius:50%;
-        background:var(--black);
+        background:#fff;
+        mix-blend-mode:difference;
         transform:scale(1);
         transition:background-color .2s ease, transform .15s cubic-bezier(.34,1.56,.64,1);
       }
       #jeame-cursor.active .dot{
         transform:scale(1.8);
-      }
-      /* Default is a solid black dot, which reads fine against the site's
-         light backgrounds. Over recognized dark zones (dark footers, the
-         gallery lightbox) it switches to difference-blend instead, so it
-         still always reads as the inverse of whatever is beneath it there. */
-      #jeame-cursor.on-dark .dot{
-        background:#fff !important;
-        mix-blend-mode:difference;
       }
       /* The one deliberate exception: hovering a hero shape camouflages the
          cursor into that shape's own color instead of contrasting with it. */
@@ -2311,22 +2312,6 @@
       wrap.classList.remove('blend-shape');
       dot.style.background = '';
     });
-
-    // Recognized dark-background zones where the default black dot would
-    // otherwise disappear: dark footers (homepage About + the project-detail
-    // and CV overlay footers, which share .po-footer), and the gallery
-    // lightbox's dark backdrop. Difference-blend the cursor for as long as
-    // it's over one of these instead. Delegated on document, rather than
-    // bound directly, since the overlay footers and the lightbox are parsed
-    // further down the page, after this script runs.
-    var DARK_ZONE_SELECTOR = '#about, .po-footer, .gallery-lightbox, #photography-page';
-    document.addEventListener('mouseover', function(e){
-      if(e.target.closest(DARK_ZONE_SELECTOR)) wrap.classList.add('on-dark');
-    });
-    document.addEventListener('mouseout', function(e){
-      var stillInside = e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest(DARK_ZONE_SELECTOR);
-      if(e.target.closest(DARK_ZONE_SELECTOR) && !stillInside) wrap.classList.remove('on-dark');
-    });
   })();
 </script>
 
@@ -3147,6 +3132,7 @@
 
     let loaded = false;
     let focusedEl = null;
+    const SCATTER_MARGIN_X = 14, SCATTER_MARGIN_Y = 16; // keep clear of the very edges, in %
     const BASE_R = 190;
     const ZOOM_R = 580; // covers the corners of the largest zoomed sketch (up to 760x760px)
     let targetR = BASE_R;
@@ -3215,9 +3201,34 @@
       kickAnimation();
     }
 
+    // Finds a spot clear of every other sketch's current position (same
+    // forgiving retry-based collision avoidance used for the initial
+    // scatter), excluding excludeEl itself from the collision check so a
+    // sketch being re-placed doesn't just avoid its own old spot.
+    function pickPosition(excludeEl){
+      const placed = Array.from(canvas.querySelectorAll('.sb-sketch'))
+        .filter(el => el !== excludeEl)
+        .map(el => ({x: parseFloat(el.style.left), y: parseFloat(el.style.top)}));
+      let x, y, tries = 0;
+      do{
+        x = SCATTER_MARGIN_X + Math.random() * (100 - SCATTER_MARGIN_X * 2);
+        y = SCATTER_MARGIN_Y + Math.random() * (100 - SCATTER_MARGIN_Y * 2);
+        tries++;
+      } while(tries < 12 && placed.some(p => Math.hypot(p.x - x, p.y - y) < 22));
+      return {x, y};
+    }
+
     function unfocusSketch(){
       if(!focusedEl) return;
-      focusedEl.classList.remove('focused');
+      const el = focusedEl;
+      // Send it to a fresh random spot instead of back where it came from -
+      // set on the still-focused element so the left/top transition carries
+      // it from dead centre straight to the new position once .focused
+      // (and its !important left/top:50%) comes off below.
+      const {x, y} = pickPosition(el);
+      el.style.left = x + '%';
+      el.style.top = y + '%';
+      el.classList.remove('focused');
       focusedEl = null;
       targetR = BASE_R;
       kickAnimation();
@@ -3241,8 +3252,6 @@
     // this many images, and keeps things feeling hand-placed rather than
     // mechanically gridded).
     function scatterSketches(srcs){
-      const placed = [];
-      const marginX = 14, marginY = 16; // keep clear of the very edges, in %
       srcs.forEach((src, i) => {
         const img = document.createElement('img');
         img.className = 'sb-sketch';
@@ -3251,13 +3260,11 @@
         img.src = src;
         img.style.setProperty('--sb-tilt', (Math.random() * 10 - 5).toFixed(1) + 'deg');
 
-        let x, y, tries = 0;
-        do{
-          x = marginX + Math.random() * (100 - marginX * 2);
-          y = marginY + Math.random() * (100 - marginY * 2);
-          tries++;
-        } while(tries < 12 && placed.some(p => Math.hypot(p.x - x, p.y - y) < 22));
-        placed.push({x, y});
+        // Each new image is only checked against ones already appended
+        // (pickPosition() reads live .sb-sketch elements from the canvas),
+        // which is exactly the same one-at-a-time collision avoidance the
+        // old inline version did with its own local placed[] array.
+        const {x, y} = pickPosition(null);
         img.style.left = x + '%';
         img.style.top = y + '%';
         canvas.appendChild(img);
