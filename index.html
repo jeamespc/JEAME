@@ -3264,18 +3264,19 @@
       });
     }
 
+    // All 24 slots are probed at once (same reasoning as getGalleryItems
+    // above) instead of awaiting each one before starting the next - that
+    // sequential version was what made the sketchbook feel slow to fill in.
     async function loadSketches(){
       if(loaded) return;
       loaded = true;
+      const slots = await Promise.all(
+        Array.from({length: 24}, (_, i) => resolveGalleryItem('sketchbook', i + 1))
+      );
       const found = [];
       let misses = 0;
-      for(let n = 1; n <= 24; n++){
-        let src = null;
-        for(const ext of GALLERY_EXTENSIONS){
-          const candidate = 'renders/sketchbook-' + n + '.' + ext;
-          if(await probeImage(candidate)){ src = candidate; break; }
-        }
-        if(src){ found.push(src); misses = 0; }
+      for(const item of slots){
+        if(item){ found.push(item.src); misses = 0; }
         else {
           misses++;
           if(misses >= (found.length ? 2 : 3)) break;
