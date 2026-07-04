@@ -131,8 +131,11 @@
         pointer-events:none;
         z-index:9999;
         transform:translate(-100px,-100px);
-        will-change:transform;
       }
+      /* No will-change:transform here on purpose - it promotes the element to
+         its own GPU compositing layer, which isolates it from the page
+         content behind it and breaks mix-blend-mode below from blending with
+         anything (it ends up just painting its plain source color). */
       /* Always white + difference-blended, rather than a solid color: against
          a black background that renders white, against white it renders
          black, and against anything in between it renders the inverse of
