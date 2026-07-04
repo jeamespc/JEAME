@@ -1777,6 +1777,25 @@
 </footer>
 
 <script>
+  // Safety net for scroll locking: body starts as overflow:hidden so the
+  // hero fills the viewport with nothing to scroll to on first load, and
+  // individual features (a hero nav click, opening a project or the CV)
+  // unlock it as they go by adding body.unlocked. But someone can land on
+  // any hash-addressed section directly - a deep link, a bookmark, a page
+  // refresh, browser back/forward restoring a hash - without ever passing
+  // through one of those specific triggers, which left them on a page that
+  // needs to scroll with no way to. Any non-empty hash means they're past
+  // the pure hero-landing state, so unlock unconditionally whenever that's
+  // true, on load and on every subsequent hash change, no matter how it was
+  // reached - this is a deliberate blanket rule rather than something added
+  // to each individual section's own open/close logic, so it also covers
+  // whatever section gets added next.
+  function unlockForHash(){
+    if(location.hash) document.body.classList.add('unlocked');
+  }
+  window.addEventListener('hashchange', unlockForHash);
+  unlockForHash();
+
   // Row thumbnails are written as <img src="renders/{key}.png" ...>. If the
   // person's actual file is a .jpg instead, try that once before giving up
   // and falling back to the plain accent swatch.
