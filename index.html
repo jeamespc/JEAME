@@ -38,7 +38,7 @@
     }
   }
   </script>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgMzI1Ljk4IDMyNi4zIj4KICA8ZGVmcz4KICAgIDxzdHlsZT4KICAgICAgLmNscy0xIHsKICAgICAgICBmaWxsOiBub25lOwogICAgICB9CgogICAgICAuY2xzLTIgewogICAgICAgIGZpbGw6ICMyODM1ODM7CiAgICAgIH0KCiAgICAgIC5jbHMtMyB7CiAgICAgICAgY2xpcC1wYXRoOiB1cmwoI2NsaXBwYXRoKTsKICAgICAgfQogICAgPC9zdHlsZT4KICAgIDxjbGlwUGF0aCBpZD0iY2xpcHBhdGgiPgogICAgICA8cmVjdCBjbGFzcz0iY2xzLTEiIHdpZHRoPSIzMjUuOTgiIGhlaWdodD0iMzI2LjMiLz4KICAgIDwvY2xpcFBhdGg+CiAgPC9kZWZzPgogIDxnIGNsYXNzPSJjbHMtMyI+CiAgICA8cGF0aCBjbGFzcz0iY2xzLTIiIGQ9Ik0xNjIuOTksMjU4LjFjLTUyLjM1LDAtOTQuNzktNDIuNDQtOTQuNzktOTQuOHM0Mi40NC05NC43OSw5NC43OS05NC43OSw5NC43OSw0Mi40NCw5NC43OSw5NC43OS00Mi40NCw5NC44LTk0Ljc5LDk0LjhNMCwzMjYuM2gzMjUuOThWMEgwdjMyNi4zWiIvPgogIDwvZz4KPC9zdmc+">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTGF5ZXJfMiIgZGF0YS1uYW1lPSJMYXllciAyIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNTEuNTIgNDMuNzEiPgogIDxkZWZzPgogICAgPHN0eWxlPgogICAgICAuY2xzLTEgewogICAgICAgIGZpbGw6IG5vbmU7CiAgICAgIH0KCiAgICAgIC5jbHMtMiB7CiAgICAgICAgZmlsbDogIzI4MzU4MzsKICAgICAgfQoKICAgICAgLmNscy0zIHsKICAgICAgICBjbGlwLXBhdGg6IHVybCgjY2xpcHBhdGgpOwogICAgICB9CiAgICA8L3N0eWxlPgogICAgPGNsaXBQYXRoIGlkPSJjbGlwcGF0aCI+CiAgICAgIDxyZWN0IGNsYXNzPSJjbHMtMSIgd2lkdGg9IjUxLjUyIiBoZWlnaHQ9IjQzLjcxIi8+CiAgICA8L2NsaXBQYXRoPgogIDwvZGVmcz4KICA8ZyBpZD0iVmVjdG9yX1NtYXJ0X09iamVjdF9JbWFnZSIgZGF0YS1uYW1lPSJWZWN0b3IgU21hcnQgT2JqZWN0wqBJbWFnZSI+CiAgICA8ZyBjbGFzcz0iY2xzLTMiPgogICAgICA8cGF0aCBjbGFzcz0iY2xzLTIiIGQ9Ik0yMS44MywzNC41OGMtNy4wMSwwLTEyLjctNS42OS0xMi43LTEyLjdzNS42OS0xMi43LDEyLjctMTIuNywxMi43LDUuNjksMTIuNywxMi43LTUuNjksMTIuNy0xMi43LDEyLjdNMCw0My43MWg0My42N1YwSDB2NDMuNzFaIi8+CiAgICA8L2c+CiAgICA8cmVjdCBjbGFzcz0iY2xzLTIiIHg9IjQ1Ljc4IiB3aWR0aD0iNS43NCIgaGVpZ2h0PSI0My43MSIvPgogIDwvZz4KPC9zdmc+">
   <style>
     :root{
       --red:#AD3745;
@@ -348,7 +348,7 @@
     }
     .cat-preview{
       position:absolute; right:0; top:-25%; z-index:5;
-      width:430px; height:316px;
+      width:620px; height:456px;
       display:flex; align-items:center; justify-content:center;
       opacity:0; transform:translateY(-20%) scale(.98);
       transform-origin:right center;
@@ -371,7 +371,7 @@
     @media (min-width:901px){
       body.cursor-preview-mode .cat-preview{
         position:fixed; top:0; left:0; right:auto;
-        width:300px; height:200px;
+        width:540px; height:360px;
         opacity:0;
         transform:translate3d(-9999px,-9999px,0);
         transition:opacity .18s ease;
@@ -380,17 +380,18 @@
       body.cursor-preview-mode .cat-preview.show{ opacity:1; }
     }
     @media (max-width:900px){
+      /* Sits directly above the project list itself (moved there in the
+         markup, right before .index) rather than up under the heading -
+         a tap-to-preview panel reads better right next to what it's
+         previewing than stranded above the section's description. */
       .cat-preview{
         position:static; z-index:auto;
         width:100%; height:auto; aspect-ratio:4/3;
-        margin:0; opacity:1; transform:none;
+        margin:0 0 32px; opacity:1; transform:none;
         display:none;
         background:transparent;
       }
       .cat-preview.show{ display:flex; }
-      .cat-head{ display:flex; flex-direction:column; }
-      .cat-head h2{ order:1; }
-      .cat-preview{ order:2; margin-top:18px; }
     }
     section.cat h2{
       font-family:'Arial Black', 'Arial', sans-serif;
@@ -732,7 +733,6 @@
     .back-to-top:hover .bt-arrow{ transform:translateY(-3px); }
     @media (max-width:640px){
       section.cat{padding:90px 6vw 90px 10vw;}
-      .row{grid-template-columns:90px 1fr 20px;gap:18px;}
       .row .yr{display:none;}
       .preview{display:none;}
     }
@@ -904,25 +904,32 @@
     }
     .sb-sketch{
       position:absolute;
-      max-width:min(38vw, 340px); max-height:min(38vh, 340px);
+      /* The box itself is always sized at its largest (focused) footprint;
+         scale(var(--sb-scale)) shrinks it back down at rest. Zooming used to
+         animate max-width/max-height directly, but a transition on a
+         min()-based size doesn't always interpolate smoothly (mobile Safari
+         in particular can jump straight to the end size), which made the
+         zoom look like an instant pop followed by a separate slide into
+         place. Driving both the size and the move-to-centre off one
+         transform keeps them as a single, reliably smooth motion. */
+      --sb-scale:0.4474;
+      max-width:min(82vw, 760px); max-height:min(82vh, 760px);
       width:auto; height:auto;
       display:block;
       cursor:pointer;
       filter:grayscale(0.15);
-      transform:translate(-50%,-50%) rotate(var(--sb-tilt,0deg));
-      transition:transform .5s cubic-bezier(.2,.8,.2,1), max-width .5s cubic-bezier(.2,.8,.2,1),
-                 max-height .5s cubic-bezier(.2,.8,.2,1), left .5s cubic-bezier(.2,.8,.2,1),
+      transform:translate(-50%,-50%) scale(var(--sb-scale)) rotate(var(--sb-tilt,0deg));
+      transition:transform .5s cubic-bezier(.2,.8,.2,1), left .5s cubic-bezier(.2,.8,.2,1),
                  top .5s cubic-bezier(.2,.8,.2,1), filter .4s ease;
       z-index:5;
     }
     .sb-sketch:hover{ filter:grayscale(0); }
-    /* Zoomed sketches move to dead centre and are capped to a share of the
-       viewport itself (rather than just scaled up from wherever they were
-       scattered), so a piece placed near an edge never zooms off-screen. */
+    /* Zoomed sketches move to dead centre - capped to a share of the viewport
+       itself (rather than just scaled up from wherever they were scattered),
+       so a piece placed near an edge never zooms off-screen. */
     .sb-sketch.focused{
       left:50% !important; top:50% !important;
-      max-width:min(82vw, 760px); max-height:min(82vh, 760px);
-      transform:translate(-50%,-50%) rotate(0deg);
+      transform:translate(-50%,-50%) scale(1) rotate(0deg);
       z-index:25;
       filter:grayscale(0);
     }
@@ -935,8 +942,7 @@
       );
     }
     @media (max-width:768px){
-      .sb-sketch{ max-width:min(60vw, 280px); max-height:min(60vh, 280px); }
-      .sb-sketch.focused{ max-width:min(88vw, 600px); max-height:min(88vh, 600px); }
+      .sb-sketch{ --sb-scale:0.4667; max-width:min(88vw, 600px); max-height:min(88vh, 600px); }
     }
 
     /* ---------- TALES: bookshelf page ---------- */
@@ -1477,10 +1483,11 @@
   <span class="spine-dot"></span>
   <span class="spine-sq"></span>
   <div class="num">01</div>
-  <div class="cat-head"><h2>Interior</h2><div class="cat-preview" id="catPreview-interior"><img alt=""></div></div>
+  <div class="cat-head"><h2>Interior</h2></div>
   <p class="desc">Spaces built like sets, where furniture acts as an extension of architecture, and the people who move through it become an extension of the space. Bathrooms, bedrooms, mobile homes: each one engineered to provoke a specific feeling.</p>
   <p class="cat-hint cat-hint-desktop">Hover a project for a sketch. Click the mark to open it.</p>
   <p class="cat-hint cat-hint-mobile">Tap a project to preview it, tap again to open it.</p>
+  <div class="cat-preview" id="catPreview-interior"><img alt=""></div>
 
   <div class="index">
 
@@ -1563,10 +1570,11 @@
   <span class="spine-dot"></span>
   <span class="spine-sq"></span>
   <div class="num">02</div>
-  <div class="cat-head"><h2>Product</h2><div class="cat-preview" id="catPreview-product"><img alt=""></div></div>
+  <div class="cat-head"><h2>Product</h2></div>
   <p class="desc">Objects that carry a story. Designed the way a scene is staged, with materials, light, and proportion working together to elicit one deliberate emotion.</p>
   <p class="cat-hint cat-hint-desktop">Hover a project for a sketch. Click the mark to open it.</p>
   <p class="cat-hint cat-hint-mobile">Tap a project to preview it, tap again to open it.</p>
+  <div class="cat-preview" id="catPreview-product"><img alt=""></div>
 
   <div class="index">
 
@@ -1628,11 +1636,12 @@
   <span class="spine-dot"></span>
   <span class="spine-sq"></span>
   <div class="num">03</div>
-  <div class="cat-head"><h2>Urban and Spatial</h2><div class="cat-preview" id="catPreview-urban"><img alt=""></div></div>
+  <div class="cat-head"><h2>Urban and Spatial</h2></div>
   <p class="desc">Collaborative work at the scale of a neighborhood: reading existing conditions on the ground, then redesigning circulation, shade, and gathering space around the people who actually use it.</p>
 
   <p class="cat-hint cat-hint-desktop">Hover a project for a sketch. Click the mark to open it.</p>
   <p class="cat-hint cat-hint-mobile">Tap a project to preview it, tap again to open it.</p>
+  <div class="cat-preview" id="catPreview-urban"><img alt=""></div>
 
   <div class="index">
 
@@ -1678,7 +1687,7 @@
   <span class="spine-dot"></span>
   <span class="spine-sq"></span>
   <div class="num">04</div>
-  <div class="cat-head"><h2>Stories</h2><div class="cat-preview" id="catPreview-stories"><img alt=""></div></div>
+  <div class="cat-head"><h2>Stories</h2></div>
   <p class="desc">Identity systems, layouts, written notes, and visual research: an instinct-driven collection of sketches and concepts that happen before any physical form is built. The underlying philosophy, stories, and raw visual language sitting directly underneath the physical works.</p>
 
   <div class="index">
@@ -1694,9 +1703,6 @@
         <div class="row-desc">Written pieces: short fiction, essays, and the stories underneath the work.</div>
       </div>
       <div class="yr">Ongoing</div>
-      <div class="preview" data-fallback="Add sketch: renders/tales.png">
-        <img src="renders/tales.png" alt="Tales sketch" onerror="handleRowImgError(this)">
-      </div>
     </a>
 
     <a class="row" href="#sketchbook" aria-label="View Sketchbook" style="--swatch-color:#AD3745;">
@@ -1711,9 +1717,6 @@
         <div class="row-desc">Raw, unedited drawings: the first pass before any idea is justified.</div>
       </div>
       <div class="yr">Ongoing</div>
-      <div class="preview" data-fallback="Add sketch: renders/sketchbook.png">
-        <img src="renders/sketchbook.png" alt="Sketchbook sketch" onerror="handleRowImgError(this)">
-      </div>
     </a>
 
     <div class="row" style="--swatch-color:#F59D23;">
@@ -1728,9 +1731,6 @@
         <div class="row-desc">Identity systems, layouts, posters, and the visual language behind the brand.</div>
       </div>
       <div class="yr">Coming soon</div>
-      <div class="preview" data-fallback="Add sketch: renders/graphics.png">
-        <img src="renders/graphics.png" alt="Graphics sketch" onerror="handleRowImgError(this)">
-      </div>
     </div>
 
     <div class="row" style="--swatch-color:#14672F;">
@@ -1745,9 +1745,6 @@
         <div class="row-desc">Renders, models, and experiments built in three dimensions.</div>
       </div>
       <div class="yr">Coming soon</div>
-      <div class="preview" data-fallback="Add sketch: renders/3d.png">
-        <img src="renders/3d.png" alt="3D sketch" onerror="handleRowImgError(this)">
-      </div>
     </div>
 
     <a class="row" href="#photography" aria-label="View Photography" style="--swatch-color:#0A0A0A;">
@@ -1762,9 +1759,6 @@
         <div class="row-desc">Frames of the everyday: light, material, and moments caught in passing.</div>
       </div>
       <div class="yr">Ongoing</div>
-      <div class="preview" data-fallback="Add sketch: renders/photography.png">
-        <img src="renders/photography.png" alt="Photography sketch" onerror="handleRowImgError(this)">
-      </div>
     </a>
   </div>
 </section>
@@ -1970,7 +1964,7 @@
       if(!isFollowingCursor()) return;
       const margin = 16;
       const rect = catPreview.getBoundingClientRect();
-      const w = rect.width || 300, h = rect.height || 200;
+      const w = rect.width || 540, h = rect.height || 360;
       // Sits just to the right of the cursor, vertically centered on it;
       // clamped so it can never run off the edge of the viewport.
       targetX = Math.min(Math.max(clientX + 28, margin), window.innerWidth - w - margin);
@@ -2242,13 +2236,18 @@
   }
 
   let heroCleared = false;
+  let heroScrollRafId = null;
   window.addEventListener('scroll', () => {
-    const heroBottom = document.getElementById('top').getBoundingClientRect().bottom;
-    if(heroBottom <= 0){
-      if(!heroCleared){ resetAllOverlays(); heroCleared = true; }
-    } else {
-      heroCleared = false;
-    }
+    if(heroScrollRafId != null) return;
+    heroScrollRafId = requestAnimationFrame(() => {
+      heroScrollRafId = null;
+      const heroBottom = document.getElementById('top').getBoundingClientRect().bottom;
+      if(heroBottom <= 0){
+        if(!heroCleared){ resetAllOverlays(); heroCleared = true; }
+      } else {
+        heroCleared = false;
+      }
+    });
   }, { passive:true });
 
   function onLeave(g){
