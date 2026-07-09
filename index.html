@@ -1164,95 +1164,228 @@
       .tl-reader-page{ padding:36px 22px; }
     }
 
-    /* ---------- PHOTOGRAPHY: filmstrip page ---------- */
-    /* Its own distinct language too, per Stories' promise: a dark room lined
-       with two reels, each one a project, each one scrolled through sideways
-       like film held up to the light. */
+    /* ---------- PHOTOGRAPHY: camera-screen page ---------- */
+    /* Its own distinct language too, per Stories' promise: not a page you
+       read so much as a device you look through - a digital camera's LCD,
+       bezel and all, permanently scanlined/vignetted/grainy like everything
+       on it (grid and open photo alike) is being viewed through its screen
+       rather than looked at directly. */
     #photography-page{
       display:none;
       position:fixed; inset:0; z-index:6000;
-      background:#0A0A0A;
-      overflow-y:auto; overflow-x:hidden;
-      -webkit-overflow-scrolling:touch;
+      background:#000;
     }
     #photography-page.show{ display:block; }
-    body.ph-open{ overflow:hidden; }
-    .ph-topbar{
-      position:absolute; top:0; left:0; right:0; z-index:30;
-      display:flex; align-items:center; justify-content:space-between;
-      padding:26px 8vw;
+    body.cam-open{ overflow:hidden; }
+
+    .cam-bezel{
+      position:absolute; inset:0;
+      padding:48px;
+      display:flex;
     }
-    .ph-brand{
-      font-family:'Arial Black','Arial',sans-serif; font-weight:900;
-      font-size:14px; letter-spacing:0.02em; color:#fff; text-decoration:none;
-    }
-    .ph-back{
-      font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
-      color:#fff; text-decoration:none;
-    }
-    .ph-back:hover, .ph-brand:hover{ color:var(--orange); }
-    .ph-title{
-      margin:0; position:relative; z-index:20;
-      padding:100px 5.4vw 0;
-      font-family:'Arial Black','Arial',sans-serif; font-weight:900;
-      font-size:clamp(28px,4vw,48px); letter-spacing:-0.01em; color:#fff;
-    }
-    .ph-hint{
-      margin:14px 0 0; padding:0 5.4vw; position:relative; z-index:20;
-      font-size:12px; font-style:italic; color:rgba(255,255,255,0.5);
-    }
-    .ph-strips{
-      position:relative; z-index:10;
-      padding:56px 0 90px;
-      display:flex; flex-direction:column; gap:64px;
-    }
-    .ph-strip-title{
-      margin:0 0 14px; padding:0 5.4vw;
-      font-family:'Arial Black','Arial',sans-serif; font-weight:900;
-      font-size:clamp(16px,1.6vw,22px); color:#fff;
-    }
-    /* The reel itself: a strip of stock with a perforated edge top and
-       bottom, dark frames in between holding each photo. */
-    .ph-reel{
+    .cam-screen{
       position:relative;
-      background:#171717;
-      padding:14px 0;
+      flex:1;
+      border-radius:8px;
+      overflow:hidden;
+      background:#0c0f0d;
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,0.08), inset 0 0 50px rgba(0,0,0,0.85);
+      isolation:isolate;
     }
-    .ph-sprockets{
-      height:13px;
-      background-color:#242424;
-      background-image:radial-gradient(circle, #0A0A0A 3px, transparent 3px);
-      background-size:22px 13px;
-      background-position:11px center;
+    /* CRT-style expanding line, played together with the brightness flicker
+       below so the screen reads as switching itself on rather than just
+       fading or popping into view. */
+    .cam-screen::before{
+      content:'';
+      position:absolute; left:0; right:0; top:50%;
+      height:2px; background:#fff;
+      transform:translateY(-50%);
+      opacity:0; pointer-events:none; z-index:500;
     }
-    .ph-filmstrip{
-      display:flex; gap:3px; align-items:stretch;
-      overflow-x:auto; overflow-y:hidden;
-      padding:10px 5.4vw;
-      scroll-snap-type:x proximity;
-      -webkit-overflow-scrolling:touch;
-      scrollbar-width:thin; scrollbar-color:#444 transparent;
+    .cam-screen.booting::before{ animation:camBootLine 1.3s ease-out forwards; }
+    .cam-screen.booting{ animation:camBootFlicker 2.1s linear; }
+    @keyframes camBootLine{
+      0%{ opacity:1; height:2px; }
+      55%{ opacity:1; height:2px; }
+      100%{ opacity:0; height:100%; }
     }
-    .ph-filmstrip::-webkit-scrollbar{ height:6px; }
-    .ph-filmstrip::-webkit-scrollbar-thumb{ background:#444; border-radius:3px; }
-    .ph-filmstrip::-webkit-scrollbar-track{ background:transparent; }
-    .ph-filmstrip .po-gallery-tile{
-      height:280px; width:calc(280px * 4 / 3);
-      background:#242424;
-      border:3px solid #0A0A0A;
+    @keyframes camBootFlicker{
+      0%{ filter:brightness(0) saturate(0); }
+      9%{ filter:brightness(5) saturate(0); }
+      16%{ filter:brightness(0); }
+      27%{ filter:brightness(3.5); }
+      36%{ filter:brightness(0.15); }
+      50%{ filter:brightness(2.2) saturate(0.6); }
+      64%{ filter:brightness(0.7); }
+      80%{ filter:brightness(1.1); }
+      100%{ filter:brightness(1) saturate(1); }
     }
-    .ph-filmstrip .po-gallery-tile.has-img{ opacity:1; }
-    .ph-filmstrip .po-gallery-tile.has-img:hover{ opacity:0.85; }
+    @media (prefers-reduced-motion:reduce){
+      .cam-screen.booting, .cam-screen.booting::before{ animation:none; }
+    }
+
+    /* Persistent "viewed through a digital screen" filter: scanlines,
+       vignette and animated grain, layered above everything else in the
+       screen - grid view or open photo alike - via z-index alone. */
+    .cam-filter{ position:absolute; inset:0; z-index:470; pointer-events:none; }
+    .cam-scanlines{
+      position:absolute; inset:0;
+      background:repeating-linear-gradient(to bottom,
+        rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) 1px,
+        transparent 1px, transparent 3px);
+      mix-blend-mode:overlay;
+    }
+    .cam-vignette{
+      position:absolute; inset:0;
+      background:radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.6) 100%);
+    }
+    .cam-grain{
+      position:absolute; inset:-20%;
+      background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+      opacity:0.1;
+      mix-blend-mode:overlay;
+      animation:camGrain 1s steps(4) infinite;
+    }
+    @keyframes camGrain{
+      0%{ transform:translate(0,0); }
+      25%{ transform:translate(-3%,2%); }
+      50%{ transform:translate(2%,-2%); }
+      75%{ transform:translate(-2%,-3%); }
+      100%{ transform:translate(0,0); }
+    }
+    @media (prefers-reduced-motion:reduce){
+      .cam-grain{ animation:none; }
+    }
+
+    /* HUD chrome: brand/back bar, blinking tally light, viewfinder corner
+       brackets, bottom counter/battery readout - sits above the grid/viewer
+       (z-index 460) but under the digital filter (470), same as it would on
+       a real screen generating its own on-screen display. */
+    .cam-hud-top{
+      position:absolute; left:0; right:0; top:0; z-index:460;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:18px 22px;
+    }
+    .cam-brand{
+      font-family:'Arial Black','Arial',sans-serif; font-weight:900;
+      font-size:13px; letter-spacing:0.02em; color:#fff; text-decoration:none;
+    }
+    .cam-brand:hover{ color:var(--orange); }
+    .cam-back{
+      font-family:'Courier New',Courier,monospace; font-size:11px; font-weight:700;
+      letter-spacing:0.08em; text-transform:uppercase; color:#fff; text-decoration:none;
+    }
+    .cam-back:hover{ color:var(--orange); }
+
+    .cam-corner{ position:absolute; width:20px; height:20px; z-index:460; pointer-events:none; }
+    .cam-corner::before{ content:''; position:absolute; inset:0; border:2px solid rgba(255,255,255,0.5); }
+    .cam-corner-tl{ top:54px; left:16px; }
+    .cam-corner-tl::before{ border-right:none; border-bottom:none; }
+    .cam-corner-tr{ top:54px; right:16px; }
+    .cam-corner-tr::before{ border-left:none; border-bottom:none; }
+    .cam-corner-bl{ bottom:40px; left:16px; }
+    .cam-corner-bl::before{ border-right:none; border-top:none; }
+    .cam-corner-br{ bottom:40px; right:16px; }
+    .cam-corner-br::before{ border-left:none; border-top:none; }
+
+    .cam-hud-bottom{
+      position:absolute; left:0; right:0; bottom:0; z-index:460; pointer-events:none;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:12px 22px;
+      font-family:'Courier New',Courier,monospace; font-size:11px; letter-spacing:0.06em;
+      color:rgba(255,255,255,0.8);
+      text-shadow:0 1px 3px rgba(0,0,0,0.9);
+    }
+
+    /* Grid view: an iPhone-Photos-style grid, grouped into one section per album. */
+    .cam-grid-view{
+      position:absolute; inset:0;
+      overflow-y:auto; -webkit-overflow-scrolling:touch;
+      padding:70px 22px 60px;
+    }
+    .cam-title{
+      margin:0; font-family:'Arial Black','Arial',sans-serif; font-weight:900;
+      font-size:clamp(26px,3.6vw,42px); letter-spacing:-0.01em; color:#fff;
+    }
+    .cam-hint{
+      margin:10px 0 0; font-family:'Courier New',Courier,monospace;
+      font-size:11px; letter-spacing:0.04em; color:rgba(255,255,255,0.5);
+    }
+    .cam-empty{
+      margin:40px 0 0; font-family:'Courier New',Courier,monospace;
+      font-size:12px; color:rgba(255,255,255,0.45);
+    }
+    .cam-albums{ margin-top:36px; display:flex; flex-direction:column; gap:44px; }
+    .cam-album-title{
+      margin:0 0 10px; font-family:'Courier New',Courier,monospace; font-weight:700;
+      font-size:12px; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,255,255,0.65);
+    }
+    .cam-grid{
+      display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr));
+      gap:3px;
+    }
+    .cam-tile{
+      appearance:none; border:none; padding:0; margin:0; cursor:pointer;
+      position:relative; aspect-ratio:1/1; overflow:hidden;
+      background:#1a1c1a;
+    }
+    .cam-tile img, .cam-tile video{
+      width:100%; height:100%; object-fit:cover; display:block;
+      filter:contrast(1.04) saturate(1.08);
+    }
+    .cam-tile:hover img, .cam-tile:hover video{ opacity:0.82; }
+
+    /* Viewer: tap a tile to page through that album, full-screen within the device. */
+    .cam-viewer{
+      display:none;
+      position:absolute; inset:0; z-index:450;
+      align-items:center; justify-content:center;
+      background:rgba(4,5,4,0.92);
+    }
+    .cam-viewer.show{ display:flex; }
+    .cam-viewer-img, .cam-viewer-video{
+      max-width:88%; max-height:80%;
+      object-fit:contain; display:block;
+      filter:contrast(1.04) saturate(1.08);
+      user-select:none; -webkit-user-drag:none;
+    }
+    .cam-viewer-close{
+      position:absolute; top:18px; right:18px; z-index:465;
+      width:38px; height:38px; border-radius:50%;
+      background:transparent; border:1px solid rgba(255,255,255,0.35);
+      color:#fff; font-size:20px; line-height:1; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .cam-viewer-close:hover{ background:rgba(255,255,255,0.12); }
+    .cam-viewer-nav{
+      position:absolute; top:50%; transform:translateY(-50%); z-index:465;
+      width:44px; height:44px; border-radius:50%;
+      background:transparent; border:1px solid rgba(255,255,255,0.35);
+      color:#fff; font-size:18px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .cam-viewer-nav:hover{ background:rgba(255,255,255,0.12); }
+    .cam-viewer-prev{ left:16px; }
+    .cam-viewer-next{ right:16px; }
+
     @media (max-width:900px){
-      .ph-title{ padding-top:88px; }
-      .ph-filmstrip .po-gallery-tile{ height:200px; width:calc(200px * 4 / 3); }
+      .cam-bezel{ padding:30px; }
+      .cam-corner{ width:16px; height:16px; }
+      .cam-corner-tl, .cam-corner-tr{ top:48px; }
+      .cam-grid-view{ padding:64px 16px 50px; }
+      .cam-grid{ grid-template-columns:repeat(auto-fill,minmax(88px,1fr)); }
     }
     @media (max-width:640px){
-      .ph-title{ padding-left:4vw; font-size:32px; }
-      .ph-hint, .ph-strip-title{ padding-left:4vw; }
-      .ph-filmstrip{ padding-left:4vw; padding-right:4vw; }
-      .ph-filmstrip .po-gallery-tile{ height:160px; width:calc(160px * 4 / 3); }
-      .ph-strips{ gap:48px; }
+      .cam-bezel{ padding:18px; }
+      .cam-hud-top{ padding:14px 16px; }
+      .cam-brand{ font-size:12px; }
+      .cam-corner{ width:13px; height:13px; }
+      .cam-corner-tl, .cam-corner-tr{ top:44px; }
+      .cam-corner-bl, .cam-corner-br{ bottom:32px; }
+      .cam-grid-view{ padding:56px 12px 46px; }
+      .cam-albums{ gap:32px; }
+      .cam-grid{ grid-template-columns:repeat(auto-fill,minmax(76px,1fr)); gap:2px; }
+      .cam-viewer-nav{ width:38px; height:38px; }
     }
 
     /* ---------- GALLERY LIGHTBOX ---------- */
@@ -2653,30 +2786,41 @@
   </div>
 </div>
 
-<!-- ===================== PHOTOGRAPHY: filmstrip page ===================== -->
+<!-- ===================== PHOTOGRAPHY: camera-screen page ===================== -->
 <div id="photography-page" aria-hidden="true">
-  <div class="ph-topbar">
-    <a class="ph-brand" href="#top">JEAME</a>
-    <a class="ph-back" href="#stories">&larr; Back to Stories</a>
-  </div>
-  <p class="ph-title">Photography</p>
-  <p class="ph-hint">Scroll a reel sideways, click a frame to open it.</p>
-
-  <div class="ph-strips">
-    <div>
-      <p class="ph-strip-title" id="phTitle1">Strip One</p>
-      <div class="ph-reel">
-        <div class="ph-sprockets"></div>
-        <div class="ph-filmstrip" id="phStrip1"></div>
-        <div class="ph-sprockets"></div>
+  <div class="cam-bezel">
+    <div class="cam-screen" id="camScreen">
+      <div class="cam-grid-view" id="camGridView">
+        <p class="cam-title">Photography</p>
+        <p class="cam-hint">Tap a photo to view it full-screen.</p>
+        <div class="cam-albums" id="camAlbums"></div>
       </div>
-    </div>
-    <div>
-      <p class="ph-strip-title" id="phTitle2">Strip Two</p>
-      <div class="ph-reel">
-        <div class="ph-sprockets"></div>
-        <div class="ph-filmstrip" id="phStrip2"></div>
-        <div class="ph-sprockets"></div>
+
+      <div class="cam-viewer" id="camViewer" aria-hidden="true">
+        <button type="button" class="cam-viewer-close" id="camViewerClose" aria-label="Close">&times;</button>
+        <button type="button" class="cam-viewer-nav cam-viewer-prev" id="camViewerPrev" aria-label="Previous photo">&larr;</button>
+        <img class="cam-viewer-img" id="camViewerImg" alt="">
+        <video class="cam-viewer-video" id="camViewerVideo" controls playsinline style="display:none;"></video>
+        <button type="button" class="cam-viewer-nav cam-viewer-next" id="camViewerNext" aria-label="Next photo">&rarr;</button>
+      </div>
+
+      <div class="cam-hud-top">
+        <a class="cam-brand" href="#top">JEAME</a>
+        <a class="cam-back" href="#stories">&larr; Back to Stories</a>
+      </div>
+      <div class="cam-corner cam-corner-tl" aria-hidden="true"></div>
+      <div class="cam-corner cam-corner-tr" aria-hidden="true"></div>
+      <div class="cam-corner cam-corner-bl" aria-hidden="true"></div>
+      <div class="cam-corner cam-corner-br" aria-hidden="true"></div>
+      <div class="cam-hud-bottom" aria-hidden="true">
+        <span id="camCounter">000 SHOTS</span>
+        <span>&#9646;&#9646;&#9646;&#9646; 100%</span>
+      </div>
+
+      <div class="cam-filter" aria-hidden="true">
+        <div class="cam-scanlines"></div>
+        <div class="cam-grain"></div>
+        <div class="cam-vignette"></div>
       </div>
     </div>
   </div>
@@ -3780,61 +3924,195 @@
     syncTalesPage();
   })();
 
-  // ---------- PHOTOGRAPHY: filmstrip page ----------
-  // Reuses the same image-detection (renders/{key}-{n}.ext) and lightbox
-  // system as each project's own gallery filmstrip - just dressed up as two
-  // dark film reels instead. Rename phTitle1/phTitle2 below to each
-  // project's real title, and rename the keys to match wherever the photos
-  // are dropped in /renders (e.g. renders/photography-1-1.jpg, -2.jpg...).
+  // ---------- PHOTOGRAPHY: camera-screen page ----------
+  // Reuses the same image-detection (renders/{key}-{n}.ext) as every other
+  // project gallery, but its own bespoke grid + viewer instead of the
+  // shared gallery-lightbox - that way the permanent digital-screen filter
+  // (see .cam-filter) only ever applies here, never leaking into other
+  // projects' galleries. Add more entries below (and drop photos at
+  // renders/{key}-{n}.ext) for another album; rename titles to whatever
+  // each shoot is actually called.
   (function(){
     const page = document.getElementById('photography-page');
     if(!page) return;
-    const strip1 = document.getElementById('phStrip1');
-    const strip2 = document.getElementById('phStrip2');
-    const REELS = [
-      { key:'photography-1', el:strip1, titleEl:document.getElementById('phTitle1'), title:'Strip One' },
-      { key:'photography-2', el:strip2, titleEl:document.getElementById('phTitle2'), title:'Strip Two' },
+    const screenEl = document.getElementById('camScreen');
+    const albumsEl = document.getElementById('camAlbums');
+    const viewer = document.getElementById('camViewer');
+    const viewerImg = document.getElementById('camViewerImg');
+    const viewerVideo = document.getElementById('camViewerVideo');
+    const viewerPrev = document.getElementById('camViewerPrev');
+    const viewerNext = document.getElementById('camViewerNext');
+    const counterEl = document.getElementById('camCounter');
+
+    const ALBUMS = [
+      { key:'photography-1', title:'Album One' },
+      { key:'photography-2', title:'Album Two' },
     ];
-    const PH_ACCENT = '#242424';
 
     let built = false;
-    function buildStrips(){
+    let totalShots = 0;
+    let currentItems = [];
+    let currentIndex = 0;
+
+    function pad(n){ return String(n).padStart(3,'0'); }
+
+    function updateCounter(){
+      if(viewer.classList.contains('show') && currentItems.length){
+        counterEl.textContent = 'IMG ' + pad(currentIndex + 1) + ' / ' + pad(currentItems.length);
+      } else {
+        counterEl.textContent = pad(totalShots) + ' SHOTS';
+      }
+    }
+
+    function showItem(index){
+      if(!currentItems.length) return;
+      currentIndex = (index + currentItems.length) % currentItems.length;
+      const item = currentItems[currentIndex];
+      if(item.type === 'video'){
+        viewerImg.style.display = 'none'; viewerImg.src = '';
+        viewerVideo.style.display = 'block'; viewerVideo.src = item.src;
+        viewerVideo.currentTime = 0; viewerVideo.play().catch(() => {});
+      } else {
+        viewerVideo.pause(); viewerVideo.style.display = 'none';
+        viewerVideo.removeAttribute('src'); viewerVideo.load();
+        viewerImg.style.display = 'block'; viewerImg.src = item.src;
+      }
+      const multi = currentItems.length > 1;
+      viewerPrev.style.display = multi ? 'flex' : 'none';
+      viewerNext.style.display = multi ? 'flex' : 'none';
+      updateCounter();
+    }
+
+    function openViewer(items, index){
+      currentItems = items;
+      viewer.classList.add('show');
+      viewer.setAttribute('aria-hidden', 'false');
+      showItem(index);
+    }
+    function closeViewer(){
+      if(!viewer.classList.contains('show')) return;
+      viewer.classList.remove('show');
+      viewer.setAttribute('aria-hidden', 'true');
+      viewerImg.src = '';
+      viewerVideo.pause(); viewerVideo.removeAttribute('src'); viewerVideo.load();
+      updateCounter();
+    }
+
+    function renderAlbum(album, items){
+      if(!items.length) return null;
+      const section = document.createElement('div');
+      section.className = 'cam-album';
+      const title = document.createElement('p');
+      title.className = 'cam-album-title';
+      title.textContent = album.title;
+      const grid = document.createElement('div');
+      grid.className = 'cam-grid';
+      items.forEach((item, i) => {
+        const tile = document.createElement('button');
+        tile.type = 'button';
+        tile.className = 'cam-tile';
+        let media;
+        if(item.type === 'video'){
+          media = document.createElement('video');
+          media.src = item.src; media.muted = true; media.loop = true;
+          media.autoplay = true; media.playsInline = true;
+          media.setAttribute('playsinline', ''); media.setAttribute('aria-hidden', 'true');
+        } else {
+          media = document.createElement('img');
+          media.alt = ''; media.loading = 'lazy'; media.src = item.src;
+        }
+        tile.appendChild(media);
+        tile.addEventListener('click', () => openViewer(items, i));
+        grid.appendChild(tile);
+      });
+      section.appendChild(title);
+      section.appendChild(grid);
+      return section;
+    }
+
+    async function buildGrid(){
       if(built) return;
       built = true;
-      REELS.forEach(reel => {
-        reel.titleEl.textContent = reel.title;
-        const loadToken = Date.now() + '-' + Math.random();
-        reel.el.dataset.loadToken = loadToken;
-        for(let i = 0; i < 4; i++){
-          const tile = document.createElement('div');
-          tile.className = 'po-gallery-tile loading';
-          tile.style.background = PH_ACCENT;
-          reel.el.appendChild(tile);
-        }
-        loadGallery(reel.el, reel.key, PH_ACCENT, loadToken);
+      const results = await Promise.all(ALBUMS.map(a => getGalleryItems(a.key)));
+      totalShots = 0;
+      results.forEach((items, i) => {
+        const section = renderAlbum(ALBUMS[i], items);
+        if(section){ albumsEl.appendChild(section); totalShots += items.length; }
       });
+      if(!totalShots){
+        const empty = document.createElement('p');
+        empty.className = 'cam-empty';
+        empty.textContent = 'No photos loaded yet.';
+        albumsEl.appendChild(empty);
+      }
+      updateCounter();
+    }
+
+    // Replayed every time the page is entered, so leaving and coming back
+    // gets the "switching on" moment again instead of just once per visit.
+    let bootTimer = null;
+    function playBoot(){
+      screenEl.classList.remove('booting');
+      void screenEl.offsetWidth;
+      screenEl.classList.add('booting');
+      clearTimeout(bootTimer);
+      bootTimer = setTimeout(() => screenEl.classList.remove('booting'), 2100);
     }
 
     function syncPhotographyPage(){
       if(location.hash === '#photography'){
-        buildStrips();
+        buildGrid();
         page.classList.add('show');
         page.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('ph-open');
+        document.body.classList.add('cam-open');
         window.scrollTo(0,0);
+        playBoot();
       } else {
         page.classList.remove('show');
         page.setAttribute('aria-hidden', 'true');
-        document.body.classList.remove('ph-open');
+        document.body.classList.remove('cam-open');
+        closeViewer();
       }
     }
 
-    document.querySelector('#photography-page .ph-back').addEventListener('click', function(e){
+    document.getElementById('camViewerClose').addEventListener('click', closeViewer);
+    viewerPrev.addEventListener('click', () => showItem(currentIndex - 1));
+    viewerNext.addEventListener('click', () => showItem(currentIndex + 1));
+    viewer.addEventListener('click', e => { if(e.target === viewer) closeViewer(); });
+
+    // Swipe left/right to page through, mirroring the sitewide lightbox's
+    // touch handling; a vertical drag is left alone so it doesn't fight
+    // with scrolling.
+    let touchStartX = 0, touchStartY = 0, touchActive = false;
+    const SWIPE_THRESHOLD = 40;
+    viewer.addEventListener('touchstart', e => {
+      if(!e.touches[0]) return;
+      touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; touchActive = true;
+    }, {passive:true});
+    viewer.addEventListener('touchend', e => {
+      if(!touchActive || !e.changedTouches[0]) return;
+      touchActive = false;
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      if(Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy)){
+        if(dx < 0) showItem(currentIndex + 1); else showItem(currentIndex - 1);
+      }
+    });
+
+    window.addEventListener('keydown', e => {
+      if(!page.classList.contains('show') || !viewer.classList.contains('show')) return;
+      if(e.key === 'Escape') closeViewer();
+      else if(e.key === 'ArrowLeft') showItem(currentIndex - 1);
+      else if(e.key === 'ArrowRight') showItem(currentIndex + 1);
+    });
+
+    document.querySelector('#photography-page .cam-back').addEventListener('click', function(e){
       e.preventDefault();
+      if(viewer.classList.contains('show')){ closeViewer(); return; }
       page.classList.remove('show');
       location.hash = 'stories';
     });
-    document.querySelector('#photography-page .ph-brand').addEventListener('click', function(e){
+    document.querySelector('#photography-page .cam-brand').addEventListener('click', function(e){
       e.preventDefault();
       page.classList.remove('show');
       location.hash = '';
