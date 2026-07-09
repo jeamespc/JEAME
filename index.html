@@ -402,13 +402,6 @@
       text-transform:uppercase;
       line-height:1.1;
     }
-    section.cat .desc{
-      max-width:560px;
-      margin-top:26px;
-      font-size:15px;
-      line-height:1.65;
-      color:#333;
-    }
     .tiles{
       margin-top:56px;
       display:grid;
@@ -1046,10 +1039,16 @@
       max-height:90vh;
       box-shadow:0 40px 90px rgba(0,0,0,0.55);
       border-radius:3px;
-      overflow:hidden;
+      perspective:1800px;
       animation:tlPageIn .35s cubic-bezier(.2,.8,.2,1);
       background:#fff;
     }
+    /* NB: the spread deliberately does NOT clip its overflow - the turning
+       leaf lifts up out of the book plane (translateZ in tlFlipTurn) and
+       must be free to render past the book's edges, the way a real page
+       rises off the surface mid-turn. The static pages still round their
+       own outer corners and clip their own content via .tl-page below, so
+       nothing else spills. */
     .tl-page{
       position:relative;
       flex:1 1 50%;
@@ -1065,11 +1064,26 @@
     .tl-page-left{ border-radius:3px 0 0 3px; box-shadow:inset -14px 0 24px -18px rgba(0,0,0,0.55); }
     .tl-page-right{ border-radius:0 3px 3px 0; box-shadow:inset 14px 0 24px -18px rgba(0,0,0,0.55); }
     /* Pages written directly as story text instead of scanned images: a
-       real book page, set and paginated to fit the page box exactly. */
+       real book page, set and paginated to fit the page box exactly. The
+       extra bottom padding reserves the strip the page number sits in;
+       because pagination measures against this very same box, the text
+       automatically stops short of the folio instead of running under it. */
     .tl-page.tl-story-page{
       display:block;
-      padding:38px 34px;
+      padding:38px 34px 52px;
       text-align:left;
+    }
+    /* The page number (folio), centred in the reserved strip at the foot of
+       each page. Lives directly on the page/leaf (not inside the text flow)
+       so it travels with the sheet as it turns, and sits under the flip
+       shading overlay so it darkens and lifts along with everything else on
+       the page. */
+    .tl-folio{
+      position:absolute; left:0; right:0; bottom:20px;
+      text-align:center;
+      font-family:Georgia,'Times New Roman',serif;
+      font-size:12px; letter-spacing:0.04em; color:#a89a80;
+      pointer-events:none;
     }
     .tl-story-inner h4{
       margin:0 0 16px;
@@ -1088,6 +1102,73 @@
     @keyframes tlPageIn{
       from{ opacity:0; transform:translateY(16px) scale(0.98); }
       to{ opacity:1; transform:translateY(0) scale(1); }
+    }
+    /* Page-flip overlay: a leaf that rotates in 3D around the spine edge.
+       Its front face shows the page being left behind; its back face (pre-
+       rotated 180deg, so backface-visibility only reveals it once the leaf
+       has turned past perpendicular) shows the page being revealed. The
+       real page underneath already holds the new content the whole time -
+       this overlay is purely the animated visual on top, sized and
+       positioned via JS to exactly match whichever page slot is turning.
+       Axis/origin/direction (left-right vs top-bottom hinge) are set
+       inline per-flip since the book itself switches from a side-by-side
+       to a stacked layout at the 768px breakpoint below. */
+    .tl-flip-leaf{
+      display:none;
+      position:absolute;
+      transform-style:preserve-3d;
+      pointer-events:none;
+      z-index:20;
+    }
+    .tl-flip-leaf.show{ display:block; }
+    /* The turn itself. Rather than a dead-flat swing around the spine, the
+       leaf also floats a little toward the reader through the middle of the
+       arc (the translateZ peak) and eases with a soft, back-loaded curve, so
+       the page lifts and settles like paper caught by gravity instead of a
+       stiff hinged board. rotate3d + the --ax/--ay/--dir custom properties
+       (set inline per-flip) let this one keyframe cover all four cases:
+       left/right hinge (row layout) or top/bottom hinge (stacked), forward
+       or back. will-change promotes the leaf and its text to one compositor
+       layer so it's rasterised once and just transformed each frame. */
+    .tl-flip-leaf.animating{
+      box-shadow:0 20px 55px rgba(0,0,0,0.42);
+      will-change:transform;
+      animation:tlFlipTurn .82s cubic-bezier(.32,.02,.26,1) forwards;
+    }
+    @keyframes tlFlipTurn{
+      0%{   transform:translateZ(0) rotate3d(var(--ax,0),var(--ay,1),0, 0deg); }
+      50%{  transform:translateZ(26px) rotate3d(var(--ax,0),var(--ay,1),0, calc(var(--dir,-1) * 90deg)); }
+      100%{ transform:translateZ(0) rotate3d(var(--ax,0),var(--ay,1),0, calc(var(--dir,-1) * 180deg)); }
+    }
+    .tl-page.tl-flip-face{
+      position:absolute; inset:0;
+      flex:none; aspect-ratio:auto; max-height:none;
+      backface-visibility:hidden;
+      border-radius:3px; /* the leaf now shows past the book edge; soften its corners */
+    }
+    /* A soft cylindrical shading across the sheet - shadowed in the gutter
+       and along the curling free edge, brighter along the ridge between -
+       so the turning page reads as a bowed surface, not a flat plane being
+       dimmed. Its opacity swells to a peak edge-on and fades as the page
+       lands flat, and --fold-angle runs the gradient across the sheet the
+       right way for whichever hinge is in play. */
+    .tl-flip-face::after{
+      content:'';
+      position:absolute; inset:0;
+      background:linear-gradient(var(--fold-angle,90deg),
+        rgba(0,0,0,0.36) 0%,
+        rgba(0,0,0,0.05) 22%,
+        rgba(255,255,255,0.14) 50%,
+        rgba(0,0,0,0.05) 78%,
+        rgba(0,0,0,0.36) 100%);
+      opacity:0;
+      pointer-events:none;
+    }
+    @keyframes tlFlipShade{ 0%{ opacity:0; } 50%{ opacity:0.9; } 100%{ opacity:0; } }
+    .tl-flip-leaf.animating .tl-flip-face::after{ animation:tlFlipShade .82s ease-in-out; }
+    @media (prefers-reduced-motion:reduce){
+      .tl-flip-leaf.animating{ animation-duration:.4s; }
+      .tl-flip-leaf.animating .tl-flip-face::after{ animation:none; }
     }
     /* Text-only fallback card, used for shelf entries with no scanned pages yet. */
     .tl-reader-page{
@@ -1137,7 +1218,7 @@
       color:#fff; font-size:18px; cursor:pointer;
       display:flex; align-items:center; justify-content:center;
       transition:background .2s ease;
-      z-index:2;
+      z-index:30;
     }
     .tl-page-nav:hover{ background:rgba(20,16,10,0.55); }
     .tl-page-nav.tl-prev{ left:max(-56px, -6vw); }
@@ -1617,7 +1698,6 @@
   <span class="spine-sq"></span>
   <div class="num">01</div>
   <div class="cat-head"><h2>Interior</h2></div>
-  <p class="desc">Spaces built like sets, where furniture acts as an extension of architecture, and the people who move through it become an extension of the space. Bathrooms, bedrooms, mobile homes: each one engineered to provoke a specific feeling.</p>
   <p class="cat-hint cat-hint-desktop">Hover a project for a sketch. Click the mark to open it.</p>
   <p class="cat-hint cat-hint-mobile">Tap a project to preview it, tap again to open it.</p>
   <div class="cat-preview" id="catPreview-interior"><img alt=""></div>
@@ -1704,7 +1784,6 @@
   <span class="spine-sq"></span>
   <div class="num">02</div>
   <div class="cat-head"><h2>Product</h2></div>
-  <p class="desc">Objects that carry a story. Designed the way a scene is staged, with materials, light, and proportion working together to elicit one deliberate emotion.</p>
   <p class="cat-hint cat-hint-desktop">Hover a project for a sketch. Click the mark to open it.</p>
   <p class="cat-hint cat-hint-mobile">Tap a project to preview it, tap again to open it.</p>
   <div class="cat-preview" id="catPreview-product"><img alt=""></div>
@@ -1770,8 +1849,6 @@
   <span class="spine-sq"></span>
   <div class="num">03</div>
   <div class="cat-head"><h2>Urban and Spatial</h2></div>
-  <p class="desc">Collaborative work at the scale of a neighborhood: reading existing conditions on the ground, then redesigning circulation, shade, and gathering space around the people who actually use it.</p>
-
   <p class="cat-hint cat-hint-desktop">Hover a project for a sketch. Click the mark to open it.</p>
   <p class="cat-hint cat-hint-mobile">Tap a project to preview it, tap again to open it.</p>
   <div class="cat-preview" id="catPreview-urban"><img alt=""></div>
@@ -1821,7 +1898,6 @@
   <span class="spine-sq"></span>
   <div class="num">04</div>
   <div class="cat-head"><h2>Stories</h2></div>
-  <p class="desc">Identity systems, layouts, written notes, and visual research: an instinct-driven collection of sketches and concepts that happen before any physical form is built. The underlying philosophy, stories, and raw visual language sitting directly underneath the physical works.</p>
 
   <div class="index">
     <a class="row" href="#tales" aria-label="View Tales" style="--swatch-color:#283583;">
@@ -2780,6 +2856,10 @@
       <div class="tl-spine-shadow"></div>
       <div class="tl-page tl-page-right" id="tlPageRight"></div>
       <button type="button" class="tl-page-nav tl-next" id="tlPageNext" aria-label="Next page">&rarr;</button>
+      <div class="tl-flip-leaf" id="tlFlipLeaf" aria-hidden="true">
+        <div class="tl-page tl-flip-face tl-flip-front" id="tlFlipFront"></div>
+        <div class="tl-page tl-flip-face tl-flip-back" id="tlFlipBack"></div>
+      </div>
       <div class="tl-reader-count" id="tlReaderCount"></div>
     </div>
     <div class="tl-reader-page" id="tlReaderPage" style="display:none;"></div>
@@ -3554,6 +3634,9 @@
     const pagePrevBtn = document.getElementById('tlPagePrev');
     const pageNextBtn = document.getElementById('tlPageNext');
     const readerCountEl = document.getElementById('tlReaderCount');
+    const flipLeaf = document.getElementById('tlFlipLeaf');
+    const flipFront = document.getElementById('tlFlipFront');
+    const flipBack = document.getElementById('tlFlipBack');
     if(!page || !shelf || !reader || !spreadEl) return;
 
     // The actual manuscript, written directly into the page instead of
@@ -3650,11 +3733,21 @@
       if(!pages.length) return 0;
       return 1 + Math.ceil((pages.length - 1) / 2);
     }
+    // Page numbers are 1-based over the flat `pages` array: pages[0] is
+    // folio 1 (the opening page on the right of spread 0), pages[k] is
+    // folio k+1. leftNum/rightNum are null for a blank slot (e.g. the cover
+    // back facing the opening page).
     function computeSpread(pages, idx){
-      if(idx === 0) return { left: null, right: pages[0] || null };
-      return { left: pages[2 * idx - 1] || null, right: pages[2 * idx] || null };
+      if(idx === 0) return { left: null, right: pages[0] || null, leftNum: null, rightNum: pages[0] ? 1 : null };
+      const li = 2 * idx - 1, ri = 2 * idx;
+      return {
+        left: pages[li] || null,
+        right: pages[ri] || null,
+        leftNum: pages[li] ? li + 1 : null,
+        rightNum: pages[ri] ? ri + 1 : null
+      };
     }
-    function renderPageSlot(el, item){
+    function renderPageSlot(el, item, pageNum){
       el.innerHTML = '';
       el.classList.remove('tl-story-page');
       el.classList.toggle('blank', !item);
@@ -3671,23 +3764,131 @@
         img.src = item.src;
         el.appendChild(img);
       }
+      if(pageNum != null){
+        const folio = document.createElement('span');
+        folio.className = 'tl-folio';
+        folio.textContent = pageNum;
+        el.appendChild(folio);
+      }
     }
     function renderSpread(idx){
       const total = totalSpreads(currentPages);
       if(!total) return;
       currentSpreadIndex = Math.max(0, Math.min(idx, total - 1));
-      const { left, right } = computeSpread(currentPages, currentSpreadIndex);
-      renderPageSlot(pageLeft, left);
-      renderPageSlot(pageRight, right);
+      const s = computeSpread(currentPages, currentSpreadIndex);
+      renderPageSlot(pageLeft, s.left, s.leftNum);
+      renderPageSlot(pageRight, s.right, s.rightNum);
       readerCountEl.textContent = 'Spread ' + (currentSpreadIndex + 1) + ' of ' + total;
       pagePrevBtn.style.visibility = currentSpreadIndex > 0 ? 'visible' : 'hidden';
       pageNextBtn.style.visibility = currentSpreadIndex < total - 1 ? 'visible' : 'hidden';
     }
-    // Clicking directly on a page turns it too — left page goes back, right
-    // page goes forward — same as flicking through a real book, alongside
-    // the round arrow buttons and the keyboard.
-    function turnPrev(){ if(currentSpreadIndex > 0) renderSpread(currentSpreadIndex - 1); }
-    function turnNext(){ renderSpread(currentSpreadIndex + 1); }
+    // ---- Page-flip animation ----
+    // The book itself switches from side-by-side pages to a stacked layout
+    // at the 768px breakpoint (see .tl-book-spread in CSS), so the flip has
+    // to hinge left/right normally but top/bottom when stacked.
+    function flipStacked(){ return getComputedStyle(spreadEl).flexDirection === 'column'; }
+
+    // Sizes and positions the flip-leaf to exactly match whichever real
+    // page slot (left or right) it's standing in for, so the animated
+    // overlay lines up pixel-for-pixel with the page underneath it.
+    function positionFlipLeaf(overRight){
+      const spreadRect = spreadEl.getBoundingClientRect();
+      const targetRect = (overRight ? pageRight : pageLeft).getBoundingClientRect();
+      flipLeaf.style.left = (targetRect.left - spreadRect.left) + 'px';
+      flipLeaf.style.top = (targetRect.top - spreadRect.top) + 'px';
+      flipLeaf.style.width = targetRect.width + 'px';
+      flipLeaf.style.height = targetRect.height + 'px';
+    }
+
+    let flipping = false;
+    let flipTimer = null;
+    // overRight: true turns the right/bottom leaf forward (hinge at the
+    // spine-facing edge - left in the side-by-side layout, top when
+    // stacked); false turns the left/top leaf back (hinge on the opposite
+    // edge). The motion is a single CSS @keyframes (tlFlipTurn) driven by
+    // the --ax/--ay/--dir/--fold-angle custom properties set here, rather
+    // than a JS-tweened transition - the keyframe is what carries the
+    // translateZ "lift" and the eased curve that make the turn feel soft.
+    // onComplete fires on animationend, or a safety timeout if that event
+    // is ever missed (e.g. a backgrounded tab), so the book can't get stuck;
+    // it's where the finished spread is finally committed (see turnNext/
+    // turnPrev for why that commit is deferred to the very end).
+    function runFlip(overRight, onComplete){
+      const stacked = flipStacked();
+      const backAxis = stacked ? 'X' : 'Y';
+      const origin = stacked
+        ? (overRight ? 'center top' : 'center bottom')
+        : (overRight ? 'left center' : 'right center');
+
+      positionFlipLeaf(overRight);
+      flipLeaf.className = 'tl-flip-leaf show';
+      flipLeaf.style.transformOrigin = origin;
+      flipLeaf.style.transform = '';
+      flipLeaf.style.setProperty('--ax', stacked ? 1 : 0);
+      flipLeaf.style.setProperty('--ay', stacked ? 0 : 1);
+      flipLeaf.style.setProperty('--dir', overRight ? -1 : 1);
+      flipLeaf.style.setProperty('--fold-angle', stacked ? '180deg' : '90deg');
+      flipBack.style.transform = 'rotate' + backAxis + '(180deg)';
+      void flipLeaf.offsetWidth; // restart the keyframe cleanly on repeat flips
+
+      flipLeaf.classList.add('animating'); // applies the tlFlipTurn animation
+
+      let done = false;
+      function finish(){
+        if(done) return;
+        done = true;
+        clearTimeout(flipTimer); flipTimer = null;
+        flipLeaf.removeEventListener('animationend', onEnd);
+        // Commit the settled spread, THEN hide the leaf, both synchronously
+        // so the real page is already showing the new content the instant
+        // the leaf vanishes - no one-frame flash of stale text.
+        if(onComplete) onComplete();
+        flipLeaf.classList.remove('show', 'animating');
+        flipLeaf.style.transform = '';
+        flipping = false;
+      }
+      function onEnd(e){
+        if(e.target !== flipLeaf || e.animationName !== 'tlFlipTurn') return;
+        finish();
+      }
+      flipLeaf.addEventListener('animationend', onEnd);
+      flipTimer = setTimeout(finish, 1000); // fallback past the .82s animation
+    }
+
+    // Turning a page keeps every page's text bound to the sheet it's printed
+    // on: the lifting leaf carries the page you're leaving on its front and
+    // the page being revealed on its back, while underneath only the page
+    // the lift actually uncovers is swapped in early. The page the leaf is
+    // about to come down onto is left showing its old content until the leaf
+    // lands and covers it, so new text is never visible before the turn
+    // reaches it. Clicking a page turns it too - left goes back, right goes
+    // forward - alongside the arrow buttons and the keyboard.
+    function turnNext(){
+      if(flipping) return;
+      const total = totalSpreads(currentPages);
+      if(currentSpreadIndex >= total - 1) return;
+      flipping = true;
+      const nextIdx = currentSpreadIndex + 1;
+      const cur = computeSpread(currentPages, currentSpreadIndex);
+      const next = computeSpread(currentPages, nextIdx);
+      renderPageSlot(flipFront, cur.right, cur.rightNum);  // leaf front: the page being turned
+      renderPageSlot(flipBack, next.left, next.leftNum);   // leaf back: revealed as it lands
+      renderPageSlot(pageRight, next.right, next.rightNum); // uncovered beneath the lifting leaf
+      // pageLeft stays on cur.left until the leaf comes down over it.
+      runFlip(true, () => renderSpread(nextIdx));
+    }
+    function turnPrev(){
+      if(flipping || currentSpreadIndex <= 0) return;
+      flipping = true;
+      const prevIdx = currentSpreadIndex - 1;
+      const cur = computeSpread(currentPages, currentSpreadIndex);
+      const prev = computeSpread(currentPages, prevIdx);
+      renderPageSlot(flipFront, cur.left, cur.leftNum);   // leaf front: the page being turned
+      renderPageSlot(flipBack, prev.right, prev.rightNum);  // leaf back: revealed as it lands
+      renderPageSlot(pageLeft, prev.left, prev.leftNum);   // uncovered beneath the lifting leaf
+      // pageRight stays on cur.right until the leaf comes down over it.
+      runFlip(false, () => renderSpread(prevIdx));
+    }
     pageLeft.addEventListener('click', () => { if(!pageLeft.classList.contains('blank')) turnPrev(); });
     pageRight.addEventListener('click', () => { if(!pageRight.classList.contains('blank')) turnNext(); });
 
@@ -3881,17 +4082,25 @@
       currentPages = [];
       currentSpreadIndex = 0;
       currentStoryBook = null;
+      // Cancels any flip mid-animation (removing .animating drops the
+      // keyframe with no animationend event, so flipping/the safety timer
+      // have to be cleared here too, or a book closed mid-turn would either
+      // stay stuck or fire a stale commit onto the now-empty reader).
+      clearTimeout(flipTimer); flipTimer = null;
+      flipLeaf.classList.remove('show', 'animating');
+      flipLeaf.style.transform = '';
+      flipping = false;
     }
     readerClose.addEventListener('click', closeBook);
     reader.addEventListener('click', e => { if(e.target === reader) closeBook(); });
-    pagePrevBtn.addEventListener('click', () => renderSpread(currentSpreadIndex - 1));
-    pageNextBtn.addEventListener('click', () => renderSpread(currentSpreadIndex + 1));
+    pagePrevBtn.addEventListener('click', turnPrev);
+    pageNextBtn.addEventListener('click', turnNext);
     window.addEventListener('keydown', e => {
       if(!reader.classList.contains('show')) return;
       if(e.key === 'Escape'){ closeBook(); return; }
       if(spreadEl.style.display === 'none') return;
-      if(e.key === 'ArrowLeft') renderSpread(currentSpreadIndex - 1);
-      else if(e.key === 'ArrowRight') renderSpread(currentSpreadIndex + 1);
+      if(e.key === 'ArrowLeft') turnPrev();
+      else if(e.key === 'ArrowRight') turnNext();
     });
 
     function syncTalesPage(){
