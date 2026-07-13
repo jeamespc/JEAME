@@ -938,6 +938,122 @@
       .sb-sketch{ --sb-scale:0.4667; max-width:min(88vw, 600px); max-height:min(88vh, 600px); }
     }
 
+    /* ---------- GRAPHICS: investigation-wall page ---------- */
+    /* Same flashlight-in-the-dark idea as the sketchbook, but the surface is
+       a big evidence wall: posters pinned up at angles with red string strung
+       between them, and only what the cursor's light falls on is visible. */
+    #graphics-page{
+      display:none;
+      position:fixed; inset:0; z-index:6000;
+      background:#0a0806;
+      overflow:hidden;
+    }
+    #graphics-page.show{ display:block; }
+    body.gr-open{ overflow:hidden; }
+    .gr-topbar{
+      position:absolute; top:0; left:0; right:0; z-index:30;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:26px 8vw; pointer-events:none;
+    }
+    .gr-topbar a{ pointer-events:auto; }
+    .gr-brand{
+      font-family:'Arial Black','Arial',sans-serif; font-weight:900;
+      font-size:14px; letter-spacing:0.02em; color:#fff; text-decoration:none;
+      mix-blend-mode:difference;
+    }
+    .gr-back{
+      font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+      color:#fff; text-decoration:none; mix-blend-mode:difference;
+    }
+    .gr-hint{
+      position:absolute; bottom:26px; left:0; right:0; z-index:30;
+      text-align:center; font-size:11px; font-style:italic; color:#fff;
+      opacity:0.5; pointer-events:none; transition:opacity .4s ease;
+      mix-blend-mode:difference;
+    }
+    .gr-hint.fade{ opacity:0; }
+    /* The wall: a warm dark plaster/cork surface with a faint speckle. It reads
+       as a dimly lit wall inside the flashlight beam; the spotlight overlay
+       blacks out everything past the beam. */
+    .gr-wall{
+      position:absolute; inset:0;
+      background-color:#463b30;
+      background-image:
+        radial-gradient(rgba(0,0,0,0.22) 1px, transparent 1.6px),
+        radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1.6px),
+        linear-gradient(135deg, #4b4034 0%, #40352a 52%, #362c22 100%);
+      background-size:7px 7px, 11px 11px, 100% 100%;
+      background-position:0 0, 3px 4px, 0 0;
+    }
+    .gr-strings{
+      position:absolute; inset:0; width:100%; height:100%;
+      pointer-events:none; z-index:3; overflow:visible;
+    }
+    /* A pinned print: a white matte lifted off the wall by a soft shadow, a
+       thumbtack at the top, tilted a touch like it was tacked up by hand. Sized
+       (like the sketchbook) at its full focused footprint, then scaled down at
+       rest so one transform drives both the zoom and the move to centre. */
+    .gr-poster{
+      position:absolute;
+      --gr-tilt:0deg; --gr-scale:0.34;
+      max-width:min(78vw, 660px); max-height:min(80vh, 660px);
+      transform:translate(-50%,-50%) scale(var(--gr-scale)) rotate(var(--gr-tilt));
+      transform-origin:center center;
+      cursor:pointer; z-index:5;
+      transition:transform .5s cubic-bezier(.2,.8,.2,1), left .5s cubic-bezier(.2,.8,.2,1),
+                 top .5s cubic-bezier(.2,.8,.2,1), filter .3s ease;
+      filter:brightness(0.97);
+    }
+    .gr-poster-inner{
+      position:relative; display:block; background:#f4f0e6;
+      padding:14px 14px 16px; border-radius:1px;
+      box-shadow:0 20px 44px rgba(0,0,0,0.62), 0 3px 8px rgba(0,0,0,0.5);
+    }
+    .gr-poster img{ display:block; width:100%; height:auto; max-height:62vh; object-fit:contain; }
+    .gr-poster.placeholder{ --gr-scale:0.52; }
+    .gr-poster.placeholder .gr-poster-inner{
+      width:min(42vw, 340px); aspect-ratio:3/4;
+      display:flex; align-items:center; justify-content:center;
+      background:repeating-linear-gradient(45deg, #efe9db, #efe9db 11px, #e6dfce 11px, #e6dfce 22px);
+    }
+    .gr-poster.placeholder .gr-poster-inner::after{
+      content:'POSTER'; font-family:'Courier New',Courier,monospace;
+      font-size:13px; letter-spacing:0.24em; color:#b3a891;
+    }
+    .gr-pin{
+      position:absolute; top:-7px; left:50%; transform:translateX(-50%);
+      width:18px; height:18px; border-radius:50%;
+      background:radial-gradient(circle at 38% 32%, #ff8577 0%, #c9302c 60%, #8f1f1c 100%);
+      box-shadow:0 3px 6px rgba(0,0,0,0.6), inset 0 -2px 3px rgba(0,0,0,0.35);
+      z-index:2;
+    }
+    .gr-poster:hover{ filter:brightness(1.06); }
+    .gr-poster.focused{
+      left:50% !important; top:50% !important;
+      transform:translate(-50%,-50%) scale(1) rotate(0deg);
+      z-index:25; filter:brightness(1.02);
+    }
+    .gr-poster.focused .gr-pin{ opacity:0; }
+    /* Cursor flashlight: a warm core fading out, then hard black past the beam. */
+    .gr-spotlight{
+      position:fixed; inset:0; z-index:15; pointer-events:none;
+      background:
+        radial-gradient(circle calc(var(--gr-r,190px) * 0.85) at var(--gr-x,50%) var(--gr-y,50%),
+          rgba(255,198,124,0.12) 0%, rgba(255,198,124,0) 72%),
+        radial-gradient(circle var(--gr-r,190px) at var(--gr-x,50%) var(--gr-y,50%),
+          transparent 0%, transparent 46%, rgba(8,5,3,0.99) 100%);
+    }
+    .gr-empty{
+      position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+      color:#fff; opacity:0.5; font-size:13px; font-style:italic; text-align:center;
+      width:80vw; max-width:360px; mix-blend-mode:difference; pointer-events:none;
+    }
+    @media (max-width:768px){
+      .gr-poster{ --gr-scale:0.44; max-width:min(86vw, 520px); max-height:min(78vh, 520px); }
+      .gr-poster.placeholder{ --gr-scale:0.62; }
+      .gr-poster.placeholder .gr-poster-inner{ width:min(52vw, 260px); }
+    }
+
     /* ---------- TALES: typewriter page ---------- */
     /* Its own distinct language, per Stories' promise: not a shelf of books
        but a typewriter. The stories are listed as titles on the left; pick
@@ -1079,6 +1195,203 @@
       }
       .tw-output{ padding:64px 22px 40px; }
       .tw-body, .tw-placeholder{ font-size:14px; }
+    }
+
+    /* ---------- 3D: sketch globe page ---------- */
+    /* Its own distinct language too: a hand-drawn globe you spin. Different
+       biomes sit at different longitudes; drag to rotate them to the front,
+       and the front biome opens its own set of renders. The rotation is a
+       real "points on a sphere" projection done in 2D - each marker's screen
+       x, scale and opacity come from its longitude vs the current spin. */
+    #threed-page{
+      display:none;
+      position:fixed; inset:0; z-index:6000;
+      background:#ece6da;
+      color:#1c1a17;
+      overflow:hidden;
+    }
+    #threed-page.show{ display:block; }
+    body.gb-open{ overflow:hidden; }
+    .gb-topbar{
+      position:absolute; top:0; left:0; right:0; z-index:30;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:22px 6vw;
+    }
+    .gb-brand{
+      font-family:'Arial Black','Arial',sans-serif; font-weight:900;
+      font-size:14px; letter-spacing:0.02em; color:var(--black); text-decoration:none;
+    }
+    .gb-back{
+      font-family:'Courier New',Courier,monospace;
+      font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+      color:var(--black); text-decoration:none;
+    }
+    .gb-back:hover, .gb-brand:hover{ color:var(--green); }
+    .gb-head{
+      text-align:center; padding:0 8vw; pointer-events:none;
+    }
+    .gb-title{
+      margin:0; font-family:'Arial Black','Arial',sans-serif; font-weight:900;
+      font-size:clamp(26px,3.4vw,42px); letter-spacing:-0.01em; color:var(--black);
+    }
+    .gb-hint{
+      margin:8px 0 0; font-family:'Courier New',Courier,monospace;
+      font-size:12px; letter-spacing:0.04em; color:#847b6c;
+    }
+
+    /* The stage stacks the title, globe and readout and centres them as one
+       group in the space below the topbar. */
+    .gb-stage{
+      position:absolute; inset:58px 0 22px;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:clamp(14px,2.4vh,26px);
+    }
+    .gb-globe{
+      position:relative; flex:0 0 auto;
+      width:min(56vmin, 460px); height:min(56vmin, 460px);
+      touch-action:none;
+    }
+    .gb-sphere{
+      position:absolute; inset:0; border-radius:50%;
+      overflow:hidden;
+      background:radial-gradient(circle at 33% 27%, #f7f3ea 0%, #e3dccb 55%, #cfc6b0 82%, #bdb298 100%);
+      border:2px solid #1c1a17;
+      box-shadow:0 30px 60px rgba(0,0,0,0.20), inset 0 0 40px rgba(0,0,0,0.05);
+      cursor:grab;
+    }
+    .gb-sphere.dragging{ cursor:grabbing; }
+    /* Faint static latitude hairlines for globe-feel. */
+    .gb-lat{
+      position:absolute; left:0; right:0; height:1px;
+      background:rgba(28,26,23,0.14); pointer-events:none;
+    }
+    /* Longitude lines, positioned per-frame by JS (clipped to the circle so
+       they read as meridians sweeping as it spins). */
+    .gb-meridian{
+      position:absolute; top:-2%; width:1px; height:104%;
+      background:rgba(28,26,23,0.22); pointer-events:none;
+      will-change:transform, opacity;
+    }
+    /* Decorative terrain scattered over the surface - little sketch marks that
+       move with the spin so the globe reads as a lived-in world, not a ball
+       with two pins in it. Non-interactive. */
+    .gb-glyph{
+      position:absolute; left:50%; top:50%;
+      transform-origin:center; pointer-events:none;
+      color:#3a352c;
+      will-change:transform, opacity;
+    }
+    .gb-glyph svg{ display:block; width:100%; height:100%; overflow:visible; }
+    /* Interactive biome markers: an icon and a label, projected onto the sphere. */
+    .gb-biome{
+      position:absolute; left:50%; top:50%;
+      display:flex; flex-direction:column; align-items:center; gap:7px;
+      cursor:pointer; pointer-events:auto;
+      will-change:transform, opacity;
+    }
+    .gb-biome-icon{
+      width:56px; height:56px; color:#1c1a17;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .gb-biome-icon svg{ display:block; width:100%; height:100%; overflow:visible; }
+    .gb-biome-label{
+      font-family:'Arial Black','Arial',sans-serif; font-weight:900;
+      font-size:12px; letter-spacing:0.04em; text-transform:uppercase; color:#1c1a17;
+      white-space:nowrap;
+      padding:2px 8px; border-radius:2px;
+      background:rgba(240,236,226,0.72);
+    }
+    .gb-biome.front .gb-biome-label{ color:var(--green); }
+    .gb-biome.front .gb-biome-icon{ color:var(--green); }
+    /* Soft sphere shading over everything, for roundness. */
+    .gb-shade{
+      position:absolute; inset:0; border-radius:50%; pointer-events:none;
+      background:
+        radial-gradient(circle at 30% 26%, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 42%),
+        radial-gradient(circle at 68% 74%, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0) 60%);
+      mix-blend-mode:multiply;
+    }
+    .gb-shade.hi{ mix-blend-mode:normal; }
+
+    /* Readout under the globe: which world is facing you, and the way in. */
+    .gb-readout{
+      display:flex; flex-direction:column; align-items:center; gap:12px;
+      text-align:center; min-height:96px;
+    }
+    .gb-readout-name{
+      font-family:'Arial Black','Arial',sans-serif; font-weight:900;
+      font-size:clamp(20px,2.4vw,28px); letter-spacing:-0.01em; color:var(--black);
+      transition:opacity .15s ease;
+    }
+    .gb-readout-sub{
+      margin-top:-6px; font-family:'Courier New',Courier,monospace;
+      font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:#847b6c;
+    }
+    .gb-view-btn{
+      appearance:none; cursor:pointer;
+      font-family:'Arial Black','Arial',sans-serif; font-weight:900;
+      font-size:12px; letter-spacing:0.06em; text-transform:uppercase;
+      color:#fff; background:var(--green); border:none;
+      padding:12px 22px; border-radius:3px;
+      display:inline-flex; align-items:center; gap:8px;
+      transition:transform .15s ease, background .15s ease, opacity .15s ease;
+    }
+    .gb-view-btn:hover{ transform:translateY(-2px); }
+    .gb-view-btn[disabled]{ background:#b8b0a0; color:#f3efe6; cursor:default; transform:none; }
+
+    /* Biome gallery overlay: sits above the globe page, below the shared
+       lightbox (which was bumped to 6500 so it opens on top of this). */
+    .gb-gallery{
+      display:none;
+      position:fixed; inset:0; z-index:6100;
+      background:#ece6da;
+      overflow-y:auto; -webkit-overflow-scrolling:touch;
+    }
+    .gb-gallery.show{ display:block; }
+    .gb-gallery-head{
+      position:sticky; top:0; z-index:2;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:22px 6vw; background:linear-gradient(180deg, #ece6da 70%, rgba(236,230,218,0));
+    }
+    .gb-gallery-titles .gb-gallery-name{
+      font-family:'Arial Black','Arial',sans-serif; font-weight:900;
+      font-size:clamp(22px,3vw,34px); letter-spacing:-0.01em; color:var(--black);
+    }
+    .gb-gallery-titles .gb-gallery-sub{
+      font-family:'Courier New',Courier,monospace; font-size:12px;
+      letter-spacing:0.08em; text-transform:uppercase; color:#847b6c;
+    }
+    .gb-gallery-close{
+      flex:0 0 auto;
+      appearance:none; cursor:pointer; background:transparent;
+      border:1px solid rgba(0,0,0,0.28); color:#1c1a17;
+      border-radius:50%; width:42px; height:42px; font-size:20px; line-height:1;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .gb-gallery-close:hover{ background:rgba(0,0,0,0.06); }
+    .gb-grid{
+      display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));
+      gap:4px; padding:6px 6vw 8vh;
+    }
+    .gb-grid .po-gallery-tile{
+      position:relative; aspect-ratio:4/3; overflow:hidden; cursor:pointer;
+      background:#d9d1c0;
+    }
+    .gb-grid .po-gallery-tile img, .gb-grid .po-gallery-tile video{
+      width:100%; height:100%; object-fit:cover; display:block;
+      transition:transform .3s ease;
+    }
+    .gb-grid .po-gallery-tile:hover img, .gb-grid .po-gallery-tile:hover video{ transform:scale(1.04); }
+    .gb-empty{
+      padding:14vh 6vw; text-align:center;
+      font-family:'Courier New',Courier,monospace; font-size:14px; color:#847b6c;
+    }
+
+    @media (max-width:720px){
+      .gb-globe{ width:min(80vmin, 400px); height:min(80vmin, 400px); }
+      .gb-biome-icon{ width:46px; height:46px; }
+      .gb-stage{ inset:54px 0 18px; gap:16px; }
+      .gb-grid{ grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); }
     }
 
     /* ---------- PHOTOGRAPHY: camera-screen page ---------- */
@@ -1307,7 +1620,7 @@
 
     /* ---------- GALLERY LIGHTBOX ---------- */
     .gallery-lightbox{
-      display:none; position:fixed; inset:0; z-index:3000;
+      display:none; position:fixed; inset:0; z-index:6500;
       background:rgba(8,8,8,0.96);
       align-items:center; justify-content:center;
     }
@@ -1764,7 +2077,7 @@
       <div class="yr">Ongoing</div>
     </a>
 
-    <div class="row" style="--swatch-color:#F59D23;">
+    <a class="row" href="#graphics" aria-label="View Graphics" style="--swatch-color:#F59D23;">
       <div class="row-swatch"></div>
       <div class="titleblock">
         <div class="tt">
@@ -1775,10 +2088,10 @@
         </div>
         <div class="row-desc">Identity systems, layouts, posters, and the visual language behind the brand.</div>
       </div>
-      <div class="yr">Coming soon</div>
-    </div>
+      <div class="yr">Ongoing</div>
+    </a>
 
-    <div class="row" style="--swatch-color:#14672F;">
+    <a class="row" href="#threed" aria-label="View 3D" style="--swatch-color:#14672F;">
       <div class="row-swatch"></div>
       <div class="titleblock">
         <div class="tt">
@@ -1789,8 +2102,8 @@
         </div>
         <div class="row-desc">Renders, models, and experiments built in three dimensions.</div>
       </div>
-      <div class="yr">Coming soon</div>
-    </div>
+      <div class="yr">Ongoing</div>
+    </a>
 
     <a class="row" href="#photography" aria-label="View Photography" style="--swatch-color:#0A0A0A;">
       <div class="row-swatch"></div>
@@ -2671,6 +2984,19 @@
   <div class="sb-spotlight" id="sbSpotlight"></div>
 </div>
 
+<!-- ===================== GRAPHICS: investigation-wall page ===================== -->
+<div id="graphics-page" aria-hidden="true">
+  <div class="gr-topbar">
+    <a class="gr-brand" href="#top">JEAME</a>
+    <a class="gr-back" href="#stories">&larr; Back to Stories</a>
+  </div>
+  <div class="gr-wall" id="grWall">
+    <svg class="gr-strings" id="grStrings" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+  <p class="gr-hint" id="grHint">Move the light across the wall. Click a piece to look closer.</p>
+  <div class="gr-spotlight" id="grSpotlight"></div>
+</div>
+
 <!-- ===================== TALES: typewriter page ===================== -->
 <div id="tales-page" aria-hidden="true">
   <div class="tw-topbar">
@@ -2692,6 +3018,40 @@
       </div>
       <div class="tw-skip-hint" aria-hidden="true">click to skip &rsaquo;</div>
     </div>
+  </div>
+</div>
+
+<!-- ===================== 3D: sketch globe page ===================== -->
+<div id="threed-page" aria-hidden="true">
+  <div class="gb-topbar">
+    <a class="gb-brand" href="#top">JEAME</a>
+    <a class="gb-back" href="#stories">&larr; Back to Stories</a>
+  </div>
+  <div class="gb-stage">
+    <div class="gb-head">
+      <p class="gb-title">3D</p>
+      <p class="gb-hint">Spin the globe &middot; open a world to see its renders</p>
+    </div>
+    <div class="gb-globe" id="gbGlobe">
+      <div class="gb-sphere" id="gbSphere"></div>
+      <div class="gb-shade"></div>
+    </div>
+    <div class="gb-readout">
+      <div class="gb-readout-name" id="gbReadoutName">&mdash;</div>
+      <div class="gb-readout-sub" id="gbReadoutSub"></div>
+      <button type="button" class="gb-view-btn" id="gbViewBtn" disabled>View renders <span aria-hidden="true">&rarr;</span></button>
+    </div>
+  </div>
+
+  <div class="gb-gallery" id="gbGallery" aria-hidden="true">
+    <div class="gb-gallery-head">
+      <div class="gb-gallery-titles">
+        <div class="gb-gallery-name" id="gbGalleryName"></div>
+        <div class="gb-gallery-sub" id="gbGallerySub"></div>
+      </div>
+      <button type="button" class="gb-gallery-close" id="gbGalleryClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="gb-grid" id="gbGrid"></div>
   </div>
 </div>
 
@@ -3450,6 +3810,211 @@
     syncSketchbookPage();
   })();
 
+  // ---------- GRAPHICS: investigation-wall page ----------
+  // The sketchbook's flashlight, dressed as an evidence wall: posters pinned
+  // up at angles with red string strung between them, revealed only where the
+  // cursor's light falls. Same eased spotlight + click-to-focus as the
+  // sketchbook. Posters come from renders/graphics-{n}; until any are dropped
+  // in it shows placeholder prints so the wall still reads.
+  (function(){
+    const page = document.getElementById('graphics-page');
+    const wall = document.getElementById('grWall');
+    const strings = document.getElementById('grStrings');
+    const hint = document.getElementById('grHint');
+    const spotlight = document.getElementById('grSpotlight');
+    if(!page || !wall || !spotlight) return;
+
+    let loaded = false, focusedEl = null;
+    const MARGIN_X = 13, MARGIN_Y = 15, COLLIDE = 16;
+    const BASE_R = 200, ZOOM_R = 560;
+    let targetR = BASE_R, currentR = BASE_R;
+    let targetX = 50, targetY = 50, currentX = 50, currentY = 50;
+    let rafRunning = false;
+    let stringPairs = [];
+
+    const px = v => v + 'px';
+
+    function animate(){
+      currentR += (targetR - currentR) * 0.12;
+      currentX += (targetX - currentX) * 0.35;
+      currentY += (targetY - currentY) * 0.35;
+      spotlight.style.setProperty('--gr-r', px(currentR));
+      spotlight.style.setProperty('--gr-x', currentX + '%');
+      spotlight.style.setProperty('--gr-y', currentY + '%');
+      const settled = Math.abs(targetR - currentR) < 0.5 && Math.abs(targetX - currentX) < 0.1 && Math.abs(targetY - currentY) < 0.1;
+      if(!settled) requestAnimationFrame(animate); else rafRunning = false;
+    }
+    function kick(){ if(!rafRunning){ rafRunning = true; requestAnimationFrame(animate); } }
+    function setPointerTarget(cx, cy){
+      targetX = (cx / window.innerWidth) * 100;
+      targetY = (cy / window.innerHeight) * 100;
+      kick();
+    }
+
+    page.addEventListener('mousemove', e => {
+      if(focusedEl) return;
+      setPointerTarget(e.clientX, e.clientY);
+      hint.classList.add('fade');
+    });
+    page.addEventListener('touchmove', e => {
+      if(focusedEl || !e.touches[0]) return;
+      setPointerTarget(e.touches[0].clientX, e.touches[0].clientY);
+      hint.classList.add('fade');
+    }, {passive:true});
+    page.addEventListener('touchstart', e => {
+      if(focusedEl || !e.touches[0]) return;
+      setPointerTarget(e.touches[0].clientX, e.touches[0].clientY);
+      hint.classList.add('fade');
+    }, {passive:true});
+
+    function pickPosition(){
+      const placed = Array.from(wall.querySelectorAll('.gr-poster'))
+        .map(el => ({ x: parseFloat(el.style.left), y: parseFloat(el.style.top) }));
+      let x, y, tries = 0;
+      do{
+        x = MARGIN_X + Math.random() * (100 - MARGIN_X * 2);
+        y = MARGIN_Y + Math.random() * (100 - MARGIN_Y * 2);
+        tries++;
+      } while(tries < 14 && placed.some(p => Math.hypot(p.x - x, p.y - y) < COLLIDE));
+      return { x, y };
+    }
+
+    function scatterPosters(items){
+      items.forEach(item => {
+        const el = document.createElement('div');
+        el.className = 'gr-poster' + (item.type === 'placeholder' ? ' placeholder' : '');
+        el.style.setProperty('--gr-tilt', (Math.random() * 9 - 4.5).toFixed(1) + 'deg');
+        const inner = document.createElement('div');
+        inner.className = 'gr-poster-inner';
+        if(item.type === 'img'){
+          const img = document.createElement('img');
+          img.alt = ''; img.loading = 'lazy'; img.src = item.src;
+          inner.appendChild(img);
+        }
+        const pin = document.createElement('div');
+        pin.className = 'gr-pin';
+        el.appendChild(inner);
+        el.appendChild(pin);
+        const { x, y } = pickPosition();
+        el.style.left = x + '%';
+        el.style.top = y + '%';
+        wall.appendChild(el);
+      });
+    }
+
+    // Red string between a handful of the pinned prints - consecutive links
+    // plus one long cross-wall run, drawn in the SVG px space (redrawn on
+    // resize since the posters themselves are placed in percentages).
+    function computePairs(n){
+      const pairs = [];
+      for(let i = 0; i < n - 1; i++){ if(Math.random() < 0.68) pairs.push([i, i + 1]); }
+      if(n > 2) pairs.push([0, n - 1]);
+      return pairs;
+    }
+    function redrawStrings(){
+      const posters = Array.from(wall.querySelectorAll('.gr-poster'));
+      const wr = wall.getBoundingClientRect();
+      const pts = posters.map(el => ({
+        x: parseFloat(el.style.left) / 100 * wr.width,
+        y: parseFloat(el.style.top) / 100 * wr.height
+      }));
+      const ns = 'http://www.w3.org/2000/svg';
+      strings.innerHTML = '';
+      stringPairs.forEach(([a, b]) => {
+        if(!pts[a] || !pts[b]) return;
+        const A = pts[a], B = pts[b];
+        const midX = (A.x + B.x) / 2;
+        const midY = (A.y + B.y) / 2 + 26 + Math.abs(A.x - B.x) * 0.04;
+        const path = document.createElementNS(ns, 'path');
+        path.setAttribute('d', 'M ' + A.x.toFixed(1) + ' ' + A.y.toFixed(1) + ' Q ' + midX.toFixed(1) + ' ' + midY.toFixed(1) + ' ' + B.x.toFixed(1) + ' ' + B.y.toFixed(1));
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke', '#b23b30');
+        path.setAttribute('stroke-width', '2');
+        path.setAttribute('stroke-linecap', 'round');
+        path.setAttribute('opacity', '0.85');
+        strings.appendChild(path);
+      });
+    }
+
+    async function loadPosters(){
+      if(loaded) return;
+      loaded = true;
+      const slots = await Promise.all(Array.from({ length: 16 }, (_, i) => resolveGalleryItem('graphics', i + 1)));
+      const found = [];
+      let misses = 0;
+      for(const item of slots){
+        if(item){ found.push(item.src); misses = 0; }
+        else { misses++; if(misses >= (found.length ? 2 : 3)) break; }
+      }
+      const items = found.length
+        ? found.map(src => ({ type: 'img', src }))
+        : Array.from({ length: 8 }, () => ({ type: 'placeholder' }));
+      scatterPosters(items);
+      stringPairs = computePairs(items.length);
+      redrawStrings();
+    }
+
+    function focusPoster(el){
+      if(focusedEl === el) return;
+      if(focusedEl) focusedEl.classList.remove('focused');
+      focusedEl = el;
+      el.classList.add('focused');
+      targetX = 50; targetY = 50; targetR = ZOOM_R; kick();
+    }
+    function unfocusPoster(){
+      if(!focusedEl) return;
+      focusedEl.classList.remove('focused');
+      focusedEl = null;
+      targetR = BASE_R; kick();
+    }
+    wall.addEventListener('click', e => {
+      const poster = e.target.closest('.gr-poster');
+      if(poster){ poster === focusedEl ? unfocusPoster() : focusPoster(poster); }
+      else if(focusedEl){ unfocusPoster(); }
+    });
+
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+      if(!page.classList.contains('show')) return;
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(redrawStrings, 180);
+    });
+
+    function syncGraphicsPage(){
+      if(location.hash === '#graphics'){
+        page.classList.add('show');
+        page.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('gr-open');
+        window.scrollTo(0, 0);
+        loadPosters();
+        targetX = currentX = 50; targetY = currentY = 50; targetR = currentR = BASE_R;
+        spotlight.style.setProperty('--gr-r', px(BASE_R));
+        spotlight.style.setProperty('--gr-x', '50%');
+        spotlight.style.setProperty('--gr-y', '50%');
+        hint.classList.remove('fade');
+      } else {
+        page.classList.remove('show');
+        page.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('gr-open');
+        unfocusPoster();
+      }
+    }
+
+    document.querySelector('#graphics-page .gr-back').addEventListener('click', function(e){
+      e.preventDefault();
+      page.classList.remove('show');
+      location.hash = 'stories';
+    });
+    document.querySelector('#graphics-page .gr-brand').addEventListener('click', function(e){
+      e.preventDefault();
+      page.classList.remove('show');
+      location.hash = '';
+    });
+
+    window.addEventListener('hashchange', syncGraphicsPage);
+    syncGraphicsPage();
+  })();
+
   // ---------- TALES: typewriter page ----------
   (function(){
     const page = document.getElementById('tales-page');
@@ -3875,6 +4440,298 @@
 
     window.addEventListener('hashchange', syncPhotographyPage);
     syncPhotographyPage();
+  })();
+
+  // ---------- 3D: sketch globe page ----------
+  // A hand-drawn globe you spin. Each biome sits at a longitude; every frame
+  // the biomes (and decorative terrain, and the meridian lines) are projected
+  // onto the 2D circle from the current spin - screen x = R*sin(angle),
+  // toward-viewer depth = cos(lat)*cos(angle) drives scale/opacity/z-order and
+  // hides the back hemisphere. Drag spins it with momentum, then it settles
+  // (snaps) the nearest biome to the front. The front biome's renders open in
+  // a gallery that reuses the shared probe + lightbox as every other section.
+  (function(){
+    const page = document.getElementById('threed-page');
+    if(!page) return;
+    const globe = document.getElementById('gbGlobe');
+    const sphere = document.getElementById('gbSphere');
+    const readoutName = document.getElementById('gbReadoutName');
+    const readoutSub = document.getElementById('gbReadoutSub');
+    const viewBtn = document.getElementById('gbViewBtn');
+    const gallery = document.getElementById('gbGallery');
+    const galleryName = document.getElementById('gbGalleryName');
+    const gallerySub = document.getElementById('gbGallerySub');
+    const galleryClose = document.getElementById('gbGalleryClose');
+    const grid = document.getElementById('gbGrid');
+    if(!globe || !sphere) return;
+
+    const TAU = Math.PI * 2;
+    const ICONS = {
+      city: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><path d="M3 41h42"/><rect x="9" y="22" width="10" height="19"/><rect x="20" y="12" width="10" height="29"/><rect x="31" y="27" width="8" height="14"/><path d="M23 18h4M23 24h4M23 30h4"/></svg>',
+      mtn: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><path d="M2 40h44"/><path d="M4 40 18 15 26 28 32 19 45 40"/><path d="M13 23 18 15 23 23"/></svg>',
+      tree: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 3 5 15h14z"/><path d="M12 15v6"/></svg>',
+      hill: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M2 18Q12 5 22 18"/></svg>',
+      water: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 9Q7 5 11 9T19 9"/><path d="M3 15Q7 11 11 15T19 15"/></svg>',
+      peak: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M2 20 9 8l5 7 4-5 4 10z"/></svg>',
+      dot: '<svg viewBox="0 0 24 24"><rect x="8" y="8" width="8" height="8" fill="currentColor"/></svg>'
+    };
+
+    // The two biomes with renders today. Add more entries (with matching
+    // renders/threed-{key}-{n} files) and they slot straight onto the globe.
+    const BIOMES = [
+      { key:'interiors',   name:'City',      sub:'Interiors',  lon:-0.75, lat:0.14,  icon:ICONS.city },
+      { key:'mountainside',name:'Mountains', sub:'Wilderness', lon:1.95,  lat:-0.20, icon:ICONS.mtn }
+    ];
+
+    // Decorative terrain scattered over the surface (fixed positions so it's
+    // the same world every visit). Purely visual - it sells the spin and makes
+    // the globe feel inhabited between the two biomes.
+    const GLYPHS = [
+      {t:'tree', lon:0.4, lat:0.5, s:0.7}, {t:'tree', lon:0.7, lat:0.34, s:0.6}, {t:'hill', lon:-0.2, lat:-0.42, s:0.9},
+      {t:'water', lon:0.15, lat:-0.15, s:0.8}, {t:'peak', lon:1.2, lat:0.4, s:0.7}, {t:'dot', lon:-1.25, lat:0.18, s:0.9},
+      {t:'tree', lon:2.7, lat:0.44, s:0.65}, {t:'hill', lon:2.4, lat:-0.3, s:0.95}, {t:'water', lon:3.1, lat:0.05, s:0.8},
+      {t:'peak', lon:3.5, lat:-0.4, s:0.65}, {t:'dot', lon:3.9, lat:0.3, s:0.9}, {t:'tree', lon:4.4, lat:-0.12, s:0.6},
+      {t:'hill', lon:4.9, lat:0.4, s:0.9}, {t:'water', lon:5.3, lat:-0.34, s:0.8}, {t:'peak', lon:5.7, lat:0.18, s:0.7},
+      {t:'dot', lon:-0.5, lat:-0.05, s:0.85}, {t:'tree', lon:5.0, lat:-0.05, s:0.6}, {t:'hill', lon:1.55, lat:0.12, s:0.8}
+    ];
+    const MERIDIAN_COUNT = 8;
+
+    let R = 250, Rm = 205;         // sphere radius, and inset radius for markers
+    let rotation = 0, vel = 0;     // spin state (radians, radians/sec)
+    let dragging = false, moved = false, downTarget = null;
+    let lastX = 0, lastT = 0;
+    let snapping = false, snapTarget = 0;
+    let rafId = null, lastFrame = 0, built = false;
+    let frontBiome = null;
+    const meridianEls = [], glyphEls = [], biomeEls = [];
+
+    function measure(){
+      R = globe.clientWidth / 2;
+      Rm = R * 0.82;
+    }
+
+    function build(){
+      if(built) return;
+      built = true;
+      // latitude hairlines (static)
+      [-0.34, 0, 0.34].forEach(fr => {
+        const lat = document.createElement('div');
+        lat.className = 'gb-lat';
+        lat.style.top = (50 + fr * 50) + '%';
+        sphere.appendChild(lat);
+      });
+      // meridians
+      for(let i = 0; i < MERIDIAN_COUNT; i++){
+        const m = document.createElement('div');
+        m.className = 'gb-meridian';
+        m.style.left = '50%';
+        m._lon = (i / MERIDIAN_COUNT) * TAU;
+        sphere.appendChild(m);
+        meridianEls.push(m);
+      }
+      // decorative glyphs
+      GLYPHS.forEach(g => {
+        const el = document.createElement('div');
+        el.className = 'gb-glyph';
+        const px = 30 * g.s;
+        el.style.width = px + 'px';
+        el.style.height = px + 'px';
+        el.innerHTML = ICONS[g.t] || ICONS.dot;
+        el._g = g;
+        sphere.appendChild(el);
+        glyphEls.push(el);
+      });
+      // biome markers
+      BIOMES.forEach(b => {
+        const el = document.createElement('div');
+        el.className = 'gb-biome';
+        el.innerHTML = '<div class="gb-biome-icon">' + b.icon + '</div><div class="gb-biome-label">' + b.name + '</div>';
+        el._b = b;
+        sphere.appendChild(el);
+        biomeEls.push(el);
+      });
+      readoutName.textContent = BIOMES[0].name;
+      readoutSub.textContent = BIOMES[0].sub;
+      viewBtn.disabled = false;
+    }
+
+    function norm(a){ // wrap to [-PI, PI]
+      a = (a + Math.PI) % TAU;
+      if(a < 0) a += TAU;
+      return a - Math.PI;
+    }
+    function smooth(t){ t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); }
+
+    function project(){
+      // meridians: vertical lines swept across the circle
+      for(const m of meridianEls){
+        const a = m._lon + rotation;
+        const x = R * Math.sin(a);
+        const front = Math.cos(a);
+        m.style.transform = 'translate(-50%,0) translateX(' + x.toFixed(1) + 'px)';
+        m.style.opacity = (Math.max(0, front) * 0.5).toFixed(3);
+      }
+      // glyphs + biomes: full sphere projection
+      const place = (el, lon, lat, extraScale) => {
+        const a = lon + rotation;
+        const cl = Math.cos(lat);
+        const depth = cl * Math.cos(a);        // toward viewer, [-1,1]
+        const x = Rm * cl * Math.sin(a);
+        const y = -Rm * Math.sin(lat);
+        const vis = depth > 0.02;
+        const sc = (0.55 + 0.45 * Math.max(0, depth)) * extraScale;
+        el.style.transform = 'translate(-50%,-50%) translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) scale(' + sc.toFixed(3) + ')';
+        el.style.opacity = vis ? smooth((depth - 0.02) / 0.3).toFixed(3) : '0';
+        el.style.zIndex = String(100 + Math.round(depth * 100));
+        return depth;
+      };
+      for(const el of glyphEls){ place(el, el._g.lon, el._g.lat, 1); }
+      let best = -2, bestEl = null;
+      for(const el of biomeEls){
+        const depth = place(el, el._b.lon, el._b.lat, 1);
+        el.style.pointerEvents = depth > 0.3 ? 'auto' : 'none';
+        el.classList.remove('front');
+        if(depth > best){ best = depth; bestEl = el; }
+      }
+      if(bestEl){
+        bestEl.classList.add('front');
+        const b = bestEl._b;
+        if(frontBiome !== b){
+          frontBiome = b;
+          readoutName.textContent = b.name;
+          readoutSub.textContent = b.sub;
+        }
+      }
+    }
+
+    function snapTargetFor(){
+      // bring whichever biome is nearest the front to angle 0
+      let best = Infinity, target = rotation;
+      for(const b of BIOMES){
+        const d = norm(-b.lon - rotation);
+        if(Math.abs(d) < Math.abs(best)){ best = d; target = rotation + d; }
+      }
+      return target;
+    }
+
+    function frame(now){
+      if(!lastFrame) lastFrame = now;
+      const dt = Math.min((now - lastFrame) / 1000, 0.05);
+      lastFrame = now;
+      if(!dragging){
+        if(Math.abs(vel) > 0.12){
+          rotation += vel * dt;
+          vel *= Math.exp(-2.3 * dt);   // friction
+          snapping = false;
+        } else {
+          if(!snapping){ snapTarget = snapTargetFor(); snapping = true; }
+          rotation += (snapTarget - rotation) * 0.12;
+          if(Math.abs(snapTarget - rotation) < 0.0005){ rotation = snapTarget; }
+        }
+      }
+      project();
+      rafId = requestAnimationFrame(frame);
+    }
+    function startLoop(){ if(rafId == null){ lastFrame = 0; rafId = requestAnimationFrame(frame); } }
+    function stopLoop(){ if(rafId != null){ cancelAnimationFrame(rafId); rafId = null; } }
+
+    // ---- drag to spin ----
+    function onDown(e){
+      dragging = true; moved = false;
+      downTarget = e.target.closest('.gb-biome');
+      lastX = e.clientX; lastT = performance.now();
+      vel = 0; snapping = false;
+      sphere.classList.add('dragging');
+      sphere.setPointerCapture && e.pointerId != null && sphere.setPointerCapture(e.pointerId);
+    }
+    function onMove(e){
+      if(!dragging) return;
+      const dx = e.clientX - lastX;
+      if(Math.abs(dx) > 0) { rotation += dx * 0.007; }
+      if(Math.abs(e.clientX - lastX) > 3) moved = true;
+      const t = performance.now();
+      const dtm = (t - lastT) / 1000;
+      if(dtm > 0){ vel = (dx * 0.007) / dtm; }
+      lastX = e.clientX; lastT = t;
+    }
+    function onUp(e){
+      if(!dragging) return;
+      dragging = false;
+      sphere.classList.remove('dragging');
+      if(!moved && downTarget && downTarget._b){ openBiome(downTarget._b); }
+      downTarget = null;
+    }
+    sphere.addEventListener('pointerdown', onDown);
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+
+    viewBtn.addEventListener('click', () => { if(frontBiome) openBiome(frontBiome); });
+
+    // ---- biome render gallery (shared probe + lightbox) ----
+    let galleryToken = 0;
+    async function openBiome(biome){
+      const token = ++galleryToken;
+      galleryName.textContent = biome.name;
+      gallerySub.textContent = biome.sub;
+      grid.innerHTML = '<div class="gb-empty">Loading&hellip;</div>';
+      gallery.classList.add('show');
+      gallery.setAttribute('aria-hidden', 'false');
+      const items = await getGalleryItems('threed-' + biome.key);
+      if(token !== galleryToken) return;
+      grid.innerHTML = '';
+      if(items.length){
+        renderGalleryTiles(grid, items, '#d9d1c0');
+      } else {
+        grid.innerHTML = '<div class="gb-empty">Renders for this world are coming soon.</div>';
+      }
+    }
+    function closeGallery(){
+      gallery.classList.remove('show');
+      gallery.setAttribute('aria-hidden', 'true');
+      galleryToken++;
+    }
+    galleryClose.addEventListener('click', closeGallery);
+    window.addEventListener('keydown', e => {
+      if(e.key === 'Escape' && gallery.classList.contains('show')){ e.stopPropagation(); closeGallery(); }
+    });
+
+    function syncThreedPage(){
+      if(location.hash === '#threed'){
+        build();
+        page.classList.add('show');
+        page.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('gb-open');
+        window.scrollTo(0, 0);
+        measure();
+        // face the first biome, with a small nudge so it's clearly spinnable
+        rotation = -BIOMES[0].lon - 0.55;
+        vel = 0.5;
+        snapping = false;
+        startLoop();
+      } else {
+        page.classList.remove('show');
+        page.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('gb-open');
+        closeGallery();
+        stopLoop();
+      }
+    }
+
+    window.addEventListener('resize', () => { if(page.classList.contains('show')) measure(); });
+
+    document.querySelector('#threed-page .gb-back').addEventListener('click', function(e){
+      e.preventDefault();
+      page.classList.remove('show');
+      location.hash = 'stories';
+    });
+    document.querySelector('#threed-page .gb-brand').addEventListener('click', function(e){
+      e.preventDefault();
+      page.classList.remove('show');
+      location.hash = '';
+    });
+
+    window.addEventListener('hashchange', syncThreedPage);
+    syncThreedPage();
   })();
 </script>
 
