@@ -1008,9 +1008,49 @@
       position:relative; display:block; background:#f4f0e6;
       padding:14px 14px 16px; border-radius:1px;
       box-shadow:0 20px 44px rgba(0,0,0,0.62), 0 3px 8px rgba(0,0,0,0.5);
+      perspective:1800px;
     }
     .gr-poster img{ display:block; width:100%; height:auto; max-height:62vh; object-fit:contain; }
     .gr-poster.placeholder{ --gr-scale:0.52; }
+    /* Two-sided posters: a front face and a back face sharing one box, spun
+       on the Y axis. The back is absolutely stacked on the front so the
+       card doesn't reflow while it turns. */
+    .gr-flip{
+      position:relative; transform-style:preserve-3d;
+      transition:transform .8s cubic-bezier(.3,.7,.25,1);
+    }
+    .gr-poster.flipped .gr-flip{ transform:rotateY(180deg); }
+    .gr-face{ backface-visibility:hidden; }
+    .gr-face-back{
+      position:absolute; inset:0; transform:rotateY(180deg);
+      display:flex; align-items:center; justify-content:center;
+    }
+    .gr-face-back img{ height:100%; width:100%; }
+    /* A bright tag poking off the top-right corner, like a taped-on note -
+       high contrast against the posters and pulsing until it's used once. */
+    .gr-flip-btn{
+      position:absolute; top:-16px; right:-18px; z-index:8;
+      height:38px; padding:0 16px 0 14px; border-radius:20px; border:none; cursor:pointer;
+      background:#F59D23; color:#1c1508; font:700 13px/1 'Courier New',Courier,monospace;
+      letter-spacing:0.03em; white-space:nowrap;
+      display:none; align-items:center; justify-content:center; gap:7px;
+      box-shadow:0 5px 14px rgba(0,0,0,0.55);
+      transition:background .2s ease, transform .2s ease;
+      transform:rotate(4deg);
+    }
+    .gr-flip-btn .gr-flip-ico{ font-size:16px; line-height:1; }
+    .gr-flip-btn:hover{ background:#ffb238; transform:rotate(0deg) scale(1.06); }
+    .gr-poster.focused.has-back .gr-flip-btn{
+      display:flex; animation:gr-flip-pulse 1.7s ease-in-out infinite;
+    }
+    .gr-poster.focused.has-back.flipped .gr-flip-btn{ animation:none; }
+    @keyframes gr-flip-pulse{
+      0%,100%{ box-shadow:0 5px 14px rgba(0,0,0,0.55), 0 0 0 0 rgba(245,157,35,0.55); }
+      50%{ box-shadow:0 5px 14px rgba(0,0,0,0.55), 0 0 0 9px rgba(245,157,35,0); }
+    }
+    @media (max-width:768px){
+      .gr-flip-btn{ top:-14px; right:-10px; height:34px; padding:0 13px 0 11px; font-size:12px; }
+    }
     .gr-poster.placeholder .gr-poster-inner{
       width:min(42vw, 340px); aspect-ratio:3/4;
       display:flex; align-items:center; justify-content:center;
@@ -1113,6 +1153,11 @@
       font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#a89a80;
     }
     .ar-group-label:first-child{ margin-top:0; }
+    .ar-group-desc{
+      margin:0 0 10px;
+      font-family:Georgia,'Times New Roman',serif; font-style:italic;
+      font-size:13px; line-height:1.4; color:#8a8172;
+    }
     .ar-item{
       appearance:none; background:transparent; border:none; cursor:pointer;
       text-align:left; padding:14px 8px 14px 0;
@@ -3912,14 +3957,38 @@
     function scatterPosters(items){
       items.forEach(item => {
         const el = document.createElement('div');
-        el.className = 'gr-poster' + (item.type === 'placeholder' ? ' placeholder' : '');
+        el.className = 'gr-poster' + (item.type === 'placeholder' ? ' placeholder' : '') + (item.back ? ' has-back' : '');
         el.style.setProperty('--gr-tilt', (Math.random() * 9 - 4.5).toFixed(1) + 'deg');
         const inner = document.createElement('div');
         inner.className = 'gr-poster-inner';
         if(item.type === 'img'){
-          const img = document.createElement('img');
-          img.alt = ''; img.loading = 'lazy'; img.src = item.src;
-          inner.appendChild(img);
+          if(item.back){
+            const flip = document.createElement('div');
+            flip.className = 'gr-flip';
+            const front = document.createElement('div');
+            front.className = 'gr-face gr-face-front';
+            const frontImg = document.createElement('img');
+            frontImg.alt = ''; frontImg.loading = 'lazy'; frontImg.src = item.src;
+            front.appendChild(frontImg);
+            const back = document.createElement('div');
+            back.className = 'gr-face gr-face-back';
+            const backImg = document.createElement('img');
+            backImg.alt = ''; backImg.loading = 'lazy'; backImg.src = item.back;
+            back.appendChild(backImg);
+            flip.appendChild(front);
+            flip.appendChild(back);
+            inner.appendChild(flip);
+            const flipBtn = document.createElement('button');
+            flipBtn.type = 'button';
+            flipBtn.className = 'gr-flip-btn';
+            flipBtn.setAttribute('aria-label', 'Flip poster for context');
+            flipBtn.innerHTML = '<span class="gr-flip-ico">&#8635;</span><span>Flip for context</span>';
+            el.appendChild(flipBtn);
+          } else {
+            const img = document.createElement('img');
+            img.alt = ''; img.loading = 'lazy'; img.src = item.src;
+            inner.appendChild(img);
+          }
         }
         const pin = document.createElement('div');
         pin.className = 'gr-pin';
@@ -3966,6 +4035,9 @@
       });
     }
 
+    // Posters with a written statement on the back: filename slot -> back-face image.
+    const POSTER_BACKS = { 'graphics-2': 'renders/graphics-2-back.jpg' };
+
     async function loadPosters(){
       if(loaded) return;
       loaded = true;
@@ -3977,7 +4049,11 @@
         else { misses++; if(misses >= (found.length ? 2 : 3)) break; }
       }
       const items = found.length
-        ? found.map(src => ({ type: 'img', src }))
+        ? found.map(src => {
+            const m = src.match(/(graphics-\d+)\.\w+$/);
+            const back = m ? POSTER_BACKS[m[1]] : null;
+            return back ? { type: 'img', src, back } : { type: 'img', src };
+          })
         : Array.from({ length: 8 }, () => ({ type: 'placeholder' }));
       scatterPosters(items);
       stringPairs = computePairs(items.length);
@@ -3993,11 +4069,17 @@
     }
     function unfocusPoster(){
       if(!focusedEl) return;
-      focusedEl.classList.remove('focused');
+      focusedEl.classList.remove('focused', 'flipped');
       focusedEl = null;
       targetR = BASE_R; kick();
     }
     wall.addEventListener('click', e => {
+      const flipBtn = e.target.closest('.gr-flip-btn');
+      if(flipBtn){
+        e.stopPropagation();
+        flipBtn.closest('.gr-poster')?.classList.toggle('flipped');
+        return;
+      }
       const poster = e.target.closest('.gr-poster');
       if(poster){ poster === focusedEl ? unfocusPoster() : focusPoster(poster); }
       else if(focusedEl){ unfocusPoster(); }
@@ -4181,13 +4263,15 @@ const HANNINEN_BLOCKS = [
     // with no key/no files just get no corner at all.
     const ARCHIVES = [
       {
-        section: "Tales",
+        section: "Tales from a Young Man's Old Life",
+        desc: "Short fiction, told one story at a time.",
         items: [
           { title: "The Scarf", blocks: BOOK_1_STORY }
         ]
       },
       {
         section: "Reflections",
+        desc: "Studies and inspirations",
         items: [
           { title: "on “Design Emergency”", sub: "Design Theory — Elisa Massoni, 2024", blocks: RAWSTHORN_BLOCKS },
           { title: "on Flores & Prats", sub: "Studios by JEAME — April 2026", blocks: MAGAZINE_BLOCKS, imagesKey: "reflections-magazine" },
@@ -4209,6 +4293,12 @@ const HANNINEN_BLOCKS = [
         label.className = 'ar-group-label';
         label.textContent = group.section;
         listEl.appendChild(label);
+        if(group.desc){
+          const desc = document.createElement('p');
+          desc.className = 'ar-group-desc';
+          desc.textContent = group.desc;
+          listEl.appendChild(desc);
+        }
         group.items.forEach((piece, groupN) => {
           const item = document.createElement('button');
           item.type = 'button';
