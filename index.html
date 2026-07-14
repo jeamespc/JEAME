@@ -1054,57 +1054,66 @@
       .gr-poster.placeholder .gr-poster-inner{ width:min(52vw, 260px); }
     }
 
-    /* ---------- TALES: typewriter page ---------- */
-    /* Its own distinct language, per Stories' promise: not a shelf of books
-       but a typewriter. The stories are listed as titles on the left; pick
-       one and it clatters out, character by character, onto the sheet on the
-       right - the machine writing the whole thing in front of you. */
-    #tales-page{
+    /* ---------- ARCHIVES: typewriter + photo-corner page ---------- */
+    /* Tales and Reflections merged into one typewriter page with two
+       labelled subsections in its index - picking any piece from either
+       subsection clatters it out on the same sheet. Pieces can optionally
+       carry their own small set of reference photos, shown as a small
+       clickable stack pinned in the bottom-left corner of the sheet and
+       opening the same shared lightbox every other gallery on the site
+       uses. */
+    #archives-page{
       display:none;
       position:fixed; inset:0; z-index:6000;
       background:#e7e3d8;
       color:#1c1a17;
       overflow:hidden;
     }
-    #tales-page.show{ display:block; }
-    body.tl-open{ overflow:hidden; }
-    .tw-topbar{
+    #archives-page.show{ display:block; }
+    body.ar-open{ overflow:hidden; }
+    .ar-topbar{
       position:absolute; top:0; left:0; right:0; z-index:30;
       display:flex; align-items:center; justify-content:space-between;
       padding:22px 6vw;
     }
-    .tw-brand{
+    .ar-brand{
       font-family:'Arial Black','Arial',sans-serif; font-weight:900;
       font-size:14px; letter-spacing:0.02em; color:var(--black); text-decoration:none;
     }
-    .tw-back{
+    .ar-back{
       font-family:'Courier New',Courier,monospace;
       font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
       color:var(--black); text-decoration:none;
     }
-    .tw-back:hover, .tw-brand:hover{ color:var(--blue); }
+    .ar-back:hover, .ar-brand:hover{ color:#283583; }
 
-    .tw-stage{
+    .ar-stage{
       position:absolute; inset:72px 6vw 5vh;
       display:flex; gap:clamp(20px,4vw,64px); align-items:stretch;
     }
-    .tw-index{
+    .ar-index{
       flex:0 0 34%; min-width:0;
       display:flex; flex-direction:column;
       padding-top:6px; overflow-y:auto;
     }
-    .tw-masthead{
+    .ar-masthead{
       margin:0 0 6px;
       font-family:'Courier New',Courier,monospace;
       font-size:12px; letter-spacing:0.12em; text-transform:uppercase; color:#7a7266;
     }
-    .tw-heading{
+    .ar-heading{
       margin:0 0 26px;
       font-family:'Arial Black','Arial',sans-serif; font-weight:900;
       font-size:clamp(30px,3.4vw,46px); letter-spacing:-0.01em; color:var(--black);
     }
-    .tw-list{ display:flex; flex-direction:column; }
-    .tw-item{
+    .ar-list{ display:flex; flex-direction:column; }
+    .ar-group-label{
+      margin:22px 0 4px;
+      font-family:'Courier New',Courier,monospace; font-weight:700;
+      font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#a89a80;
+    }
+    .ar-group-label:first-child{ margin-top:0; }
+    .ar-item{
       appearance:none; background:transparent; border:none; cursor:pointer;
       text-align:left; padding:14px 8px 14px 0;
       border-bottom:1px dashed rgba(0,0,0,0.18);
@@ -1112,17 +1121,17 @@
       display:flex; align-items:baseline; gap:12px;
       transition:color .15s ease, padding-left .15s ease;
     }
-    .tw-item-index{ color:#b4ab9a; font-size:12px; flex:0 0 auto; }
-    .tw-item:hover{ color:var(--blue); padding-left:8px; }
-    .tw-item:hover .tw-item-index{ color:var(--blue); }
-    .tw-item.active{ color:var(--blue); font-weight:700; }
-    .tw-item.active .tw-item-index{ color:var(--blue); }
-    .tw-note{
+    .ar-item-index{ color:#b4ab9a; font-size:12px; flex:0 0 auto; }
+    .ar-item:hover{ color:#283583; padding-left:8px; }
+    .ar-item:hover .ar-item-index{ color:#283583; }
+    .ar-item.active{ color:#283583; font-weight:700; }
+    .ar-item.active .ar-item-index{ color:#283583; }
+    .ar-note{
       margin-top:22px;
       font-family:'Courier New',Courier,monospace; font-size:12px; font-style:italic; color:#8a8072;
     }
 
-    .tw-reader{
+    .ar-reader{
       flex:1 1 auto; min-width:0; position:relative;
       background:#faf8f2;
       border:1px solid rgba(0,0,0,0.08);
@@ -1130,71 +1139,91 @@
       border-radius:2px; overflow:hidden;
       display:flex; flex-direction:column;
     }
-    .tw-reader::before{
+    .ar-reader::before{
       content:''; position:absolute; top:0; left:0; right:0; height:6px; z-index:2;
       background:linear-gradient(180deg, rgba(0,0,0,0.10), rgba(0,0,0,0)); pointer-events:none;
     }
-    .tw-output{
+    .ar-output{
       flex:1 1 auto; overflow-y:auto;
       padding:min(7vh,58px) clamp(24px,4vw,64px);
       -webkit-overflow-scrolling:touch;
       scrollbar-width:thin; scrollbar-color:#c9c1b2 transparent;
       cursor:default;
     }
-    .tw-output::-webkit-scrollbar{ width:8px; }
-    .tw-output::-webkit-scrollbar-thumb{ background:#c9c1b2; border-radius:4px; }
-    .tw-output::-webkit-scrollbar-track{ background:transparent; }
-    .tw-body{
+    .ar-output::-webkit-scrollbar{ width:8px; }
+    .ar-output::-webkit-scrollbar-thumb{ background:#c9c1b2; border-radius:4px; }
+    .ar-output::-webkit-scrollbar-track{ background:transparent; }
+    .ar-body{
       font-family:'Courier New',Courier,monospace;
       font-size:15px; line-height:1.95; color:#26221c;
       white-space:pre-wrap; word-break:break-word;
       max-width:62ch; margin:0 auto;
     }
-    .tw-caret{
+    .ar-caret{
       display:inline-block; width:0.6ch; height:1.02em;
       transform:translateY(0.16em); background:#26221c; margin-left:1px;
     }
-    .tw-body.blink .tw-caret{ animation:twBlink 1s steps(1,end) infinite; }
-    @keyframes twBlink{ 0%,50%{ opacity:1; } 51%,100%{ opacity:0; } }
-    .tw-placeholder{
+    .ar-body.blink .ar-caret{ animation:arBlink 1s steps(1,end) infinite; }
+    @keyframes arBlink{ 0%,50%{ opacity:1; } 51%,100%{ opacity:0; } }
+    .ar-placeholder{
       max-width:62ch; margin:0 auto;
       font-family:'Courier New',Courier,monospace; font-size:14px; line-height:1.8;
       color:#9a9184; font-style:italic;
     }
-    .tw-reader:not(.has-tale) .tw-body{ display:none; }
-    .tw-reader.has-tale .tw-placeholder{ display:none; }
-    .tw-reader-close{ display:none; }
-    /* Discreet "click to skip" cue, shown only while the machine is writing. */
-    .tw-skip-hint{
+    .ar-reader:not(.has-piece) .ar-body{ display:none; }
+    .ar-reader.has-piece .ar-placeholder{ display:none; }
+    .ar-reader-close{ display:none; }
+    .ar-skip-hint{
       position:absolute; bottom:14px; right:18px; z-index:4;
       font-family:'Courier New',Courier,monospace; font-size:11px; letter-spacing:0.05em;
       color:#a89a80; background:rgba(250,248,242,0.85);
       padding:3px 8px; border-radius:3px;
       opacity:0; pointer-events:none; transition:opacity .25s ease;
     }
-    .tw-reader.typing .tw-skip-hint{ opacity:1; }
+    .ar-reader.typing .ar-skip-hint{ opacity:1; }
+
+    .ar-corner{
+      position:absolute; left:16px; bottom:16px; z-index:3;
+      display:flex; flex-wrap:wrap-reverse; gap:6px;
+      max-width:calc(100% - 70px);
+    }
+    .ar-corner:empty{ display:none; }
+    .ar-corner .po-gallery-tile{
+      width:44px; height:44px; flex:0 0 auto;
+      border:2px solid #faf8f2; border-radius:2px;
+      box-shadow:0 5px 12px rgba(0,0,0,0.3);
+      cursor:pointer; opacity:1;
+      transition:transform .15s ease, box-shadow .15s ease;
+    }
+    .ar-corner .po-gallery-tile:hover{
+      transform:translateY(-4px) scale(1.15); z-index:2;
+      box-shadow:0 10px 18px rgba(0,0,0,0.38);
+    }
+    .ar-corner .po-gallery-tile img{ width:100%; height:100%; object-fit:cover; display:block; }
+    .ar-corner .gt-expand{ display:none; }
 
     @media (prefers-reduced-motion:reduce){
-      .tw-body.blink .tw-caret{ animation:none; }
+      .ar-body.blink .ar-caret{ animation:none; }
     }
     @media (max-width:820px){
-      .tw-stage{ position:absolute; inset:64px 6vw 4vh; flex-direction:column; gap:18px; }
-      .tw-index{ flex:none; overflow:visible; }
-      .tw-heading{ margin-bottom:18px; }
-      .tw-reader{
+      .ar-stage{ position:absolute; inset:64px 6vw 4vh; flex-direction:column; gap:18px; }
+      .ar-index{ flex:none; overflow:visible; }
+      .ar-heading{ margin-bottom:18px; }
+      .ar-reader{
         position:fixed; inset:0; z-index:40; border:none; border-radius:0;
         transform:translateY(100%); transition:transform .32s cubic-bezier(.2,.8,.2,1);
       }
-      .tw-reader.open{ transform:translateY(0); }
-      .tw-reader-close{
+      .ar-reader.open{ transform:translateY(0); }
+      .ar-reader-close{
         display:flex; align-items:center; justify-content:center;
         position:absolute; top:14px; right:14px; z-index:5;
         width:40px; height:40px; border-radius:50%;
         background:transparent; border:1px solid rgba(0,0,0,0.25);
         color:#26221c; font-size:20px; line-height:1; cursor:pointer;
       }
-      .tw-output{ padding:64px 22px 40px; }
-      .tw-body, .tw-placeholder{ font-size:14px; }
+      .ar-output{ padding:64px 22px 40px; }
+      .ar-body, .ar-placeholder{ font-size:14px; }
+      .ar-corner .po-gallery-tile{ width:38px; height:38px; }
     }
 
     /* ---------- 3D: sketch globe page ---------- */
@@ -2049,16 +2078,16 @@
   <div class="cat-head"><h2>Stories</h2></div>
 
   <div class="index">
-    <a class="row" href="#tales" aria-label="View Tales" style="--swatch-color:#283583;">
+    <a class="row" href="#archives" aria-label="View Archives" style="--swatch-color:#283583;">
       <div class="row-swatch"></div>
       <div class="titleblock">
         <div class="tt">
           <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <rect fill="#283583" width="24" height="24"/>
           </svg>
-          <span>Tales</span>
+          <span>Archives</span>
         </div>
-        <div class="row-desc">Written pieces: short fiction, essays, and the stories underneath the work.</div>
+        <div class="row-desc">Tales and Reflections: short fiction, essays, and the writing underneath the work.</div>
       </div>
       <div class="yr">Ongoing</div>
     </a>
@@ -2997,26 +3026,27 @@
   <div class="gr-spotlight" id="grSpotlight"></div>
 </div>
 
-<!-- ===================== TALES: typewriter page ===================== -->
-<div id="tales-page" aria-hidden="true">
-  <div class="tw-topbar">
-    <a class="tw-brand" href="#top">JEAME</a>
-    <a class="tw-back" href="#stories">&larr; Back to Stories</a>
+<!-- ===================== ARCHIVES: typewriter + photo-corner page ===================== -->
+<div id="archives-page" aria-hidden="true">
+  <div class="ar-topbar">
+    <a class="ar-brand" href="#top">JEAME</a>
+    <a class="ar-back" href="#stories">&larr; Back to Stories</a>
   </div>
-  <div class="tw-stage">
-    <div class="tw-index">
-      <p class="tw-masthead">Tales from a Young Man&rsquo;s Old Life</p>
-      <h2 class="tw-heading">Tales</h2>
-      <div class="tw-list" id="twList"></div>
-      <p class="tw-note">More tales are being written.</p>
+  <div class="ar-stage">
+    <div class="ar-index">
+      <p class="ar-masthead">Tales &amp; Reflections</p>
+      <h2 class="ar-heading">Archives</h2>
+      <div class="ar-list" id="arList"></div>
+      <p class="ar-note">More entries are being written.</p>
     </div>
-    <div class="tw-reader" id="twReader">
-      <button type="button" class="tw-reader-close" id="twClose" aria-label="Back to tales">&times;</button>
-      <div class="tw-output" id="twOutput">
-        <p class="tw-placeholder">Pick a tale from the list.<br>The typewriter writes it out here.</p>
-        <div class="tw-body" id="twBody"><span id="twTyped"></span><span class="tw-caret" id="twCaret"></span></div>
+    <div class="ar-reader" id="arReader">
+      <button type="button" class="ar-reader-close" id="arClose" aria-label="Back to archives">&times;</button>
+      <div class="ar-output" id="arOutput">
+        <p class="ar-placeholder">Pick a piece from the list.<br>The typewriter writes it out here.</p>
+        <div class="ar-body" id="arBody"><span id="arTyped"></span><span class="ar-caret" id="arCaret"></span></div>
       </div>
-      <div class="tw-skip-hint" aria-hidden="true">click to skip &rsaquo;</div>
+      <div class="ar-corner" id="arCorner"></div>
+      <div class="ar-skip-hint" aria-hidden="true">click to skip &rsaquo;</div>
     </div>
   </div>
 </div>
@@ -4015,24 +4045,27 @@
     syncGraphicsPage();
   })();
 
-  // ---------- TALES: typewriter page ----------
+  // ---------- ARCHIVES: typewriter + photo-corner page ----------
+  // Tales and Reflections merged into one typewriter with two labelled
+  // subsections in its index. Each piece can optionally carry its own photo
+  // corner (imagesKey), probed and rendered with the same shared helpers
+  // every other gallery on the site uses, so it opens the normal lightbox.
   (function(){
-    const page = document.getElementById('tales-page');
-    const listEl = document.getElementById('twList');
-    const reader = document.getElementById('twReader');
-    const output = document.getElementById('twOutput');
-    const twBody = document.getElementById('twBody');
-    const twTyped = document.getElementById('twTyped');
-    const twCaret = document.getElementById('twCaret');
-    const closeBtn = document.getElementById('twClose');
-    if(!page || !listEl || !output || !twBody || !twTyped) return;
+    const page = document.getElementById('archives-page');
+    const listEl = document.getElementById('arList');
+    const reader = document.getElementById('arReader');
+    const output = document.getElementById('arOutput');
+    const arBody = document.getElementById('arBody');
+    const arTyped = document.getElementById('arTyped');
+    const arCaret = document.getElementById('arCaret');
+    const corner = document.getElementById('arCorner');
+    const closeBtn = document.getElementById('arClose');
+    if(!page || !listEl || !output || !arBody || !arTyped) return;
 
     // The manuscript, written directly into the page. Each block is either
-    // { type:'h', text } (a heading - the collection title, then a story
-    // title) or { type:'p', text } (a paragraph). The typewriter below reads
-    // straight from this: story titles feed the index, and their paragraphs
-    // get clattered onto the sheet when a title is picked.
-    const BOOK_1_STORY = [
+    // { type:'h', text } (typed in caps - a title or section heading) or
+    // { type:'p', text } (typed as written).
+const BOOK_1_STORY = [
       { type:'h', text:"Tales from a Young Man's Old Life" },
       { type:'h', text:"The Scarf" },
       { type:'p', text:"On a forgotten mountain of the world, within the treacherous looking forests, lived the old man Claude his 201st year. With his cabin and small farm covered by snow 300 days a year, he spent his days sitting by the campfire singing his songs, enjoying his own and the nature's company, and though he was alone most of his time, he never really felt lonely." },
@@ -4072,13 +4105,97 @@
       { type:'p', text:"It was the morning of March 6th, one week had passed since the arrival of the lady. Claude, waking up excited as he had grown more to be over the past few days, awoke to the unpleasant surprise of the lady's absence. His genuine and enthusiastic \"Good morning!\" interrupted, he searched with panic for the lady in the kitchen, than the bathroom, and then the campfire and the near parts of the forest surrounding the cabin. He found or traced nothing. As he walked back to the cabin, distraught, distressed, and displeased, he realised that she had finished the scarf." }
     ];
 
-
-    // One entry per tale: its title feeds the index, its paragraphs are what
-    // the machine types out. The Scarf's paragraphs are every 'p' block in the
-    // manuscript above; give any future tale its own explicit entry here.
-    const TALES = [
-      { title: "The Scarf", paragraphs: BOOK_1_STORY.filter(b => b.type === 'p').map(b => b.text) }
+const RAWSTHORN_BLOCKS = [
+      { type:'h', text:"Reflections on \"Design Emergency\" by Alice Rawsthorn" },
+      { type:'p', text:"Despite her wonderfully mystifying voice and mannerisms of speech, Alice Rawsthorn also offers ideas that are quite overlooked and interesting. In her presentation she starts by mentioning that design can help us adapt to what we find unknown or unpleasant and make it easier to understand and like. She proves with her examples that this can be as simple as a gesture which can help create a meaning out of feelings otherwise inexpressible and/or complex. Her first example being a clenched fist, which I find very interesting as I had not thought before, that even a simple sign such as this can be a form of design that moves many different hearts in many different ways with one single and powerful overarching meaning. It is very strange to think about design in the form of a bodily expression, but when thought about, it becomes quite inspiring and is able to open many doors to designers that are stuck in their ways of viewing design. We are often taught to categorise and define design as a whole, and also often taught that design is anything. Being the most natural construct of the nature of all conscientious beings –finding most ideal ways of surviving and living, along with constantly developing– design is offered another cloak by Rawsthorn to be viewed in all forms of human behaviour. Symbolism and metaphors, although already a big part of design in different ways, is highlighted by A.R. as an important tool to bring attention to how much the value of design can be carried out by its meaning, rather than the extent of creativity that goes into it, or the way that it looks. The fist and the white flag being the prime examples that caught my interest, make me think twice of how much can be said by simplicity despite my respectful negativity against the ideas of \"less is more.\" She also relates back to this with examples of works from activists and protestors of both wars and different forms of oppression, proving that design can be used, in her words, \"responsibly, empathically, and intelligently\" in order to send a message against any form of political and/or social injustice that is in frequent increase. Depending on the area the design would be placed in, it can carry out unfathomable volumes of meaning and voice, while showing so little." },
+      { type:'p', text:"Design can also be a way to move the world forward and leave mistakes and miscalculations in the past. To paraphrase A.R.'s words, \"...design has been at the forefront of positive change\" as she points out that design has been the first line to react to what have been disastrous in the past such as the water sewage systems after \"The Great Stink\" in 1858. Although it is quite obvious that design as a crisis reaction exists, it is interesting to think that I have never defined it as such. It does connect to ideas of how design is at many times a way of improving the day to day life, but still highlights and adds that design is not only a form of creation, but also recreation, and very importantly, reaction." },
+      { type:'p', text:"Rawsthorn, while raising important points about how design is essential in usefulness when attempting to deal with emergencies, raises another interesting contradiction that is found in situations as such. This contradiction relates to how the extremity of urgency in such situations can compromise the design process in areas such as refugee camps. Hearing this has led me to reconsider how much urgency plays a role in design, both in comparison to other fields of work, and not. I believe that urgency is often the biggest motivator, although found relatively less in the line of work of design. It is found that designers are prime procrastinators as we are often fueled by sudden inspiration, which causes a state of over-relaxation and patience, and urgency is the best way to push us as well as any other field of work in the world, and therefore I find it quite interesting that urgency, although can find results of high quality, can also often lead to demise and failure really easily. How much urgency is needed for an intelligent design while avoiding the procrastinating nature of the artist within the designer?" }
     ];
+
+const MAGAZINE_BLOCKS = [
+      { type:'h', text:"Flores & Prats" },
+      { type:'p', text:"How does design merge with construction and environment? What role does hands-on approach have in the future of design?" },
+      { type:'p', text:"Flores & Prats is a studio of architecture and design based and founded in Barcelona by Ricardo Flores and Eva Prats in 1998. In their own words in LinkedIn, their work focuses heavily on \"the confrontation of theory and academic practice with the design and constructive activity.\" Their designs create a successful and most playful blend between what is old and visibly worn out, and additions that feel strikingly lively and eventful both through colors and geometries, as though they jump out of a young girl's dreams." },
+      { type:'p', text:"My personal amazement towards Flores & Prats comes not only from their design style, but also through their creativity in presentation, and their relentless pursuit in keeping the value in macquette making, hand-drawn visualisations, and an overall hands on approach to the subject of design which often risks becoming too conceptual for the average pupil." },
+      { type:'p', text:"With countless works in theatres, industrial and social spaces, landscapes, houses, neighborhoods, and more, the portfolio of Flores & Prats exceeds the reality of what is the dream of every designer, providing solutions and spaces of different breaths for all people. Their design works not only show strong character and insistance on revival, but they create a visible storyline of their investigative work in lead-up." },
+      { type:'p', text:"According to them in their letter to Salone del Mobile Milano, and their presentation to Venice Biennale di Architettura 2023, their attitude contains 5 core themes:" },
+      { type:'p', text:"To draw with time, transforming what already exists." },
+      { type:'p', text:"The right to inherit from the past and the challenge to think about how to improve its qualities when rehabilitating." },
+      { type:'p', text:"The open condition of the ruin, which accepts new transformations and occupations." },
+      { type:'p', text:"The value of use, the elements you find inside a building and how you reuse them." },
+      { type:'p', text:"Attention to emotional heritage, to the intangible values that an old building has." },
+      { type:'h', text:"From Enric Miralles to Flores and Prats" },
+      { type:'p', text:"Motionful geometries, immersion with environment, heavy focus on safekeeping and tribute." },
+      { type:'p', text:"Enric Miralles (1955-2000) was a prominent figure in Spanish architecture through most important movements in urbanisation that took place in Barcelona in the late 20th century. His career was characterised by a rejection of static forms, to rather put efforts into movement, time, and the social landscape." },
+      { type:'p', text:"He rose to fame in the post-Franco boom of the 1980s, after studying at the Barcelona School of Architecture, to later establish a partnership with Carme Pinos and later with Benedetta Tagliabue." },
+      { type:'p', text:"Miralles most favorably viewed architecture not as finished objects, but living beings in harmony with time, believing that the structures were always in motion." },
+      { type:'p', text:"This is most visible in his works in Igualada Cemetery, where theres a visible blend between natural topography and the human-made structure, transition between the designs and their environments. Additionally, he was also a strong representative for handful approach to design, encouraging thinking by hand, and extensive use of hand crafts in design processes." },
+      { type:'p', text:"Flores & Prats, shooting their careers forward through working under Miralles, although seemingly developed their own voice, still also keep the touch of influence given by Miralles and his techniques and methodology. One of the most prominent of these is the use of superimposition, in projects such as Sala Beckett where the partners take into heavy consideration the social landscape." },
+      { type:'p', text:"Obsessive drawing, strategic imperfections, focus on social and environmental connections." },
+      { type:'p', text:"Flores & Prats' career is defined by patience and heavy attention to research, and design process. Becoming the lead in the movement of \"adaptive reuse\" in architecture and design, the partner has become my leading inspiration in the field, through seeing abandoned and worn buildings not as constraints, but materials, and supports, in their processes and desires." },
+      { type:'p', text:"F&P like Miralles, state that their process starts with plans, and in their plans, they do not draw to represent a building, but rather to inhabit it, creating them rich of information and layering with character and liveliness through colors and materials. Showing that their design process originates heavily from the feel of the space, rather than strictly its organisation. They say \"Drawing is a way of thinking.. it allows us to see things that aren't there yet, but are waiting in the walls.\" (Drawing Without Erasing and other essays)" },
+      { type:'p', text:"Against the modernist values of clean structures and spaces, Flores & Prats follow their tutor's steps in showing motion and life through their designs, rejecting cleanness of shapes, and utilising rawness, and tradition in spatial design." },
+      { type:'p', text:"Furthermore, like Miralles, F&P consider materials with high value, for example, using wood not only structurally, but because of how it feels when a hand touches it, or when the sun reflects from it." },
+      { type:'h', text:"\"We treat every project as research.\" — Ricardo Flores and Eva Prats" },
+      { type:'p', text:"Taken as a prominent example, and one of Flores & Prats' most famous works, Sala Beckett, reflects their ideals and themes in all the most wonderful ways. The project takes the old Peace and Justice cooperative headquarters, and transforms it into a cultural space for theatrical usage. The design reflects dense memories rooted in the culture of the industrial district, which had transformed already for the 1992 Olympics, and had now become more lively due to the occupation by artists and creative talents." },
+      { type:'p', text:"\"The ruinous state in which we encountered was of interest, not because we wanted to restore it, but rather to take the ruin forward and make it a participant, with its unfinished character of superimposed periods, in a new reality that would continue to be updated on this foundation. (...) The challenge of the project is therefore to adapt the building to its new use without banishing its ghosts\" said the architects." },
+      { type:'p', text:"Most importantly, \"to adapt the building without banishing its ghosts\" is a consideration to be taken in any design project, as it is of utmost importance to respect what comes before, the context around the site and the space itself, while considering what is the biggest potential for the space to be used by the people. This is how stories are created within design processes." },
+      { type:'h', text:"Tradition in a Changing Era" },
+      { type:'p', text:"When looking at and taking inspiration from Flores & Prats as a young designer, question comes down to: What is the role of handcraft approach in the future of design, with rise and practicality of digitality? And where does the story of a design start, and where does it end?" },
+      { type:'p', text:"These are questions to be answered only through experience, which this duo has more than most. Personally, they show great example through visible interactivity, and the feasability of their models and their drawings, literally highlighting the most important aspects of their design stories, from their plan making, to their use of materials, to the way they use and integrate the environment. To answer the first question, I believe that the duo shows very prominently the importance of the human hand, and the physicality of the design process, showing that a designer only truly understands their design, once they have been arms deep in it., thinking through intricacies and the deepest understanding of shapes and forms." },
+      { type:'p', text:"Secondly, the story of a design forms by nature, and is supported through research, choices, and processes, and I want to especially highlight, through mistakes and imperfections." }
+    ];
+
+const HANNINEN_BLOCKS = [
+      { type:'h', text:"How Do We Talk About Design?" },
+      { type:'h', text:"The Hänninen Way" },
+      { type:'p', text:"Giovanni Hänninen, born in Helsinki in 1976, is a Milan based photographer with a PhD in Aerospace Engineering. He teaches Photography for Architecture at Politecnico di Milano, and is known for his long-standing collaboration with Filarmonica della Scala since 2009. Hänninen, with his work, inspirationally explores a blend between architecture, society, and identity. With a wide range of strong projects that have been featured in major international exhibitions such as Dak'Art, Nuit Blanche Paris, the Venice Architecture Biennale, and David Zwirner Gallery in New York, he offers a new and personal view on how spaces, architecture, and people are viewed. Additionally, he is the co-author of the acclaimed Senegal/Sicily project and has collaborated with institutions such as Studio Mumbai, and the Josef and Anni Albers Foundation. His photographs are held in both prestigious public and private collections, including MACAAL and MUFOCO." },
+      { type:'p', text:"In his own words, \"There are two main approaches to photography, the first following the school of Henri Cartier-Bresson, who had a camera in his hands, and loved to point it in the right moment.\" referring to the common photographic phrase of \"Capturing the moment,\" with which Hänninen does not identify. He instead claims he belongs to the second approach: \"Photographers who, on the other hand, decide beforehand, where to place the camera. The camera stays there, and they wait for the reality to change in front of them.\"" },
+      { type:'p', text:"\"You find the right frame in the place that you feel yours, which tells the story that you want to tell. You just wait for things to happen, things always happen, its not about capturing the moment, its about understanding the space, and how people relate to it.\" Hänninen claims. This approach is most present in his ongoing project labeled \"FLUX,\" where \"an interval of time is shrinked and collapsed\" from being part of the fourth dimension, to being captured in a \"bidimensional image.\" Exploring the reality that is around us." },
+      { type:'p', text:"Throughout the interview and our deep dive into his work, Hänninen was able to offer us new and personal insight to what it means to be both a photographer and an artist with a fast-working mind, in the emerging world that often seems to bring a lack of life, innovation, and thought." },
+      { type:'h', text:"Portraits" },
+      { type:'p', text:"After understanding Hänninen's approach to the physical act of photography, we asked how his process is impacted when working with solos and groups, in contrast to his works on spaces and forms of architecture. To this he answered, focusing on a specific portrait work based in Senegal, which was \"done thanks to the collaboration with the Joseph and Amelie Albers Foundation, pupils and teachers in the Bauhaus, in the 30s Germany\"" },
+      { type:'p', text:"\"This series looks back on the work of August Sander, the photographer who used the idea of typologies to portray the different types that create the German society. I did the same thing in Tambacounda, an area of Senegal on the border with Mali. From which, most of the inhabitants, especially male, eventually flee trying to reach Europe having to cross the Sahara to then reach Sicily through the Mediterranean sea, an itinerary which often brings a deadly outcome.\"" },
+      { type:'p', text:"\"Removing a person, the picture which will remain, will tell the story of a place; people who are there portrayed, represent the role of themselves inside the society of Tambacounda.\"" },
+      { type:'p', text:"This series by Hänninen, not only brings an inside look at the lives often gone unseen, but also is a master in finding cinematic character studies through merely a bidimensional image, and when asked about whether this is merely a coincidence, he stated how \"movies are an important part, even though they are not inside the category of pictures, cinematography plays a part in my inspiration.\"" },
+      { type:'p', text:"Following the previous discussions, we decided to explore how Hänninen was able to maintain his personal touch and message throughout both personal and collaborative projects. He answered, \"I really don't care about being famous, I care about working, I love working, I love what I do.\" This vision alongside other factors allowed to photographer the ability to select from the works for which he was contacted, only carrying out what gives him the \"possibility of working with freedom.\"" },
+      { type:'p', text:"\"It may appear as a way of saying I do only what I want to do, its not like that, I do what I really feel engaged to.\" After being called in 2018 by Bijoy Jain to document the projects carried out by Studio Mumbai in India, Hänninen not only fulfilled the required comission, but with the collaboration of the studio, he spent 10 days in the city within the original project to carry out his personal research on Layered Mumbai, creating \"an atlas that uses photography as a tool of analysing the city's dynamics.\"" },
+      { type:'p', text:"There is a highlight in the contrast between Slums (crumbling high density neighborhoods where there are no basic supplies) and the cities \"race pursuing one of the most rapid growth in history,\" shining a light on the vitality of these areas where a large part of the population call home." },
+      { type:'h', text:"Design" },
+      { type:'p', text:"Investigating the relationship between the photographer and the architect/designer, Hänninen stated how \"It sometimes happens that they tell you that you have to look at this point of view, follow this path. But usually those points of view are not the ones that are actually used, because I try to put something of me inside the project, and usually it works much better than somehow caging the offer to do what the client wants to do. This again, belongs to another category of photographer, who are very brilliant in perceiving the necessities of the client. I don't have this, I put myself in, trying to find new ways of describing the spaces.\"" },
+      { type:'p', text:"Through his visible influence from cinematography and his growth as a photographer through his series about people, Hänninen offers a creative and insightful approach to how one perceives spaces from both their interiors and exteriors. His use of composition and his interest in capturing the subjects' belonging in the spaces makes for a masterful and warm photography that not only gives a feeling of the forms, but also the life that is in them." },
+      { type:'p', text:"\"My projects can depict huge areas in which relations between urbanism, architecture, and the use of landscape by the humans is strongly linked. This requires a huge amount of work related to programming, understanding which are the main typologies and concepts underlying a certain topic. Most of my projects are thought before even going in the place. I predispose all factors from the framing of the image, to where the sun will be at what time. I always have a baseline that has been already programmed and organised by me and my team.\"" },
+      { type:'h', text:"Insight on Artificial Intelligence" },
+      { type:'p', text:"Concluding the interview, we opened the subject of Artificial Intelligence, questioning its role in the future of art and design. Hänninen gave an exceedingly complete response covering different points of view, also taking advantage of his background in the field of engineering and his knowledge in optimization and algorithmic computing." },
+      { type:'p', text:"\"There is this algorithm which is called particle swarm optimization which mimics the behavior of swarms of birds in search of a nest or water or food. What I see right now in AI is what I tried to avoid in optimization algorithm called early fix optimization.\"" },
+      { type:'p', text:"\"Imagine that you have to find the highest peak around you. What happens is that if you want to achieve the highest peak and you are completely blind, the easiest way is to start to walk in the direction of the rising terrain. Eventually you arrive at a point which is high, and if you do another step you will go down. This is your local maximum in this case, which doesn't mean that you achieved the highest peak. Another way of trying to achieve a highest peak if you are completely blind is through stochastic algorithms to throw a series of points into the environment and measure the height of each point. You can understand that this way of trying to find the highest peak might eventually lead you to find the local optimum solution. This is exactly what AI is doing.\"" },
+      { type:'p', text:"\"It is working on a database which is very small compared to the reality [...] The result is necessarily a local optimum, which is very far from an optimization process which takes into account the most complicated areas.\"" },
+      { type:'p', text:"\"What I see right now in AI, which doesn't mean that it will always be like this, is something very local, quite boring in my point of view. I don't find it more complicated than a very smart copy and paste so far.\"" },
+      { type:'p', text:"Hänninen through his in-depth answers offers an interesting yet challenging insight to how AI plays a role in the life of a creative individual. This insight calls attention to how the software fails to explore the potential of human imagination, and how it instead duplicates our capabilities as it finds on the wide web. In addition, it emphasizes the limit imposed on communication in the field of design, segregated to a basin of already seen notions and blocking the input of novelty." },
+      { type:'p', text:"Project by Cem Izgi, Felice Sassoli De Bianchi, Gianluca Perna, and Massimo Martignoni — History of Design II, Milan 2025." }
+    ];
+
+    // Archives is organised into subsections; each piece's blocks are typed
+    // onto the sheet in order, headings in caps. imagesKey (optional) is the
+    // renders/{key}-{n} prefix probed for that piece's photo corner - pieces
+    // with no key/no files just get no corner at all.
+    const ARCHIVES = [
+      {
+        section: "Tales",
+        items: [
+          { title: "The Scarf", blocks: BOOK_1_STORY }
+        ]
+      },
+      {
+        section: "Reflections",
+        items: [
+          { title: "on “Design Emergency”", sub: "Design Theory — Elisa Massoni, 2024", blocks: RAWSTHORN_BLOCKS },
+          { title: "on Flores & Prats", sub: "Studios by JEAME — April 2026", blocks: MAGAZINE_BLOCKS, imagesKey: "reflections-magazine" },
+          { title: "on Giovanni Hänninen", sub: "History of Design II — Milan 2025", blocks: HANNINEN_BLOCKS, imagesKey: "reflections-hanninen" }
+        ]
+      }
+    ];
+    const FLAT_ITEMS = ARCHIVES.flatMap(g => g.items);
 
     const reduceMotion = () => window.matchMedia('(prefers-reduced-motion:reduce)').matches;
 
@@ -4086,72 +4203,91 @@
     function buildIndex(){
       if(built) return;
       built = true;
-      TALES.forEach((tale, i) => {
-        const item = document.createElement('button');
-        item.type = 'button';
-        item.className = 'tw-item';
-        const num = document.createElement('span');
-        num.className = 'tw-item-index';
-        num.textContent = String(i + 1).padStart(2, '0');
-        const title = document.createElement('span');
-        title.className = 'tw-item-title';
-        title.textContent = tale.title;
-        item.appendChild(num);
-        item.appendChild(title);
-        item.addEventListener('click', () => selectTale(i));
-        listEl.appendChild(item);
+      let flatIndex = 0;
+      ARCHIVES.forEach(group => {
+        const label = document.createElement('p');
+        label.className = 'ar-group-label';
+        label.textContent = group.section;
+        listEl.appendChild(label);
+        group.items.forEach((piece, groupN) => {
+          const item = document.createElement('button');
+          item.type = 'button';
+          item.className = 'ar-item';
+          const num = document.createElement('span');
+          num.className = 'ar-item-index';
+          num.textContent = String(groupN + 1).padStart(2, '0');
+          const title = document.createElement('span');
+          title.className = 'ar-item-title';
+          title.textContent = piece.title;
+          item.appendChild(num);
+          item.appendChild(title);
+          const idx = flatIndex;
+          item.addEventListener('click', () => selectPiece(idx));
+          listEl.appendChild(item);
+          flatIndex++;
+        });
       });
     }
 
-    let typeToken = 0;   // bumped to cancel an in-flight typing loop
+    let typeToken = 0;
     let typing = false;
     let rafId = null;
     let fullText = '';
+    let cornerToken = 0;
 
     function markActive(i){
-      Array.from(listEl.children).forEach((el, idx) => el.classList.toggle('active', idx === i));
+      const items = listEl.querySelectorAll('.ar-item');
+      items.forEach((el, idx) => el.classList.toggle('active', idx === i));
     }
 
-    function selectTale(i){
-      const tale = TALES[i];
-      if(!tale) return;
+    // Photo corner: only populated for pieces with an imagesKey, and only
+    // shown at all if that key actually resolves to real files.
+    function loadCorner(piece){
+      const token = ++cornerToken;
+      corner.innerHTML = '';
+      if(!piece.imagesKey) return;
+      getGalleryItems(piece.imagesKey).then(items => {
+        if(token !== cornerToken) return;
+        if(items.length) renderGalleryTiles(corner, items, '#283583');
+      });
+    }
+
+    function selectPiece(i){
+      const piece = FLAT_ITEMS[i];
+      if(!piece) return;
       markActive(i);
-      reader.classList.add('has-tale', 'open');
-      typeTale(tale);
+      reader.classList.add('has-piece', 'open');
+      typePiece(piece);
+      loadCorner(piece);
     }
 
-    // Types the tale onto the sheet: the title in caps, a blank line, then the
-    // paragraphs separated by blank lines. Reveal is time-based (chars shown =
-    // elapsed * chars-per-second) so it stays smooth and framerate-independent,
-    // fast enough to clatter the whole thing out in about ten seconds.
-    // Reading-paced: a touch quicker than a comfortable reading speed, so you
-    // can follow along as it writes and the words stay just ahead of you.
-    // (Click the sheet to drop the rest at once - see finishTyping.)
-    const CPS = 25;
+    // Reading-paced: quick enough to follow along as it writes, slow enough
+    // to actually read. Click the sheet to drop the rest at once (finishTyping).
+    const CPS = 32;
 
     // Keeps the writing head about two-thirds of the way down the sheet as it
     // types, so there's already-written text to read above it rather than the
     // newest line being pinned to the very bottom edge.
     function keepCaretInView(){
-      const cRect = twCaret.getBoundingClientRect();
+      const cRect = arCaret.getBoundingClientRect();
       const oRect = output.getBoundingClientRect();
       const caretY = (cRect.top - oRect.top) + output.scrollTop;
       output.scrollTop = Math.max(0, caretY - output.clientHeight * 0.68);
     }
 
-    function typeTale(tale){
+    function typePiece(piece){
       const token = ++typeToken;
       if(rafId != null){ cancelAnimationFrame(rafId); rafId = null; }
-      fullText = tale.title.toUpperCase() + '\n\n' + tale.paragraphs.join('\n\n');
+      fullText = piece.blocks.map(b => b.type === 'h' ? b.text.toUpperCase() : b.text).join('\n\n');
       const node = document.createTextNode('');
-      twTyped.textContent = '';
-      twTyped.appendChild(node);
-      twBody.classList.remove('blink');
+      arTyped.textContent = '';
+      arTyped.appendChild(node);
+      arBody.classList.remove('blink');
       output.scrollTop = 0;
 
       if(reduceMotion()){
         node.data = fullText;
-        twBody.classList.add('blink');
+        arBody.classList.add('blink');
         typing = false;
         reader.classList.remove('typing');
         return;
@@ -4163,7 +4299,7 @@
       typing = true;
       reader.classList.add('typing');
       function frame(now){
-        if(token !== typeToken) return; // a newer selection took over
+        if(token !== typeToken) return;
         const target = Math.min(total, Math.floor((now - start) / 1000 * CPS));
         if(target > shown){
           node.appendData(fullText.slice(shown, target));
@@ -4176,72 +4312,70 @@
           rafId = null;
           typing = false;
           reader.classList.remove('typing');
-          twBody.classList.add('blink'); // settle into an idle blink, left where you finished reading
+          arBody.classList.add('blink');
         }
       }
       rafId = requestAnimationFrame(frame);
     }
 
-    // Clicking the sheet while it is still writing finishes it at once and
-    // rolls back to the top so the whole thing can be read from the start.
     function finishTyping(){
       if(!typing) return;
       typeToken++;
       if(rafId != null){ cancelAnimationFrame(rafId); rafId = null; }
       typing = false;
       reader.classList.remove('typing');
-      let node = twTyped.firstChild;
-      if(!node){ node = document.createTextNode(''); twTyped.appendChild(node); }
+      let node = arTyped.firstChild;
+      if(!node){ node = document.createTextNode(''); arTyped.appendChild(node); }
       node.data = fullText;
-      twBody.classList.add('blink');
+      arBody.classList.add('blink');
       output.scrollTo({ top: 0, behavior: 'auto' });
     }
     output.addEventListener('click', finishTyping);
 
     function resetReader(){
       typeToken++;
+      cornerToken++;
       if(rafId != null){ cancelAnimationFrame(rafId); rafId = null; }
       typing = false;
-      twTyped.textContent = '';
-      twBody.classList.remove('blink');
-      reader.classList.remove('has-tale', 'open', 'typing');
+      arTyped.textContent = '';
+      arBody.classList.remove('blink');
+      reader.classList.remove('has-piece', 'open', 'typing');
+      corner.innerHTML = '';
       markActive(-1);
     }
 
     if(closeBtn){
-      // On narrow screens the sheet is a full overlay; this slides it away
-      // and returns to the list (the desktop layout keeps both side by side).
       closeBtn.addEventListener('click', () => reader.classList.remove('open'));
     }
 
-    function syncTalesPage(){
-      if(location.hash === '#tales'){
+    function syncArchivesPage(){
+      if(location.hash === '#archives'){
         buildIndex();
         page.classList.add('show');
         page.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('tl-open');
+        document.body.classList.add('ar-open');
         window.scrollTo(0, 0);
       } else {
         page.classList.remove('show');
         page.setAttribute('aria-hidden', 'true');
-        document.body.classList.remove('tl-open');
+        document.body.classList.remove('ar-open');
         resetReader();
       }
     }
 
-    document.querySelector('#tales-page .tw-back').addEventListener('click', function(e){
+    document.querySelector('#archives-page .ar-back').addEventListener('click', function(e){
       e.preventDefault();
       page.classList.remove('show');
       location.hash = 'stories';
     });
-    document.querySelector('#tales-page .tw-brand').addEventListener('click', function(e){
+    document.querySelector('#archives-page .ar-brand').addEventListener('click', function(e){
       e.preventDefault();
       page.classList.remove('show');
       location.hash = '';
     });
 
-    window.addEventListener('hashchange', syncTalesPage);
-    syncTalesPage();
+    window.addEventListener('hashchange', syncArchivesPage);
+    syncArchivesPage();
   })();
 
   // ---------- PHOTOGRAPHY: camera-screen page ----------
