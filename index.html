@@ -131,6 +131,12 @@
       width:min(620px, 80vw);
       padding-top:clamp(30px, 6vh, 58px);
       box-sizing:content-box;
+      /* Centre the logo on its middle rectangle column (the stacked squares),
+         not on its overall bounding box - the column's centre sits at
+         238.09/465.2 of the viewBox width, i.e. 1.18% right of centre, so
+         nudge the whole logo left by that much. This lines the column up with
+         the hero centreline, where the Draw button below already centres. */
+      transform:translateX(-1.18%);
     }
     svg.logo{
       width:100%;
