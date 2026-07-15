@@ -1322,150 +1322,43 @@
     }
     .gb-globe{
       position:relative; flex:0 0 auto;
-      width:min(56vmin, 460px); height:min(56vmin, 460px);
+      width:min(60vmin, 480px); height:min(60vmin, 480px);
       touch-action:none;
+      perspective:1100px;
     }
     .gb-sphere{
-      position:absolute; inset:0; border-radius:50%;
-      overflow:hidden;
-      background:radial-gradient(circle at 33% 27%, #f7f3ea 0%, #e3dccb 55%, #cfc6b0 82%, #bdb298 100%);
-      border:2px solid #1c1a17;
-      box-shadow:0 30px 60px rgba(0,0,0,0.20), inset 0 0 40px rgba(0,0,0,0.05);
+      position:absolute; inset:0;
       cursor:grab;
     }
     .gb-sphere.dragging{ cursor:grabbing; }
-    /* Faint static latitude hairlines for globe-feel. */
-    .gb-lat{
-      position:absolute; left:0; right:0; height:1px;
-      background:rgba(28,26,23,0.14); pointer-events:none;
+    /* The single 3D assembly every tile lives in, spun as one object. */
+    .gb-cloud{
+      position:absolute; inset:0;
+      transform-style:preserve-3d;
+      will-change:transform;
     }
-    /* Longitude lines, positioned per-frame by JS (clipped to the circle so
-       they read as meridians sweeping as it spins). */
-    .gb-meridian{
-      position:absolute; top:-2%; width:1px; height:104%;
-      background:rgba(28,26,23,0.22); pointer-events:none;
-      will-change:transform, opacity;
-    }
-    /* Decorative terrain scattered over the surface - little sketch marks that
-       move with the spin so the globe reads as a lived-in world, not a ball
-       with two pins in it. Non-interactive. */
-    .gb-glyph{
+    /* The tiles ARE the globe: each render is rotated to its lat/lon and
+       pushed out along its own normal (rotateY/rotateX + translateZ), so
+       together they form a hollow sphere of images; the far side reads
+       through mirrored, like a paper globe seen inside-out. Sizes and
+       offsets come inline from JS, from the measured radius. */
+    .gb-tile{
       position:absolute; left:50%; top:50%;
-      transform-origin:center; pointer-events:none;
-      color:#3a352c;
-      will-change:transform, opacity;
+      border:2px solid #1c1a17; border-radius:4px; overflow:hidden;
+      background:#d9d1c0; cursor:pointer;
+      box-shadow:0 6px 16px rgba(0,0,0,0.22);
+      will-change:transform, filter;
     }
-    .gb-glyph svg{ display:block; width:100%; height:100%; overflow:visible; }
-    /* Interactive biome markers: an icon and a label, projected onto the sphere. */
-    .gb-biome{
-      position:absolute; left:50%; top:50%;
-      display:flex; flex-direction:column; align-items:center; gap:7px;
-      cursor:pointer; pointer-events:auto;
-      will-change:transform, opacity;
-    }
-    .gb-biome-icon{
-      width:56px; height:56px; color:#1c1a17;
-      display:flex; align-items:center; justify-content:center;
-    }
-    .gb-biome-icon svg{ display:block; width:100%; height:100%; overflow:visible; }
-    .gb-biome-label{
-      font-family:'Arial Black','Arial',sans-serif; font-weight:900;
-      font-size:12px; letter-spacing:0.04em; text-transform:uppercase; color:#1c1a17;
-      white-space:nowrap;
-      padding:2px 8px; border-radius:2px;
-      background:rgba(240,236,226,0.72);
-    }
-    .gb-biome.front .gb-biome-label{ color:var(--green); }
-    .gb-biome.front .gb-biome-icon{ color:var(--green); }
-    /* Soft sphere shading over everything, for roundness. */
-    .gb-shade{
-      position:absolute; inset:0; border-radius:50%; pointer-events:none;
-      background:
-        radial-gradient(circle at 30% 26%, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 42%),
-        radial-gradient(circle at 68% 74%, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0) 60%);
-      mix-blend-mode:multiply;
-    }
-    .gb-shade.hi{ mix-blend-mode:normal; }
-
-    /* Readout under the globe: which world is facing you, and the way in. */
-    .gb-readout{
-      display:flex; flex-direction:column; align-items:center; gap:12px;
-      text-align:center; min-height:96px;
-    }
-    .gb-readout-name{
-      font-family:'Arial Black','Arial',sans-serif; font-weight:900;
-      font-size:clamp(20px,2.4vw,28px); letter-spacing:-0.01em; color:var(--black);
-      transition:opacity .15s ease;
-    }
-    .gb-readout-sub{
-      margin-top:-6px; font-family:'Courier New',Courier,monospace;
-      font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:#847b6c;
-    }
-    .gb-view-btn{
-      appearance:none; cursor:pointer;
-      font-family:'Arial Black','Arial',sans-serif; font-weight:900;
-      font-size:12px; letter-spacing:0.06em; text-transform:uppercase;
-      color:#fff; background:var(--green); border:none;
-      padding:12px 22px; border-radius:3px;
-      display:inline-flex; align-items:center; gap:8px;
-      transition:transform .15s ease, background .15s ease, opacity .15s ease;
-    }
-    .gb-view-btn:hover{ transform:translateY(-2px); }
-    .gb-view-btn[disabled]{ background:#b8b0a0; color:#f3efe6; cursor:default; transform:none; }
-
-    /* Biome gallery overlay: sits above the globe page, below the shared
-       lightbox (which was bumped to 6500 so it opens on top of this). */
-    .gb-gallery{
-      display:none;
-      position:fixed; inset:0; z-index:6100;
-      background:#ece6da;
-      overflow-y:auto; -webkit-overflow-scrolling:touch;
-    }
-    .gb-gallery.show{ display:block; }
-    .gb-gallery-head{
-      position:sticky; top:0; z-index:2;
-      display:flex; align-items:center; justify-content:space-between;
-      padding:22px 6vw; background:linear-gradient(180deg, #ece6da 70%, rgba(236,230,218,0));
-    }
-    .gb-gallery-titles .gb-gallery-name{
-      font-family:'Arial Black','Arial',sans-serif; font-weight:900;
-      font-size:clamp(22px,3vw,34px); letter-spacing:-0.01em; color:var(--black);
-    }
-    .gb-gallery-titles .gb-gallery-sub{
-      font-family:'Courier New',Courier,monospace; font-size:12px;
-      letter-spacing:0.08em; text-transform:uppercase; color:#847b6c;
-    }
-    .gb-gallery-close{
-      flex:0 0 auto;
-      appearance:none; cursor:pointer; background:transparent;
-      border:1px solid rgba(0,0,0,0.28); color:#1c1a17;
-      border-radius:50%; width:42px; height:42px; font-size:20px; line-height:1;
-      display:flex; align-items:center; justify-content:center;
-    }
-    .gb-gallery-close:hover{ background:rgba(0,0,0,0.06); }
-    .gb-grid{
-      display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));
-      gap:4px; padding:6px 6vw 8vh;
-    }
-    .gb-grid .po-gallery-tile{
-      position:relative; aspect-ratio:4/3; overflow:hidden; cursor:pointer;
-      background:#d9d1c0;
-    }
-    .gb-grid .po-gallery-tile img, .gb-grid .po-gallery-tile video{
-      width:100%; height:100%; object-fit:cover; display:block;
-      transition:transform .3s ease;
-    }
-    .gb-grid .po-gallery-tile:hover img, .gb-grid .po-gallery-tile:hover video{ transform:scale(1.04); }
-    .gb-empty{
-      padding:14vh 6vw; text-align:center;
-      font-family:'Courier New',Courier,monospace; font-size:14px; color:#847b6c;
+    .gb-tile img{ display:block; width:100%; height:100%; object-fit:cover; pointer-events:none; }
+    /* Transforms are driven per-frame while spinning (no transition); this
+       class is flipped on only for the explode / reassemble throws. */
+    .gb-tile.animating{
+      transition:transform .95s cubic-bezier(.22,.68,.32,1), opacity .5s ease;
     }
 
     @media (max-width:720px){
       .gb-globe{ width:min(80vmin, 400px); height:min(80vmin, 400px); }
-      .gb-biome-icon{ width:46px; height:46px; }
       .gb-stage{ inset:54px 0 18px; gap:16px; }
-      .gb-grid{ grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); }
     }
 
     /* ---------- PHOTOGRAPHY: camera-screen page ---------- */
@@ -3105,29 +2998,13 @@
   <div class="gb-stage">
     <div class="gb-head">
       <p class="gb-title">3D</p>
-      <p class="gb-hint">Spin the globe &middot; open a world to see its renders</p>
+      <p class="gb-hint">Drag to spin &middot; click a render to open it</p>
     </div>
     <div class="gb-globe" id="gbGlobe">
       <div class="gb-sphere" id="gbSphere"></div>
-      <div class="gb-shade"></div>
-    </div>
-    <div class="gb-readout">
-      <div class="gb-readout-name" id="gbReadoutName">&mdash;</div>
-      <div class="gb-readout-sub" id="gbReadoutSub"></div>
-      <button type="button" class="gb-view-btn" id="gbViewBtn" disabled>View renders <span aria-hidden="true">&rarr;</span></button>
     </div>
   </div>
-
-  <div class="gb-gallery" id="gbGallery" aria-hidden="true">
-    <div class="gb-gallery-head">
-      <div class="gb-gallery-titles">
-        <div class="gb-gallery-name" id="gbGalleryName"></div>
-        <div class="gb-gallery-sub" id="gbGallerySub"></div>
-      </div>
-      <button type="button" class="gb-gallery-close" id="gbGalleryClose" aria-label="Close">&times;</button>
-    </div>
-    <div class="gb-grid" id="gbGrid"></div>
-  </div>
+  <div class="gb-flat-gallery" id="gbFlatGallery" hidden></div>
 </div>
 
 <!-- ===================== PHOTOGRAPHY: camera-screen page ===================== -->
@@ -4667,175 +4544,135 @@ const HANNINEN_BLOCKS = [
   })();
 
   // ---------- 3D: sketch globe page ----------
-  // A hand-drawn globe you spin. Each biome sits at a longitude; every frame
-  // the biomes (and decorative terrain, and the meridian lines) are projected
-  // onto the 2D circle from the current spin - screen x = R*sin(angle),
-  // toward-viewer depth = cos(lat)*cos(angle) drives scale/opacity/z-order and
-  // hides the back hemisphere. Drag spins it with momentum, then it settles
-  // (snaps) the nearest biome to the front. The front biome's renders open in
-  // a gallery that reuses the shared probe + lightbox as every other section.
+  // A globe assembled from the renders themselves, in real 3D: each tile is
+  // rotated to its lat/lon and pushed outward along its own normal
+  // (rotateY/rotateX + translateZ inside a preserve-3d cloud), so the images
+  // form a hollow sphere - the far side reads through mirrored, paper-globe
+  // style. The cloud spins continuously and can be dragged on BOTH axes
+  // (yaw + pitch) to turn it to any side. A tap (as opposed to a drag) blows
+  // the whole formation apart and opens the tapped render in the shared
+  // lightbox; closing the lightbox pulls the sphere back together.
+  //
+  // Which tile a tap hit is worked out geometrically (projecting every tile's
+  // current position to the screen and taking the nearest front-facing one),
+  // NOT from the DOM event target - native hit-testing on preserve-3d layers
+  // is unreliable across browsers, and the globe is moving under the cursor.
   (function(){
     const page = document.getElementById('threed-page');
     if(!page) return;
     const globe = document.getElementById('gbGlobe');
     const sphere = document.getElementById('gbSphere');
-    const readoutName = document.getElementById('gbReadoutName');
-    const readoutSub = document.getElementById('gbReadoutSub');
-    const viewBtn = document.getElementById('gbViewBtn');
-    const gallery = document.getElementById('gbGallery');
-    const galleryName = document.getElementById('gbGalleryName');
-    const gallerySub = document.getElementById('gbGallerySub');
-    const galleryClose = document.getElementById('gbGalleryClose');
-    const grid = document.getElementById('gbGrid');
+    const flatGallery = document.getElementById('gbFlatGallery');
+    const lightbox = document.getElementById('gallery-lightbox');
     if(!globe || !sphere) return;
 
-    const TAU = Math.PI * 2;
-    const ICONS = {
-      city: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><path d="M3 41h42"/><rect x="9" y="22" width="10" height="19"/><rect x="20" y="12" width="10" height="29"/><rect x="31" y="27" width="8" height="14"/><path d="M23 18h4M23 24h4M23 30h4"/></svg>',
-      mtn: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><path d="M2 40h44"/><path d="M4 40 18 15 26 28 32 19 45 40"/><path d="M13 23 18 15 23 23"/></svg>',
-      tree: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 3 5 15h14z"/><path d="M12 15v6"/></svg>',
-      hill: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M2 18Q12 5 22 18"/></svg>',
-      water: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 9Q7 5 11 9T19 9"/><path d="M3 15Q7 11 11 15T19 15"/></svg>',
-      peak: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M2 20 9 8l5 7 4-5 4 10z"/></svg>',
-      dot: '<svg viewBox="0 0 24 24"><rect x="8" y="8" width="8" height="8" fill="currentColor"/></svg>'
-    };
+    const AUTOSPIN = 0.28;   // radians/sec, steady-state yaw the globe eases back to
+    const PERSP = 1100;      // must match the .gb-globe CSS perspective
+    const EXPLODE_MS = 980;  // just past .gb-tile.animating's transform time
+    const DRAG_K = 0.007;    // radians of rotation per px dragged
 
-    // The two biomes with renders today. Add more entries (with matching
-    // renders/threed-{key}-{n} files) and they slot straight onto the globe.
-    const BIOMES = [
-      { key:'interiors',   name:'City',      sub:'Interiors',  lon:-0.75, lat:0.14,  icon:ICONS.city },
-      { key:'mountainside',name:'Mountains', sub:'Wilderness', lon:1.95,  lat:-0.20, icon:ICONS.mtn }
-    ];
-
-    // Decorative terrain scattered over the surface (fixed positions so it's
-    // the same world every visit). Purely visual - it sells the spin and makes
-    // the globe feel inhabited between the two biomes.
-    const GLYPHS = [
-      {t:'tree', lon:0.4, lat:0.5, s:0.7}, {t:'tree', lon:0.7, lat:0.34, s:0.6}, {t:'hill', lon:-0.2, lat:-0.42, s:0.9},
-      {t:'water', lon:0.15, lat:-0.15, s:0.8}, {t:'peak', lon:1.2, lat:0.4, s:0.7}, {t:'dot', lon:-1.25, lat:0.18, s:0.9},
-      {t:'tree', lon:2.7, lat:0.44, s:0.65}, {t:'hill', lon:2.4, lat:-0.3, s:0.95}, {t:'water', lon:3.1, lat:0.05, s:0.8},
-      {t:'peak', lon:3.5, lat:-0.4, s:0.65}, {t:'dot', lon:3.9, lat:0.3, s:0.9}, {t:'tree', lon:4.4, lat:-0.12, s:0.6},
-      {t:'hill', lon:4.9, lat:0.4, s:0.9}, {t:'water', lon:5.3, lat:-0.34, s:0.8}, {t:'peak', lon:5.7, lat:0.18, s:0.7},
-      {t:'dot', lon:-0.5, lat:-0.05, s:0.85}, {t:'tree', lon:5.0, lat:-0.05, s:0.6}, {t:'hill', lon:1.55, lat:0.12, s:0.8}
-    ];
-    const MERIDIAN_COUNT = 8;
-
-    let R = 250, Rm = 205;         // sphere radius, and inset radius for markers
-    let rotation = 0, vel = 0;     // spin state (radians, radians/sec)
-    let dragging = false, moved = false, downTarget = null;
-    let lastX = 0, lastT = 0;
-    let snapping = false, snapTarget = 0;
-    let rafId = null, lastFrame = 0, built = false;
-    let frontBiome = null;
-    const meridianEls = [], glyphEls = [], biomeEls = [];
+    let R = 200;             // sphere radius in px, from the globe's box
+    let spin = 0, vel = 0;   // yaw (radians, radians/sec)
+    let pitch = -0.19, pitchVel = 0; // pitch (radians); starts ~ -11deg tilt
+    let dragging = false, moved = false;
+    let lastX = 0, lastY = 0, lastT = 0, downX = 0, downY = 0;
+    let rafId = null, lastFrame = 0;
+    let photosRequested = false, exploded = false;
+    let cloud = null;
+    const tileEls = [];
 
     function measure(){
-      R = globe.clientWidth / 2;
-      Rm = R * 0.82;
+      // Guard against measuring before layout: fall back to the previous
+      // radius rather than collapsing the whole formation to a point.
+      const w = globe.clientWidth || (R / 0.42);
+      R = w * 0.42;
+      sizeTiles();
     }
 
-    function build(){
-      if(built) return;
-      built = true;
-      // latitude hairlines (static)
-      [-0.34, 0, 0.34].forEach(fr => {
-        const lat = document.createElement('div');
-        lat.className = 'gb-lat';
-        lat.style.top = (50 + fr * 50) + '%';
-        sphere.appendChild(lat);
-      });
-      // meridians
-      for(let i = 0; i < MERIDIAN_COUNT; i++){
-        const m = document.createElement('div');
-        m.className = 'gb-meridian';
-        m.style.left = '50%';
-        m._lon = (i / MERIDIAN_COUNT) * TAU;
-        sphere.appendChild(m);
-        meridianEls.push(m);
+    function sizeTiles(){
+      const tw = Math.round(R * 0.68), th = Math.round(tw * 0.72);
+      for(const el of tileEls){
+        el.style.width = tw + 'px';
+        el.style.height = th + 'px';
+        el.style.marginLeft = (-tw / 2) + 'px';
+        el.style.marginTop = (-th / 2) + 'px';
+        if(!exploded) el.style.transform = el._base + ' translateZ(' + R.toFixed(0) + 'px)';
       }
-      // decorative glyphs
-      GLYPHS.forEach(g => {
-        const el = document.createElement('div');
-        el.className = 'gb-glyph';
-        const px = 30 * g.s;
-        el.style.width = px + 'px';
-        el.style.height = px + 'px';
-        el.innerHTML = ICONS[g.t] || ICONS.dot;
-        el._g = g;
-        sphere.appendChild(el);
-        glyphEls.push(el);
-      });
-      // biome markers
-      BIOMES.forEach(b => {
-        const el = document.createElement('div');
-        el.className = 'gb-biome';
-        el.innerHTML = '<div class="gb-biome-icon">' + b.icon + '</div><div class="gb-biome-label">' + b.name + '</div>';
-        el._b = b;
-        sphere.appendChild(el);
-        biomeEls.push(el);
-      });
-      readoutName.textContent = BIOMES[0].name;
-      readoutSub.textContent = BIOMES[0].sub;
-      viewBtn.disabled = false;
     }
 
-    function norm(a){ // wrap to [-PI, PI]
-      a = (a + Math.PI) % TAU;
-      if(a < 0) a += TAU;
-      return a - Math.PI;
+    // Evenly spreads n tiles over the sphere with the golden angle so the
+    // surface reads tiled regardless of count. Latitudes are pulled in a
+    // touch (x0.92) so no tile sits exactly edge-on at a pole.
+    function placeTiles(items){
+      const n = items.length;
+      if(!n) return;
+      cloud = document.createElement('div');
+      cloud.className = 'gb-cloud';
+      const golden = Math.PI * (3 - Math.sqrt(5));
+      items.forEach((item, i) => {
+        const y = n === 1 ? 0 : 1 - (i / (n - 1)) * 2;
+        const latDeg = Math.asin(Math.max(-1, Math.min(1, y))) * 180 / Math.PI * 0.92;
+        const lonDeg = ((i * golden) * 180 / Math.PI) % 360;
+        const el = document.createElement('div');
+        el.className = 'gb-tile';
+        const img = document.createElement('img');
+        img.alt = ''; img.loading = 'lazy'; img.src = item.src;
+        el.appendChild(img);
+        el._base = 'rotateY(' + lonDeg.toFixed(2) + 'deg) rotateX(' + (-latDeg).toFixed(2) + 'deg)';
+        el._lat = latDeg * Math.PI / 180;
+        el._lon = lonDeg * Math.PI / 180;
+        el._i = i;
+        cloud.appendChild(el);
+        tileEls.push(el);
+      });
+      sphere.appendChild(cloud);
+      sizeTiles();
+      project();
     }
-    function smooth(t){ t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); }
+
+    async function loadPhotos(){
+      if(photosRequested) return;
+      photosRequested = true;
+      const [interiors, mountainside] = await Promise.all([
+        getGalleryItems('threed-interiors'),
+        getGalleryItems('threed-mountainside')
+      ]);
+      const items = [...interiors, ...mountainside];
+      if(!items.length) return;
+      renderGalleryTiles(flatGallery, items, '#d9d1c0');
+      placeTiles(items);
+    }
+
+    // A tile's centre, projected to screen space relative to the globe centre,
+    // mirroring the exact CSS transform chain (base rotateY(lon) rotateX(-lat)
+    // translateZ(R), then cloud rotateX(pitch) rotateY(spin)) so it matches
+    // what's actually drawn. depth > 0 means the tile faces the viewer.
+    function tileGeom(el){
+      // point on the sphere from the base transform (X right, Y down, Z fwd)
+      const x = Math.cos(el._lat) * Math.sin(el._lon) * R;
+      const y = Math.sin(el._lat) * R;
+      const z = Math.cos(el._lat) * Math.cos(el._lon) * R;
+      // cloud rotateY(spin)
+      const x1 = x * Math.cos(spin) + z * Math.sin(spin);
+      const z1 = -x * Math.sin(spin) + z * Math.cos(spin);
+      // cloud rotateX(pitch)
+      const y2 = y * Math.cos(pitch) - z1 * Math.sin(pitch);
+      const z2 = y * Math.sin(pitch) + z1 * Math.cos(pitch);
+      const s = PERSP / (PERSP - z2);
+      return { sx: x1 * s, sy: y2 * s, depth: z2, scale: s };
+    }
 
     function project(){
-      // meridians: vertical lines swept across the circle
-      for(const m of meridianEls){
-        const a = m._lon + rotation;
-        const x = R * Math.sin(a);
-        const front = Math.cos(a);
-        m.style.transform = 'translate(-50%,0) translateX(' + x.toFixed(1) + 'px)';
-        m.style.opacity = (Math.max(0, front) * 0.5).toFixed(3);
+      if(!cloud) return;
+      cloud.style.transform =
+        'rotateX(' + (pitch * 180 / Math.PI).toFixed(2) + 'deg) ' +
+        'rotateY(' + (spin * 180 / Math.PI).toFixed(2) + 'deg)';
+      // Depth cue: tiles swinging behind dim a touch (perspective already
+      // shrinks and mirrors them).
+      for(const el of tileEls){
+        const d = tileGeom(el).depth / R;   // -1 .. 1
+        el.style.filter = 'brightness(' + (0.72 + 0.3 * Math.max(0, d)).toFixed(3) + ')';
       }
-      // glyphs + biomes: full sphere projection
-      const place = (el, lon, lat, extraScale) => {
-        const a = lon + rotation;
-        const cl = Math.cos(lat);
-        const depth = cl * Math.cos(a);        // toward viewer, [-1,1]
-        const x = Rm * cl * Math.sin(a);
-        const y = -Rm * Math.sin(lat);
-        const vis = depth > 0.02;
-        const sc = (0.55 + 0.45 * Math.max(0, depth)) * extraScale;
-        el.style.transform = 'translate(-50%,-50%) translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) scale(' + sc.toFixed(3) + ')';
-        el.style.opacity = vis ? smooth((depth - 0.02) / 0.3).toFixed(3) : '0';
-        el.style.zIndex = String(100 + Math.round(depth * 100));
-        return depth;
-      };
-      for(const el of glyphEls){ place(el, el._g.lon, el._g.lat, 1); }
-      let best = -2, bestEl = null;
-      for(const el of biomeEls){
-        const depth = place(el, el._b.lon, el._b.lat, 1);
-        el.style.pointerEvents = depth > 0.3 ? 'auto' : 'none';
-        el.classList.remove('front');
-        if(depth > best){ best = depth; bestEl = el; }
-      }
-      if(bestEl){
-        bestEl.classList.add('front');
-        const b = bestEl._b;
-        if(frontBiome !== b){
-          frontBiome = b;
-          readoutName.textContent = b.name;
-          readoutSub.textContent = b.sub;
-        }
-      }
-    }
-
-    function snapTargetFor(){
-      // bring whichever biome is nearest the front to angle 0
-      let best = Infinity, target = rotation;
-      for(const b of BIOMES){
-        const d = norm(-b.lon - rotation);
-        if(Math.abs(d) < Math.abs(best)){ best = d; target = rotation + d; }
-      }
-      return target;
     }
 
     function frame(now){
@@ -4843,15 +4680,14 @@ const HANNINEN_BLOCKS = [
       const dt = Math.min((now - lastFrame) / 1000, 0.05);
       lastFrame = now;
       if(!dragging){
-        if(Math.abs(vel) > 0.12){
-          rotation += vel * dt;
-          vel *= Math.exp(-2.3 * dt);   // friction
-          snapping = false;
-        } else {
-          if(!snapping){ snapTarget = snapTargetFor(); snapping = true; }
-          rotation += (snapTarget - rotation) * 0.12;
-          if(Math.abs(snapTarget - rotation) < 0.0005){ rotation = snapTarget; }
-        }
+        // yaw eases back to the steady auto-spin (a drag is a nudge, not a
+        // brake - it never fully stops); pitch keeps its position, its
+        // momentum just bleeding off to rest.
+        vel += (AUTOSPIN - vel) * Math.min(1, dt * 1.1);
+        spin += vel * dt;
+        pitch += pitchVel * dt;
+        pitchVel *= Math.exp(-3 * dt);
+        if(Math.abs(pitchVel) < 0.02) pitchVel = 0;
       }
       project();
       rafId = requestAnimationFrame(frame);
@@ -4859,85 +4695,125 @@ const HANNINEN_BLOCKS = [
     function startLoop(){ if(rafId == null){ lastFrame = 0; rafId = requestAnimationFrame(frame); } }
     function stopLoop(){ if(rafId != null){ cancelAnimationFrame(rafId); rafId = null; } }
 
-    // ---- drag to spin ----
+    // ---- explode / reassemble ----
+    function explode(){
+      if(exploded || !tileEls.length) return;
+      exploded = true;
+      stopLoop();
+      tileEls.forEach(el => {
+        // each tile is thrown further out along its own normal, so the
+        // formation bursts radially with every piece keeping its facing
+        const throwZ = R * (2.6 + Math.random() * 1.4);
+        const rz = (Math.random() * 40 - 20).toFixed(1);
+        el.classList.add('animating');
+        el.style.filter = 'brightness(1)';
+        el.style.transform = el._base + ' translateZ(' + throwZ.toFixed(0) + 'px) rotateZ(' + rz + 'deg)';
+      });
+      setTimeout(() => tileEls.forEach(el => el.classList.remove('animating')), EXPLODE_MS);
+    }
+
+    function reassemble(){
+      if(!exploded) return;
+      exploded = false;
+      tileEls.forEach(el => {
+        el.classList.add('animating');
+        el.style.transform = el._base + ' translateZ(' + R.toFixed(0) + 'px)';
+      });
+      setTimeout(() => {
+        tileEls.forEach(el => el.classList.remove('animating'));
+        if(!exploded && page.classList.contains('show')) startLoop();
+      }, EXPLODE_MS);
+    }
+
+    // Which front-facing tile (if any) is under a screen point.
+    function pickTile(clientX, clientY){
+      const rect = globe.getBoundingClientRect();
+      const cx = clientX - (rect.left + rect.width / 2);
+      const cy = clientY - (rect.top + rect.height / 2);
+      const tw = R * 0.68, th = tw * 0.72;
+      let best = null, bestD = Infinity;
+      for(const el of tileEls){
+        const g = tileGeom(el);
+        if(g.depth <= 0) continue; // only the near hemisphere is tappable
+        const d = Math.hypot(g.sx - cx, g.sy - cy);
+        const reach = Math.max(tw, th) * 0.62 * g.scale;
+        if(d < bestD && d < reach){ bestD = d; best = el; }
+      }
+      return best;
+    }
+
+    // ---- drag on both axes (trackball) ----
     function onDown(e){
+      if(exploded) return;
       dragging = true; moved = false;
-      downTarget = e.target.closest('.gb-biome');
-      lastX = e.clientX; lastT = performance.now();
-      vel = 0; snapping = false;
+      lastX = downX = e.clientX;
+      lastY = downY = e.clientY;
+      lastT = performance.now();
       sphere.classList.add('dragging');
       sphere.setPointerCapture && e.pointerId != null && sphere.setPointerCapture(e.pointerId);
     }
     function onMove(e){
       if(!dragging) return;
       const dx = e.clientX - lastX;
-      if(Math.abs(dx) > 0) { rotation += dx * 0.007; }
-      if(Math.abs(e.clientX - lastX) > 3) moved = true;
+      const dy = e.clientY - lastY;
+      spin += dx * DRAG_K;
+      pitch -= dy * DRAG_K;               // content follows the cursor
+      if(Math.hypot(e.clientX - downX, e.clientY - downY) > 4) moved = true;
       const t = performance.now();
       const dtm = (t - lastT) / 1000;
-      if(dtm > 0){ vel = (dx * 0.007) / dtm; }
-      lastX = e.clientX; lastT = t;
+      if(dtm > 0){ vel = (dx * DRAG_K) / dtm; pitchVel = (-dy * DRAG_K) / dtm; }
+      lastX = e.clientX; lastY = e.clientY; lastT = t;
+      project(); // paint on the drag itself, not just the next rAF frame
     }
     function onUp(e){
       if(!dragging) return;
       dragging = false;
       sphere.classList.remove('dragging');
-      if(!moved && downTarget && downTarget._b){ openBiome(downTarget._b); }
-      downTarget = null;
+      // a tap (barely moved) on a tile explodes the globe and zooms that render
+      if(!moved && !exploded){
+        const tile = pickTile(e.clientX, e.clientY);
+        if(tile){
+          explode();
+          setTimeout(() => openLightboxFromGallery(flatGallery, tile._i), 430);
+        }
+      }
     }
     sphere.addEventListener('pointerdown', onDown);
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
 
-    viewBtn.addEventListener('click', () => { if(frontBiome) openBiome(frontBiome); });
-
-    // ---- biome render gallery (shared probe + lightbox) ----
-    let galleryToken = 0;
-    async function openBiome(biome){
-      const token = ++galleryToken;
-      galleryName.textContent = biome.name;
-      gallerySub.textContent = biome.sub;
-      grid.innerHTML = '<div class="gb-empty">Loading&hellip;</div>';
-      gallery.classList.add('show');
-      gallery.setAttribute('aria-hidden', 'false');
-      const items = await getGalleryItems('threed-' + biome.key);
-      if(token !== galleryToken) return;
-      grid.innerHTML = '';
-      if(items.length){
-        renderGalleryTiles(grid, items, '#d9d1c0');
-      } else {
-        grid.innerHTML = '<div class="gb-empty">Renders for this world are coming soon.</div>';
-      }
+    // Reassemble when the lightbox is dismissed - but only while this page is
+    // up and blown apart (the observer sees every lightbox use site-wide).
+    if(lightbox){
+      new MutationObserver(() => {
+        if(exploded && page.classList.contains('show') && !lightbox.classList.contains('show')){
+          reassemble();
+        }
+      }).observe(lightbox, { attributes:true, attributeFilter:['class'] });
     }
-    function closeGallery(){
-      gallery.classList.remove('show');
-      gallery.setAttribute('aria-hidden', 'true');
-      galleryToken++;
-    }
-    galleryClose.addEventListener('click', closeGallery);
-    window.addEventListener('keydown', e => {
-      if(e.key === 'Escape' && gallery.classList.contains('show')){ e.stopPropagation(); closeGallery(); }
-    });
 
     function syncThreedPage(){
       if(location.hash === '#threed'){
-        build();
         page.classList.add('show');
         page.setAttribute('aria-hidden', 'false');
         document.body.classList.add('gb-open');
         window.scrollTo(0, 0);
         measure();
-        // face the first biome, with a small nudge so it's clearly spinnable
-        rotation = -BIOMES[0].lon - 0.55;
-        vel = 0.5;
-        snapping = false;
+        loadPhotos();
         startLoop();
       } else {
         page.classList.remove('show');
         page.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('gb-open');
-        closeGallery();
         stopLoop();
+        // snap straight back to a clean sphere for the next visit
+        if(exploded){
+          exploded = false;
+          tileEls.forEach(el => {
+            el.classList.remove('animating');
+            el.style.transform = el._base + ' translateZ(' + R.toFixed(0) + 'px)';
+          });
+        }
       }
     }
 
