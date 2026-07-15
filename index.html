@@ -3057,7 +3057,7 @@
 <div id="gallery-lightbox" class="gallery-lightbox" aria-hidden="true">
   <button type="button" class="gl-close" id="glClose" aria-label="Close">&times;</button>
   <button type="button" class="gl-nav gl-prev" id="glPrev" aria-label="Previous item">&larr;</button>
-  <img id="glImage" src="" alt="">
+  <img id="glImage" alt="">
   <video id="glVideo" controls playsinline style="display:none;"></video>
   <button type="button" class="gl-nav gl-next" id="glNext" aria-label="Next item">&rarr;</button>
   <div class="gl-counter" id="glCounter"></div>
@@ -4396,7 +4396,7 @@ const HANNINEN_BLOCKS = [
       currentIndex = (index + currentItems.length) % currentItems.length;
       const item = currentItems[currentIndex];
       if(item.type === 'video'){
-        viewerImg.style.display = 'none'; viewerImg.src = '';
+        viewerImg.style.display = 'none'; viewerImg.removeAttribute('src');
         viewerVideo.style.display = 'block'; viewerVideo.src = item.src;
         viewerVideo.currentTime = 0; viewerVideo.play().catch(() => {});
       } else {
@@ -4420,7 +4420,7 @@ const HANNINEN_BLOCKS = [
       if(!viewer.classList.contains('show')) return;
       viewer.classList.remove('show');
       viewer.setAttribute('aria-hidden', 'true');
-      viewerImg.src = '';
+      viewerImg.removeAttribute('src');
       viewerVideo.pause(); viewerVideo.removeAttribute('src'); viewerVideo.load();
       updateCounter();
     }
@@ -5004,7 +5004,7 @@ const HANNINEN_BLOCKS = [
       const item = currentItems[currentIndex];
       if(item.type === 'video'){
         lbImg.style.display = 'none';
-        lbImg.src = '';
+        lbImg.removeAttribute('src');
         lbVideo.style.display = 'block';
         lbVideo.src = item.src;
         lbVideo.currentTime = 0;
@@ -5044,7 +5044,7 @@ const HANNINEN_BLOCKS = [
       lb.classList.remove('show');
       lb.setAttribute('aria-hidden', 'true');
       document.body.classList.remove('lb-open');
-      lbImg.src = '';
+      lbImg.removeAttribute('src');
       lbVideo.pause();
       lbVideo.removeAttribute('src');
       lbVideo.load();
