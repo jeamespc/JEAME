@@ -1173,6 +1173,17 @@
       transition:color .15s ease, padding-left .15s ease;
     }
     .ar-item-index{ color:#b4ab9a; font-size:12px; flex:0 0 auto; }
+    .ar-item-year{
+      margin-left:auto; flex:0 0 auto;
+      color:#b4ab9a; font-size:12px; letter-spacing:0.06em; white-space:nowrap;
+    }
+    .ar-item:hover .ar-item-year{ color:#283583; }
+    .ar-item.active .ar-item-year{ color:#283583; }
+    .ar-item-flag{
+      flex:0 0 auto;
+      font-family:'Arial',sans-serif; font-weight:400; font-size:9px; letter-spacing:0.14em; text-transform:uppercase;
+      color:#a99bad; border:1px solid #ece4ee; border-radius:2px; padding:1px 5px; line-height:1.4; white-space:nowrap;
+    }
     .ar-item:hover{ color:#283583; padding-left:8px; }
     .ar-item:hover .ar-item-index{ color:#283583; }
     .ar-item.active{ color:#283583; font-weight:700; }
@@ -1213,6 +1224,17 @@
     .ar-caret{
       display:inline-block; width:0.6ch; height:1.02em;
       transform:translateY(0.16em); background:#26221c; margin-left:1px;
+    }
+    .ar-inline-fig{
+      display:block; max-width:62ch; margin:26px auto; text-align:center;
+    }
+    .ar-inline-fig img{
+      max-width:100%; height:auto; display:inline-block;
+      border:1px solid rgba(0,0,0,0.12); background:#fff; padding:10px;
+    }
+    .ar-inline-fig figcaption{
+      margin-top:10px; font-family:Georgia,'Times New Roman',serif; font-style:italic;
+      font-size:12px; line-height:1.5; color:#8a8172;
     }
     .ar-body.blink .ar-caret{ animation:arBlink 1s steps(1,end) infinite; }
     @keyframes arBlink{ 0%,50%{ opacity:1; } 51%,100%{ opacity:0; } }
@@ -4140,10 +4162,84 @@ const HANNINEN_BLOCKS = [
       { type:'p', text:"Project by Cem Izgi, Felice Sassoli De Bianchi, Gianluca Perna, and Massimo Martignoni — History of Design II, Milan 2025." }
     ];
 
+const EE_IKEA_BLOCKS = [
+      { type:'h', text:"Introduction" },
+      { type:'p', text:"IKEA is a multinational company that originated from Sweden and their main job is to design and sell assemblance-ready furniture and general household accessories. Design culture is a broad term used to define a company's view and actions towards the concept of design (Koschei). According to Jordan Koschei, this consists of 5 important aspects: Understanding and respect; intentionality; universality and holisticity; freedom to fail; and proactivity (Koschei). Throughout this essay I am going to be analysing the impact of design culture in IKEA's market success as over the past years IKEA has been controlling the market with their market share of approximately 73%." },
+      { type:'p', text:"\"Democratic Design\" by IKEA is a way for the organisation to define what they see as a perfect design and a way for them to be consistent with their product designs, it consists of five main elements: form; function; quality; low price; and sustainability (IKEA, 00:01:15)." },
+      { type:'p', text:"This is an important topic to explore as IKEA is arguably the biggest furniture design company in the world and there are many other companies in the interior design market that strive to be like them, and this research will identify the extent of which IKEA's design culture helped in their way to market success. This is especially interesting as it discovers a topic that is not very commonly noticed and taken into consideration with the organisations that focus on interior design; their design culture." },
+      { type:'h', text:"Methodology" },
+      { type:'h', text:"Sources" },
+      { type:'p', text:"My research included many websites such as articles from IKEA's and outsiders' perspectives; blog describing design culture from a certain perspective; two case studies on IKEA and their understandings of design; and finally two books (Democratic Design: Möbel für die Menschheit by Heiner Über, and Design by IKEA: A Cultural History by Sara Kristoffersson). These sources were really helpful as they gave insight to IKEA's democratic design and their understanding of design culture from many different perspectives as the two books I read were from two different authors, in addition to the websites that were also all from different authors with somewhat different backgrounds including work time in IKEA for some. They contained a sufficient and in depth understanding of IKEA's democratic design and design culture in general in order for me to link them properly. Although they have some limitations as I could not find anything that referred to the training of the employees in order to learn about democratic design, and this is important as it contributes to my knowledge and suggestions for the company in terms of their design culture." },
+      { type:'p', text:"During the first stages of research I found a book directly by IKEA called \"IKEA's Democratic Design\" but this book was unavailable in both English and German. Therefore I searched more in attempt to find a book that was able to present the design culture present in IKEA and I was able to find the book written by Heiner Über but the limitation with that was the fact that I was only able to find a German version in the level that I am not yet confident with. Regardless of this challenge I still read through it and tried to take in as much information as possible." },
+      { type:'h', text:"Tools" },
+      { type:'p', text:"This research will include two financial models that show the company's annual revenue and gross profit over time which can be helpful in the research process as it can identify the organisation's success over time after the application of democratic design. Furthermore, it will identify and analyse the design culture theory that consists of understanding and respect, intentionality, universality and holisticity, freedom to fail, and proactivity. These aspects can be used to recognise and understand how their democratic design connects to the general idea of design culture and to identify its strengths and weaknesses as a part of their design culture by splitting it into its parts and connecting them to IKEA's applications within the organisation and evaluating it's role in IKEA's market success. Finally, a force field analysis would be helpful for this research because it is useful for identifying advantages and disadvantages. However, it's limitation can be that the point system may be biased, and based on the perception of the author this could be a limitation." },
+      { type:'h', text:"IKEA's Democratic Design" },
+      { type:'p', text:"IKEA is a 78-year-old multinational organisation that arguably provides the products with best form, quality, functionality and sustainability while keeping it financially available for most customers (IKEA, 00:01:15). These are all factors that are part of IKEA's unique democratic design. The idea of democratic design originates from famous French designer Philippe Starck. From his point of view democratic design is \"Design that provides quality pieces at accessible prices\"(Kim, Sun). IKEA took this idea and adopted it to their design culture by expanding it to five key concepts; form, quality, function, sustainability and low price (IKEA, 00:01:15). Starting from 2014, IKEA started organising annual events called the \"Democratic Design Days\" in which they invited bloggers, journalists and influencers to see their newest products (Danziger, Pamela N.). Ever since their first event, they have been spreading this idea around the globe through its 300-plus stores in over 40 countries (Danziger, Pamela N.)." },
+      { type:'h', text:"Koschei's Design Culture Theory" },
+      { type:'p', text:"Design culture is a broad term with many different interpretations and definitions coming from different resources. From these many different interpretations and definitions Koschei defines 5 main aspects that form a good design culture in an organisation. These aspects, as stated before, are; understanding and respect, intentionality, universality/holisticity, freedom to fail, and proactivity (Koschei). IKEA has a design culture and they are able to apply most of these aspects to their organisation in an effective way leading them to market success." },
+      { type:'p', text:"This is a strong and reliable theory to use in this essay as it breaks down the requirements for any design company in order for them to succeed. While using it as a tool, one can identify the things IKEA has or has not done in their organisation similar or way different compared to other design companies as it can be assumed that this theory can be applied to any 'generic design company' to be successful." },
+      { type:'p', text:"Understanding and Respect: This means that the company knows and respects the value of design, not only by making things look pretty, but also understanding that design is process driven and comprehensive. IKEA understands and respects design by planting their methods and designs in their designers' minds (\"Democratic Design\"). Most popular method being the democratic design." },
+      { type:'p', text:"IKEA's mission and vision statements are also great representations of their understanding and respect towards design as it shows that they are aware of the importance and brilliance of their design in people's everyday lives.\n\nMission statement: \"Offering a wide range of well designed, functional home furnishing products with prices so low that as many people as possible will be able to afford them.\"\n\nVision statement: \"To create a better everyday life for the many people\" (IKEA, 00:00:13)." },
+      { type:'p', text:"Intentionality: This means all decisions in the organisation need to be made intentionally and that nothing should be left up to chance, any possible place for error must be considered (Koschei). During his presentation about democratic design in WIRED UK Youtube channel, Marcus Engman (Who was head of design at the time of the presentation (2018) but is now the Chief Creative Officer of IKEA) said: \"One single product at IKEA takes up to three years to do\"(Marcus Engman, 00:03:18). This shows how IKEA implied intentionality to their design. In this presentation Engman also talks about how making a simple thing as a water carafe at IKEA takes a lot of research as they always do their best to make sure that the product contains every aspect of democratic design (form, function, quality, low price, sustainability)." },
+      { type:'p', text:"For example their water carafe (figure 1) called IKEA 365+ because of the fact that it can serve the owner for more than all the days of the year, meets all aspects of democratic design (Marcus Engman, 00:03:54).\n\nForm: The carafe has a basic bottle shape but with a wide mouth for making cleaning easy, along with fitting perfectly in the dishwasher.\n\nFunction: It is able to carry a lot of water and it lasts long.\n\nQuality: It is made of glass so it would last longer.\n\nLow price: Costs 3.49 Euros.\n\nSustainability: It is made of glass rather than plastic. It's cork is recyclable, and it helps out other companies in the industry of cork, as the other bottle manufacturing companies start to use other methods for stoppers for bottles (Marcus Engman, 00:06:40)." },
+      { type:'img', src:"renders/ee-ikea-1.jpg", alt:"Photo of IKEA's 365+ glass water carafe with a cork stopper", caption:"Fig. 1: Picture of IKEA's 365+. www.ikea.com/de/de/p/ikea-365-karaffe-mit-stoepsel-klarglas-kork-90279719/" },
+      { type:'p', text:"Universality/Holisticity: Universality and holisticity refers to everyone including especially the non-designers and the customers to feel encouraged to participate in the design process (Koschei). IKEA includes this concept in the organisation by the use of the website they created, called lifeathome.ikea.com, which allows customers to share their opinions and reflect on the design created by IKEA (Marcus Engman, 00:09:40). They also always try to create a strong relationship between their designs and the customers, and this website really helps with that by surveying and suggesting different changes directly to customers." },
+      { type:'p', text:"IKEA also really pays attention to including every age group in their customers, Engman also stated that they have started to collaborate with famous fashion designers such as Bea Akerlund, Kit Neale, and Katie Eary in order to appeal to younger people more as the modern fashion designers are generally people that teens follow and they are also people that understand younger people and their interests (Marcus Engman, 00:16:22)." },
+      { type:'p', text:"IKEA also claims that they actively include diversity in their production process by including a \"diverse team of technicians, manufacturers, and suppliers\" but never mention the inclusion of these people's ideas in their design process, which, if are not included, can be seen as crucial limitations regarding their design culture (\"Democratic Design\")." },
+      { type:'p', text:"In order to improve in this aspect of design culture, IKEA can consider strengthening the encouragement and freedom of speech of their non-designer employees in order to give them opportunities to suggest improvements and new ideas for the designers to consider. This would help IKEA increase their universality and holisticity and would also make the employees feel more involved in terms of the company's main purpose of design." },
+      { type:'p', text:"Freedom to Fail: In order to obtain and retain a healthy design culture, every design-based organisation needs high tolerance for failure. This way, the employees always feel free to experiment. Taking risks and experimenting are important aspects in order for employees to learn and improve, and also to design quality products, without the fear of punishment (Koschei). IKEA is a vision-driven company. Rather than focusing on business, they focus on achieving their vision; to create a better everyday life for the people. They claim that design is not just making things, but instead improving them, or making things better. This idea causes the freedom of failure in IKEA and their employees, as their main focus is to keep trying to make things better, by experimenting, and failing a couple of times(Marcus Engman, 00:03:18)." },
+      { type:'p', text:"Engman also states that one simple product takes up to three years to make, as another indication of how there is a lot of thinking process and experimentation involved in the process of designing a new product (Marcus Engman, 00:03:18). Although this makes the products and the organisation more reliable, it is also a limitation regarding the time spent on even the simplest products. It could be argued that most of this time is wasted while could be used for other projects." },
+      { type:'p', text:"Proactivity: This is the last and also a very important aspect for a healthy design culture. Proactivity in a design culture refers to the designers focusing more on creating something new or improving something that already exists rather than fixing the organisation's problems and saving them from them. This also refers to constantly working on and coming up with new rooms of improvement (Koschei). IKEA is an organisation that is always keen to learn and improve based on the feedback and issues their customers have (Marcus Engman, 00:10:33). In order to be more proactive, IKEA workers are encouraged to perform home visits to see the everyday lives of people so they can improve it, relating back to their vision (Marcus Engman, 00:10:33)." },
+      { type:'p', text:"Furthermore, there are no articles or studies stating that the designers of IKEA have been involved in a process involving the organisational problems not concerning them. This means that IKEA successfully meets the requirements for being proactive in the organisation and not involving designers in organisational problems that do not concern them." },
+      { type:'p', text:"IKEA also recognises that they need to do extensive market research to meet the needs of the customers, these topics include; space, senses, pets, fashion, place, inclusiveness, job making, technology, and off the grid living. IKEA is enthusiastic about learning and improving these aspects of life by the use of their design." },
+      { type:'p', text:"Following the application of IKEA's Democratic Design to the design culture theory, one can then identify that IKEA stays true to the theory, even though there are still rooms for improvement. Especially in the universality and holisticity part, IKEA can consider strengthening the encouragement and freedom of speech of their employees in order to give them opportunities to suggest improvements and new ideas for the designers to consider. This would help IKEA increase their universality and holisticity and would also make the employees feel more involved. This is important because according to the design culture theory by Koschei, even though this is one of the least significant parts of the theory, it seems to improve the general encouragement and creativity in the workplace." },
+      { type:'h', text:"Financial Status of IKEA" },
+      { type:'p', text:"By creating and analysing the financial graphs of IKEA's revenue and gross profit over the past 20 years; from 2000 to 2020; using the gross profit margin and author's own interpretations, the company's popularity and market status before and after the introduction of democratic design around 2013 will be identified." },
+      { type:'img', src:"renders/ee-ikea-2.jpg", alt:"Bar chart of IKEA Group's annual revenue in billion euros from 2001 to 2020, rising from 10.4 to a 2019 peak of 41.3", caption:"Fig. 2: Annual revenue of IKEA Group Worldwide from 2001 to 2020. (“Annual Revenue”)" },
+      { type:'img', src:"renders/ee-ikea-3.jpg", alt:"Bar chart of IKEA Group's gross profit in million euros from 2009 to 2020, peaking at 15,431 in 2016 before declining", caption:"Fig. 3: Gross Profit of IKEA Group Worldwide from 2009 to 2020. (“Gross Profit”)" },
+      { type:'p', text:"Fig. 4: Calculation of the Gross Profit Margin for Average of 5 Years Before and after Democratic Design in IKEA.\n\nBefore Democratic Design\nGross Profit (mil.) average of 5 years -> 9424 €\nRevenue (mil.) average of 5 years -> 25320 €\n9424 / 25320 x 100 = 37.22%\n\nAfter Democratic Design\nGross Profit (mil.) average of 5 years -> 13500 €\nRevenue (mil.) average of 5 years -> 34958 €\n13500 / 34958 x 100 = 38.62%" },
+      { type:'p', text:"According to figure 2 IKEA entered the 21st century with around 10.4 billion euros of annual revenue. From 2001 to 2013, which is around the time Philippe Starck started to make democratic design famous with his own definition, the annual revenue of IKEA increased by approximately 18 billion euros. This equates to around 1.5 (18/12) billion euros in average increase per year. From 2014 to 2019, this value goes up to 2.4 (12/5) billion euros per year. In 2020, the annual revenue decreases by 0.7 billion euros, this could be because of the coronavirus outbreak that restricted working hours, the production and the sales as the stores had to close all over the world. If we ignore this year, and take into account the years before and after the introduction of democratic design in IKEA excluding the year 2020, we can see that democratic design, along with other factors, creates a positive impact in IKEA's sales along with also strengthening their design culture suggesting a strong correlation with the market success. However, these other factors could presumably be the changes such as the globalization of the company, changes of designers, improvement of materials used and etc. and would need to be considered when analysing the correlation between the theory and market success." },
+      { type:'p', text:"According to figure 3, even though it is observed that there is a continuous increase in IKEA's gross profit over the first few years of introducing the democratic design, it seems to decline after it peaks in 2016. Since this is the exact opposite of what happens with their revenue it is safe to assume that this decline is caused by the increase in cost of goods sold, possibly due to their expansion into the new highly populated locations. According to my calculations seen in figure 4 it seems also like for the first five years of introducing democratic design IKEA increased their gross profit margin very slightly by approximately 1.4%, this shows that democratic design, along with other factors have influenced their market success over the years." },
+      { type:'p', text:"IKEA recently extended its reach throughout the globe by opening new stores in highly populated countries such as India in 2018, Morocco in 2016, Latvia in 2019, in addition to their stores that debuted recently in Ukraine, Slovenia, Bahrain and Estonia (\"List of Countries\"). Another country that had a big influence in IKEA's decline in gross profit and rise in revenue after the year of 2014 would be their 4 stores in South Korea that debuted in 2014 (\"List of Countries\"). This would influence their financial situation as South Korea is a somewhat highly populated country with somewhat wealthy people and the costs would increase as there is much more demand due to a bigger customer range. Koschei's design culture is not really related to costs and this is rather irrelevant in terms of the application of the design culture theory. On the other hand, one could argue that the design culture that they have strengthened in early 2010s could have had a hand in helping them meet certain needs of these countries and their population. This is likely due to the heavy restrictions in countries such as Ukraine, in which there was a crisis going on and the country was in a tough economic situation and possibly had heavy restrictions against globalising companies such as IKEA, restrictions that design culture could overcome (Ticker)." },
+      { type:'h', text:"Force Field Analysis" },
+      { type:'p', text:"I am going to be creating a force field analysis for the involvement of exterior designers even from other industries in IKEA's design process. As stated before, IKEA started creating partnerships and getting advice from fashion designers in the past few years (Marcus Engman, 00:16:22). This force field analysis will help me identify the weaknesses and strengths of this change in terms of improving IKEA's design culture, along with spreading it to other people from other organisations. I will also clearly be able to see the extent of which this move by IKEA would be contributing to the improvement of their design culture within the firm." },
+      { type:'p', text:"Fig. 5: Force Field Analysis for involving fashion designers in the design process.\n\nCHANGE (+3)\nInvolvement of exterior fashion designers in the furniture design process in order to create more universality/holisticity.\n\nFOR (14)\n- The designers that already work at IKEA can learn from these fashion designers and implement their thinking in their future designs. (5)\n- Fashion designers generally have more knowledge about what the newer generations like so IKEA may extend their audience. (4)\n- This can help IKEA come up with more creative and different ideas coming from different people than usual. (5)\n\nAGAINST (11)\n- They are fashion designers, therefore they would not have a lot of knowledge on furniture design, this could cause designs with missing parts and faulty structure. (3)\n- If there are disagreements, since the fashion designer does not exactly work at IKEA, they can leave and leak IKEA's new design ideas along with creating a bad reputation of IKEA's workplace. (3)\n- Too many ideas coming together might create conflict in designers' minds and make them work worse as they would be attempting to gather too many different ideas together. (5)" },
+      { type:'p', text:"By looking at this force field analysis, we can see that the inclusion of external fashion designers such as Bea Akerlund, Kit Neale, and Katie Eary is more beneficial than not for IKEA's success as a whole. In terms of Koschei's design culture theory, we can see the contribution this would make as the forces for this change are all factors that positively influence IKEA's employees' understanding and respect in terms of design. This change also seems to cause a wider range of universality and holisticity, therefore improving another aspect of design culture. In addition, this change also seems to create proactivity in the organisation as the designers focus on creating something new or improving something that already exists rather than focusing on organisational problems that aren't supposed to involve the designers. It can also be a start to a chain of changes in which maybe more non-designer people can be involved in the design process strengthening their proactivity. This change can also cause an improvement on freedom to fail as the fashion designers would be new to working on furniture designs and would learn by failing over and over again, once again improving IKEA's design culture. Therefore this change can be considered influential in IKEA's way to success as it creates a good design culture that leads to a positive environment and more motivation in the workers." },
+      { type:'h', text:"Conclusion" },
+      { type:'p', text:"Overall, after the research there is evidence to suggest that IKEA has been benefiting to a sufficient extent from their applications of Koschei's design culture theory and the use of their own democratic design. It can be said that IKEA is generally able to meet the 5 main criterias of design culture through their actions and implementations of new ideas throughout the past years. Although, there are still rooms for improvement, such as creating more universality and holisticity through the inclusion of non designer employees of IKEA as explained previously." },
+      { type:'p', text:"Along with improving the design culture of the company, it is observed that there is a more rapid rise in the annual revenue of the organisation along with higher annual gross profit and gross profit margins as democratic design is introduced. As stated before, even though this can be for other reasons such as the spread of this company across newer large nations, the implementation and advertisement of their democratic design as a part and a big factor in creating a successful and strong design culture in their newer products after the year of 2013 can presumably be seen as a big influence for these changes." },
+      { type:'p', text:"It is safe to assume that in the long term, enforcement of design culture and the continuous use of their democratic design for their products will benefit IKEA more than cause problems for them in the longer term. This is because it can be identified through the tools used that these methods that have been implemented by IKEA have more advantages than disadvantages, meaning it would just be smarter to keep using them and even build up on them in order to improve it for even better market success. In the short term this outcome would likely not be different and IKEA would benefit more than they lose, as for the earlier years of advertising this method the company would attract more customers and also more external designers and organisations as they would want to find out more about their secret, although this can come with some consequences as when they advertise these methods even though they gain more customer attraction, their rivals would be able to find out more about their key to their success. But this would not be too big of an issue as IKEA is already a highly popular multinational company with many strong creative minds working for them, therefore they can improve constantly and come up with new methods and stay on the top of the interior design market for a long time." },
+      { type:'p', text:"There have been some weaknesses and limitations of this research. Starting from the book that was read for background information, called \"IKEA Democratic Design: Möbel für die Menschheit\" by Heiner Über. This book was above the author's level of knowledge in the language it was written in, German. This caused the gain of less information from the book but was still somewhat helpful for some background knowledge." },
+      { type:'p', text:"Contacting a person from IKEA could have been really helpful towards improving this essay. Although it is mostly difficult to reach out and actually get an answer during the pandemic, with more effort it could have been possible and it would have been extremely helpful in getting insight about the organisation and how they implement design culture from the perspective of someone inside." },
+      { type:'h', text:"Works Cited" },
+      { type:'p', text:"\"Annual revenue of the IKEA Group worldwide from 2000 to 2020.\" Statista, Sept. 2020, www.statista.com/statistics/264433/annual-sales-of-ikea-worldwide/. Accessed 2 Sept. 2021. Chart." },
+      { type:'p', text:"Danziger, Pamela N. \"Ikea Realizes Democratic Design for the Home.\" Ikea Realizes Democratic Design for the Home, Forbes, 12 June 2018, www.forbes.com/sites/pamdanziger/2018/06/12/ikea-realizes-democratic-design-for-the-home/. Accessed 02 Sept. 2021." },
+      { type:'p', text:"\"Democratic Design.\" Ikea, www.ikea.com/ms/en_JO/about-the-ikea-group/democratic-design/. Accessed 2 Sept. 2021." },
+      { type:'p', text:"\"Gross Profit of INGKA Group (IKEA) Worldwide from 2009 to 2020.\" Statista, www.statista.com/statistics/241801/gross-profit-of-ikea-worldwide/. Accessed 28 Aug. 2021. Chart." },
+      { type:'p', text:"\"IKEA 365+.\" IKEA, www.ikea.com/de/de/p/ikea-365-karaffe-mit-stoepsel-klarglas-kork-90279719/. Accessed 2 Sept. 2021." },
+      { type:'p', text:"IKEA | What is Democratic Design? IKEA Canada. Youtube, youtu.be/apVUlZXeS84. Accessed 2 Sept 2021." },
+      { type:'p', text:"Kim, Sun. \"Philippe Starck on Democratic Design.\" ZDNet. ZDNet, uxdesign.cc/ikea-democratic-design-3-design-takeaways-83143a51bfce. Accessed 27 Apr. 2021." },
+      { type:'p', text:"Koschei, Jordan. \"What exactly is a Design Culture?\" Inside Design, 12 July 2016, www.invisionapp.com/inside-design/what-is-a-design-culture/. Accessed 2 Sept. 2021." },
+      { type:'p', text:"\"List of Countries with IKEA Stores.\" Wikipedia, 24 Sept. 2008, en.wikipedia.org/wiki/List_of_countries_with_IKEA_stores. Accessed 17 June 2021." },
+      { type:'p', text:"Marcus Engman: How IKEA's Democratic Design nudges people into better behaviour. WIRED UK, 2018. Youtube, youtu.be/wwQlbhmGoq8. Accessed 2 Sept. 2021." },
+      { type:'p', text:"Ticker. \"Ikea Enters the Ukrainian Market.\" Across. Across Magazine, www.across-magazine.com/ikea-enters-the-ukrainian-market/. Accessed 28 Aug. 2021." },
+      { type:'h', text:"Works Consulted" },
+      { type:'p', text:"Core Elements of IKEA's Successful Product Design. Qingdao Institute of Technology, 2019, iopscience.iop.org/article/10.1088/1742-6596/1168/3/032118/pdf. Accessed 27 Apr. 2021." },
+      { type:'p', text:"Diez, JC., editor. IKEA Democratic Design: 3 design takeaways. UX Collective, 29 May 2019, uxdesign.cc/ikea-democratic-design-3-design-takeaways-83143a51bfce. Accessed 27 Apr. 2021." },
+      { type:'p', text:"Über, Heiner. Democratic Design, IKEA : Möbel für die Menschheit. Accessed 2 Sept. 2021." },
+      { type:'p', text:"\"Ikea.\" Business Case Studies, 28 Nov. 2019, businesscasestudies.co.uk/ikea/. Accessed 2 Sept. 2021." },
+      { type:'p', text:"Kristoffersson, Sara. Design by IKEA: A Cultural History. 2014. Accessed 2 Sept. 2021." }
+    ];
+
     // Archives is organised into subsections; each piece's blocks are typed
     // onto the sheet in order, headings in caps. imagesKey (optional) is the
     // renders/{key}-{n} prefix probed for that piece's photo corner - pieces
-    // with no key/no files just get no corner at all.
+    // with no key/no files just get no corner at all. flag (optional) is a
+    // small pill label next to the title in the index (see .thesis-flag on
+    // project rows for the same pattern) - used here for the IB Extended
+    // Essay, which also uses inline 'img' blocks instead of imagesKey since
+    // its figures belong at specific points in the text, not in a corner
+    // gallery.
     const ARCHIVES = [
       {
         section: "Tales from a Young Man's Old Life",
@@ -4156,9 +4252,10 @@ const HANNINEN_BLOCKS = [
         section: "Reflections",
         desc: "Studies and inspirations",
         items: [
-          { title: "on “Design Emergency”", sub: "Design Theory — Elisa Massoni, 2024", blocks: RAWSTHORN_BLOCKS },
-          { title: "on Flores & Prats", sub: "Studios by JEAME — April 2026", blocks: MAGAZINE_BLOCKS, imagesKey: "reflections-magazine" },
-          { title: "on Giovanni Hänninen", sub: "History of Design II — Milan 2025", blocks: HANNINEN_BLOCKS, imagesKey: "reflections-hanninen" }
+          { title: "To what extent does Koschei’s design culture theory and IKEA’s democratic design lead to their market success for IKEA?", sub: "Business Management — 2022", year: "2022", flag: "Extended Essay", blocks: EE_IKEA_BLOCKS },
+          { title: "on “Design Emergency”", sub: "Design Theory — Elisa Massoni, 2024", year: "2024", blocks: RAWSTHORN_BLOCKS },
+          { title: "on Giovanni Hänninen", sub: "History of Design II — Milan 2025", year: "2025", blocks: HANNINEN_BLOCKS, imagesKey: "reflections-hanninen" },
+          { title: "on Flores & Prats", sub: "Studios by JEAME — April 2026", year: "2026", blocks: MAGAZINE_BLOCKS, imagesKey: "reflections-magazine" }
         ]
       }
     ];
@@ -4194,6 +4291,18 @@ const HANNINEN_BLOCKS = [
           title.textContent = piece.title;
           item.appendChild(num);
           item.appendChild(title);
+          if(piece.year){
+            const year = document.createElement('span');
+            year.className = 'ar-item-year';
+            year.textContent = piece.year;
+            item.appendChild(year);
+          }
+          if(piece.flag){
+            const flag = document.createElement('span');
+            flag.className = 'ar-item-flag';
+            flag.textContent = piece.flag;
+            item.appendChild(flag);
+          }
           const idx = flatIndex;
           item.addEventListener('click', () => selectPiece(idx));
           listEl.appendChild(item);
@@ -4205,8 +4314,42 @@ const HANNINEN_BLOCKS = [
     let typeToken = 0;
     let typing = false;
     let rafId = null;
-    let fullText = '';
+    let chunks = [];
     let cornerToken = 0;
+
+    // Splits a piece's blocks into typed text chunks (typed char-by-char,
+    // headings upper-cased) and image chunks (inserted whole, instantly,
+    // whenever the typing head reaches them - they don't consume any of the
+    // CPS-paced character budget). Keeps the same continuous typing feel as
+    // plain-text pieces while letting figures land inline at their real spot
+    // in the essay, per-block instead of a single flat string/text node.
+    function blocksToChunks(blocks){
+      const out = [];
+      let sawAny = false;
+      blocks.forEach(b => {
+        if(b.type === 'img'){ out.push({ kind:'img', block:b }); sawAny = true; return; }
+        const text = (sawAny ? '\n\n' : '') + (b.type === 'h' ? b.text.toUpperCase() : b.text);
+        out.push({ kind:'text', text });
+        sawAny = true;
+      });
+      return out;
+    }
+
+    function renderInlineImg(block){
+      const fig = document.createElement('figure');
+      fig.className = 'ar-inline-fig';
+      const img = document.createElement('img');
+      img.src = block.src;
+      img.alt = block.alt || '';
+      img.loading = 'lazy';
+      fig.appendChild(img);
+      if(block.caption){
+        const cap = document.createElement('figcaption');
+        cap.textContent = block.caption;
+        fig.appendChild(cap);
+      }
+      arTyped.appendChild(fig);
+    }
 
     function markActive(i){
       const items = listEl.querySelectorAll('.ar-item');
@@ -4251,34 +4394,59 @@ const HANNINEN_BLOCKS = [
     function typePiece(piece){
       const token = ++typeToken;
       if(rafId != null){ cancelAnimationFrame(rafId); rafId = null; }
-      fullText = piece.blocks.map(b => b.type === 'h' ? b.text.toUpperCase() : b.text).join('\n\n');
-      const node = document.createTextNode('');
+      chunks = blocksToChunks(piece.blocks);
       arTyped.textContent = '';
-      arTyped.appendChild(node);
       arBody.classList.remove('blink');
       output.scrollTop = 0;
 
       if(reduceMotion()){
-        node.data = fullText;
+        chunks.forEach(c => c.kind === 'img' ? renderInlineImg(c.block) : arTyped.appendChild(document.createTextNode(c.text)));
         arBody.classList.add('blink');
         typing = false;
         reader.classList.remove('typing');
         return;
       }
 
-      const total = fullText.length;
+      const total = chunks.reduce((n, c) => n + (c.kind === 'text' ? c.text.length : 0), 0);
       const start = performance.now();
-      let shown = 0;
+      let shown = 0;      // cumulative chars revealed across all text chunks
+      let chunkIdx = 0;
+      let node = null;    // text node currently being typed into
+      let nodeShown = 0;  // chars already shown within that node's chunk
+
       typing = true;
       reader.classList.add('typing');
+
+      function advance(){
+        while(chunkIdx < chunks.length && chunks[chunkIdx].kind === 'img'){
+          renderInlineImg(chunks[chunkIdx].block);
+          chunkIdx++;
+        }
+        if(chunkIdx < chunks.length){
+          node = document.createTextNode('');
+          arTyped.appendChild(node);
+          nodeShown = 0;
+        } else {
+          node = null;
+        }
+      }
+      advance();
+
       function frame(now){
         if(token !== typeToken) return;
         const target = Math.min(total, Math.floor((now - start) / 1000 * CPS));
-        if(target > shown){
-          node.appendData(fullText.slice(shown, target));
-          shown = target;
-          keepCaretInView();
+        while(node && target > shown){
+          const text = chunks[chunkIdx].text;
+          const take = Math.min(text.length - nodeShown, target - shown);
+          node.appendData(text.slice(nodeShown, nodeShown + take));
+          nodeShown += take;
+          shown += take;
+          if(nodeShown >= text.length){
+            chunkIdx++;
+            advance();
+          }
         }
+        keepCaretInView();
         if(shown < total){
           rafId = requestAnimationFrame(frame);
         } else {
@@ -4297,9 +4465,8 @@ const HANNINEN_BLOCKS = [
       if(rafId != null){ cancelAnimationFrame(rafId); rafId = null; }
       typing = false;
       reader.classList.remove('typing');
-      let node = arTyped.firstChild;
-      if(!node){ node = document.createTextNode(''); arTyped.appendChild(node); }
-      node.data = fullText;
+      arTyped.textContent = '';
+      chunks.forEach(c => c.kind === 'img' ? renderInlineImg(c.block) : arTyped.appendChild(document.createTextNode(c.text)));
       arBody.classList.add('blink');
       output.scrollTo({ top: 0, behavior: 'auto' });
     }
