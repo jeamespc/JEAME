@@ -76,7 +76,7 @@
       align-items:center;
       justify-content:center;
       position:relative;
-      padding:40px 20px;
+      padding:clamp(16px, 5vh, 40px) 20px;
     }
     /* ---------- HERO DRAWING (private to this visitor) ----------
        Canvas sits above the logo but only accepts pointer input while
@@ -128,7 +128,11 @@
     }
     .logo-wrap{
       position:relative;
-      width:min(620px, 80vw);
+      /* The 72vh cap is what actually keeps this fitting on short, wide
+         laptop windows - 80vw alone never shrinks it on a screen that's
+         wide but short, since width has nothing to do with the available
+         vertical room inside the 100dvh hero. */
+      width:min(620px, 80vw, 72vh);
       padding-top:clamp(30px, 6vh, 58px);
       box-sizing:content-box;
       /* Centre the logo on its middle rectangle column (the stacked squares),
