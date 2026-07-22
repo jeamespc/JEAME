@@ -5058,11 +5058,66 @@ const EE_IKEA_BLOCKS = [
     const clearBtn = document.getElementById('heroDrawClear');
     const doneBtn = document.getElementById('heroDrawDone');
     const STORAGE_KEY = 'jeame-hero-drawing-v1';
-    const PEN_WIDTH = 2.5;
+    const PEN_WIDTH_MIN = 1.4;
+    const PEN_WIDTH_MAX = 4.6;
     const ERASER_WIDTH = 26;
     let tool = null; // null | 'pen' | 'eraser'
     let isDrawing = false;
-    let lastX = 0, lastY = 0;
+    let lastX = 0, lastY = 0, lastT = 0;
+
+    // Soft round ink dab, pre-rendered once. Stamped along the stroke path
+    // (stretched into a slight ellipse and rotated per-dab) instead of a
+    // single flat line, so the pen reads as a textured ink brush rather than
+    // a vector pen - a dry-brush "flying ink" (飛白) look.
+    const dabCanvas = document.createElement('canvas');
+    const DAB_SIZE = 64;
+    dabCanvas.width = dabCanvas.height = DAB_SIZE;
+    (function(){
+      const dctx = dabCanvas.getContext('2d');
+      const r = DAB_SIZE/2;
+      const g = dctx.createRadialGradient(r, r, 0, r, r, r);
+      g.addColorStop(0, 'rgba(10,10,10,1)');
+      g.addColorStop(0.6, 'rgba(10,10,10,0.85)');
+      g.addColorStop(1, 'rgba(10,10,10,0)');
+      dctx.fillStyle = g;
+      dctx.beginPath();
+      dctx.arc(r, r, r, 0, Math.PI*2);
+      dctx.fill();
+    })();
+
+    function inkStamp(x, y, w, alpha, angle){
+      const hw = w/2, hh = w * 0.68;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+      ctx.drawImage(dabCanvas, -hw, -hh, hw*2, hh*2);
+      ctx.restore();
+    }
+
+    // Stamps a run of ink dabs between two points. Speed drives both the
+    // width (a slow, pooling stroke runs wide and full; a fast flick runs
+    // thin) and how often a dab gets skipped - a fast stroke runs the brush
+    // dry, leaving the streaky broken coverage of a real ink brush.
+    function drawInkSegment(x0, y0, x1, y1, speed){
+      const dist = Math.hypot(x1-x0, y1-y0);
+      const steps = Math.min(120, Math.max(1, Math.ceil(dist / 1.2)));
+      const speedNorm = Math.min(1, speed / 1.8);
+      const width = PEN_WIDTH_MAX - (PEN_WIDTH_MAX - PEN_WIDTH_MIN) * speedNorm;
+      const skipChance = speedNorm * 0.55;
+      const baseAngle = Math.atan2(y1-y0, x1-x0);
+      for(let i=1; i<=steps; i++){
+        if(Math.random() < skipChance) continue;
+        const tt = i/steps;
+        const x = x0 + (x1-x0)*tt;
+        const y = y0 + (y1-y0)*tt;
+        const jitterDeg = (2 + Math.random()*3) * (Math.random() < 0.5 ? -1 : 1);
+        const angle = baseAngle + jitterDeg * Math.PI/180;
+        const w = width * (0.75 + Math.random()*0.5);
+        const alpha = 0.55 + Math.random()*0.35;
+        inkStamp(x, y, w, alpha, angle);
+      }
+    }
 
     function applyToolStyle(){
       ctx.lineCap = 'round';
@@ -5073,7 +5128,6 @@ const EE_IKEA_BLOCKS = [
       } else {
         ctx.globalCompositeOperation = 'source-over';
         ctx.strokeStyle = '#0A0A0A';
-        ctx.lineWidth = PEN_WIDTH;
       }
     }
 
@@ -5123,21 +5177,32 @@ const EE_IKEA_BLOCKS = [
       if(!tool) return;
       isDrawing = true;
       [lastX, lastY] = pointerPos(e);
-      // A tap with the eraser should still remove a dot, not require a drag.
+      lastT = performance.now();
+      // A tap should still leave a mark, not require a drag.
       if(tool === 'eraser'){
         ctx.beginPath();
         ctx.arc(lastX, lastY, ERASER_WIDTH/2, 0, Math.PI*2);
         ctx.fill();
+      } else if(tool === 'pen'){
+        inkStamp(lastX, lastY, PEN_WIDTH_MAX*0.7, 0.6, Math.random()*Math.PI*2);
       }
       e.preventDefault();
     }
     function move(e){
       if(!isDrawing) return;
       const [x, y] = pointerPos(e);
-      ctx.beginPath();
-      ctx.moveTo(lastX, lastY);
-      ctx.lineTo(x, y);
-      ctx.stroke();
+      if(tool === 'pen'){
+        const now = performance.now();
+        const dt = Math.max(1, now - lastT);
+        const speed = Math.hypot(x-lastX, y-lastY) / dt;
+        drawInkSegment(lastX, lastY, x, y, speed);
+        lastT = now;
+      } else {
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+      }
       lastX = x; lastY = y;
       e.preventDefault();
     }
