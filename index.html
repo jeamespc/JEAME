@@ -373,6 +373,10 @@
       text-transform:uppercase;color:#bbb;text-align:center;display:none;
     }
     .cat-preview.no-img::after{ display:block; }
+    /* Close tab: only meaningful on the mobile fixed-popup version below -
+       on desktop the preview follows the cursor and dismisses on its own
+       via mouseout, so this stays hidden there. */
+    .cat-preview-close{ display:none; }
     /* Desktop/hover devices: the preview detaches from the title row and
        floats next to the cursor instead (position driven every frame by JS
        in the SHARED SECTION PREVIEW script). Scoped to min-width:901px so it
@@ -415,6 +419,23 @@
         pointer-events:auto;
       }
       .cat-preview.show{ opacity:1; transform:translateY(0); }
+      /* Small pull-tab at the bottom edge, pointing back up toward where the
+         panel slides away to - a visible way to close it, rather than
+         leaving "tap anywhere" as the only, undiscoverable option. */
+      .cat-preview-close{
+        display:flex; align-items:center; justify-content:center;
+        appearance:none; position:absolute; left:50%; bottom:10px; z-index:1;
+        transform:translateX(-50%);
+        width:34px; height:34px;
+        border-radius:50%;
+        border:1px solid rgba(0,0,0,0.12);
+        background:rgba(250,250,247,0.92);
+        color:var(--black);
+        font-size:15px; line-height:1;
+        cursor:pointer;
+        box-shadow:0 4px 10px rgba(0,0,0,0.18);
+      }
+      .cat-preview-close:active{ opacity:0.7; }
     }
     section.cat h2{
       font-family:'Arial Black', 'Arial', sans-serif;
@@ -1861,7 +1882,7 @@
   <div class="cat-head"><h2>Interior</h2></div>
   <p class="cat-hint cat-hint-desktop">Hover a project for a sketch. Click the mark to open it.</p>
   <p class="cat-hint cat-hint-mobile">Tap a project to preview it, tap again to open it.</p>
-  <div class="cat-preview" id="catPreview-interior"><img alt=""></div>
+  <div class="cat-preview" id="catPreview-interior"><img alt=""><button type="button" class="cat-preview-close" aria-label="Close preview">&uarr;</button></div>
 
   <div class="index">
 
@@ -1947,7 +1968,7 @@
   <div class="cat-head"><h2>Product</h2></div>
   <p class="cat-hint cat-hint-desktop">Hover a project for a sketch. Click the mark to open it.</p>
   <p class="cat-hint cat-hint-mobile">Tap a project to preview it, tap again to open it.</p>
-  <div class="cat-preview" id="catPreview-product"><img alt=""></div>
+  <div class="cat-preview" id="catPreview-product"><img alt=""><button type="button" class="cat-preview-close" aria-label="Close preview">&uarr;</button></div>
 
   <div class="index">
 
@@ -2012,7 +2033,7 @@
   <div class="cat-head"><h2>Urban and Spatial</h2></div>
   <p class="cat-hint cat-hint-desktop">Hover a project for a sketch. Click the mark to open it.</p>
   <p class="cat-hint cat-hint-mobile">Tap a project to preview it, tap again to open it.</p>
-  <div class="cat-preview" id="catPreview-urban"><img alt=""></div>
+  <div class="cat-preview" id="catPreview-urban"><img alt=""><button type="button" class="cat-preview-close" aria-label="Close preview">&uarr;</button></div>
 
   <div class="index">
 
