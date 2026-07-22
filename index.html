@@ -401,7 +401,14 @@
         display:none;
         background:transparent;
       }
-      .cat-preview.show{ display:flex; }
+      /* .cat-preview.show (base rule, above) carries the desktop floating-
+         preview's transform:translateY(-20%) scale(1) - it's more specific
+         than the plain .cat-preview reset just above, so it still wins here
+         unless re-stated. Left unset, the shown preview visually floats up
+         by 20% of its own height while still reserving its full space in
+         the document flow, leaving that reclaimed space as a dead gap
+         before .index - which is exactly the "big empty space" bug. */
+      .cat-preview.show{ display:flex; transform:none; }
     }
     section.cat h2{
       font-family:'Arial Black', 'Arial', sans-serif;
