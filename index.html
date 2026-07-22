@@ -126,6 +126,36 @@
     @media (max-width:400px){
       .hero-draw-note{ font-size:8px; letter-spacing:0.02em; }
     }
+
+    /* ---------- PRINTS entry tab (hero edge) ---------- */
+    /* No box - just a line and a label sitting directly on the hero. The
+       line's top/height are set by JS (see the PRINTS entry tab alignment
+       script) to exactly match logoWrap's own rendered box, since the logo
+       is fluid-sized (clamp()/min()), not a fixed height. */
+    .side-tab{
+      position:absolute; right:28px; z-index:50;
+      display:flex; align-items:center;
+      gap:4px;
+      text-decoration:none;
+      transition:opacity .2s ease;
+    }
+    .side-tab:hover{ opacity:0.75; }
+    .hero.drawing .side-tab{ pointer-events:none; opacity:0; }
+    .side-tab-line{
+      width:1px; height:100%;
+      background:var(--black);
+      flex-shrink:0;
+    }
+    .side-tab-text{
+      writing-mode:vertical-rl;
+      font-family:'Arial Black','Arial',sans-serif; font-weight:900;
+      font-size:11px; letter-spacing:0.14em; text-transform:uppercase;
+      color:var(--black);
+    }
+    @media (max-width:640px){
+      .side-tab{ right:16px; }
+      .side-tab-text{ font-size:10px; }
+    }
     .logo-wrap{
       position:relative;
       /* The 72vh cap is what actually keeps this fitting on short, wide
@@ -1651,6 +1681,172 @@
       .cam-viewer-nav{ width:38px; height:38px; }
     }
 
+    /* ---------- PRINTS: wooden table page ---------- */
+    /* Sixth Stories-style page, but reached only from the hero's side tab,
+       not from the Stories list. Booklets scattered on a CSS-only wood
+       surface (no photo asset needed); click one to open the bespoke
+       page-flip reader below, reusing the shared getCoverSrc/getGalleryItems
+       probing helpers keyed as 'prints-{n}' / 'prints-{n}-cover'. */
+    #prints-page{
+      display:none;
+      position:fixed; inset:0; z-index:6000;
+      background:#1c1712;
+      overflow:hidden;
+    }
+    #prints-page.show{ display:block; }
+    body.pr-open{ overflow:hidden; }
+    .pr-topbar{
+      position:absolute; top:0; left:0; right:0; z-index:30;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:26px 8vw;
+      pointer-events:none;
+    }
+    .pr-topbar a{ pointer-events:auto; }
+    .pr-brand{
+      font-family:'Arial Black','Arial',sans-serif; font-weight:900;
+      font-size:14px; letter-spacing:0.02em; color:#fff; text-decoration:none;
+      mix-blend-mode:difference;
+    }
+    .pr-back{
+      font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+      color:#fff; text-decoration:none; mix-blend-mode:difference;
+    }
+    .pr-hint{
+      position:absolute; bottom:26px; left:0; right:0; z-index:30;
+      text-align:center; font-size:11px; font-style:italic; color:#fff;
+      opacity:0.65; pointer-events:none;
+      mix-blend-mode:difference;
+    }
+    .pr-table{
+      position:absolute; inset:0;
+      background-color:#1c1712;
+      background-image:
+        radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.07), transparent 60%),
+        url('renders/textures/prints-table.jpg');
+      background-size: cover, cover;
+      background-position: center, center;
+      background-repeat: no-repeat, no-repeat;
+    }
+    .pr-empty{
+      position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+      color:#fff; opacity:0.6; font-size:13px; font-style:italic;
+      text-align:center; width:80vw; max-width:360px;
+      mix-blend-mode:difference;
+      pointer-events:none;
+    }
+    .pr-booklet{
+      position:absolute;
+      width:min(15vw, 150px);
+      transform:translate(-50%,-50%) rotate(var(--pr-tilt,0deg));
+      cursor:pointer;
+      transition:transform .2s ease;
+      z-index:5;
+    }
+    .pr-booklet:hover{
+      transform:translate(-50%,-50%) rotate(var(--pr-tilt,0deg)) translateY(-8px);
+    }
+    .pr-booklet img{
+      display:block; width:100%; aspect-ratio:3/4; object-fit:cover;
+      border-radius:2px;
+      box-shadow:
+        0 1px 0 1px #f4f1e8, 0 3px 0 2px #e8e3d4, 0 5px 0 3px #ddd6c4,
+        0 14px 22px rgba(0,0,0,0.45);
+      transition:box-shadow .2s ease;
+    }
+    .pr-booklet:hover img{
+      box-shadow:
+        0 1px 0 1px #f4f1e8, 0 3px 0 2px #e8e3d4, 0 5px 0 3px #ddd6c4,
+        0 22px 30px rgba(0,0,0,0.5);
+    }
+
+    /* Reader: page-flip viewer for whichever booklet was opened. */
+    .pr-reader{
+      display:none;
+      position:absolute; inset:0; z-index:450;
+      align-items:center; justify-content:center;
+      background:rgba(10,7,4,0.94);
+    }
+    .pr-reader.show{ display:flex; }
+    .pr-page-wrap{
+      position:relative;
+      max-width:min(72vw, 620px); max-height:80vh;
+      display:flex; align-items:center; justify-content:center;
+      perspective:2200px;
+    }
+    .pr-page-img{
+      max-width:100%; max-height:80vh;
+      object-fit:contain; display:block;
+      box-shadow:0 20px 46px rgba(0,0,0,0.55);
+      user-select:none; -webkit-user-drag:none;
+    }
+    /* The flipping "leaf": one face (the page being left) sitting exactly
+       over the base image, sized to fill the now-known wrap box. Rotating
+       it past 90deg makes its own face disappear (backface-visibility), so
+       the base image underneath - already switched to the destination page
+       before the rotation starts - reads through as the new page settling
+       in. Cheaper than a true two-sided card since nothing needs to be
+       shown once the leaf has turned away. */
+    .pr-flip{
+      display:none;
+      position:absolute; inset:0;
+      transform-style:preserve-3d;
+      transform-origin:left center;
+      transform:rotateY(0deg);
+      pointer-events:none;
+    }
+    .pr-flip.animating{ display:block; }
+    .pr-flip.turning{ transition:transform .55s cubic-bezier(.45,.05,.15,1); }
+    .pr-flip-img{
+      width:100%; height:100%;
+      object-fit:contain; display:block;
+      backface-visibility:hidden;
+      box-shadow:0 20px 46px rgba(0,0,0,0.55);
+      user-select:none; -webkit-user-drag:none;
+    }
+    /* Booklet-to-reader opening transition: a cloned cover image, fixed to
+       the viewport, animated from the clicked booklet's exact position on
+       the table to the centred reader spot - see flyToReader(). */
+    .pr-fly-clone{
+      position:fixed; z-index:6600;
+      border-radius:2px;
+      box-shadow:0 20px 46px rgba(0,0,0,0.55);
+      object-fit:cover;
+      pointer-events:none;
+    }
+    .pr-fly-clone.flying{
+      transition:left .46s cubic-bezier(.2,.8,.2,1), top .46s cubic-bezier(.2,.8,.2,1),
+                 width .46s cubic-bezier(.2,.8,.2,1), height .46s cubic-bezier(.2,.8,.2,1),
+                 transform .46s cubic-bezier(.2,.8,.2,1);
+    }
+    .pr-reader-close{
+      position:absolute; top:18px; right:18px; z-index:465;
+      width:38px; height:38px; border-radius:50%;
+      background:transparent; border:1px solid rgba(255,255,255,0.35);
+      color:#fff; font-size:20px; line-height:1; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .pr-reader-close:hover{ background:rgba(255,255,255,0.12); }
+    .pr-reader-nav{
+      position:absolute; top:50%; transform:translateY(-50%); z-index:465;
+      width:44px; height:44px; border-radius:50%;
+      background:transparent; border:1px solid rgba(255,255,255,0.35);
+      color:#fff; font-size:18px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .pr-reader-nav:hover{ background:rgba(255,255,255,0.12); }
+    .pr-reader-prev{ left:16px; }
+    .pr-reader-next{ right:16px; }
+    .pr-page-counter{
+      position:absolute; bottom:22px; left:0; right:0; z-index:465;
+      text-align:center; color:#fff; opacity:0.75;
+      font-size:11px; letter-spacing:0.08em;
+    }
+    @media (max-width:640px){
+      .pr-booklet{ width:min(24vw, 130px); }
+      .pr-reader-nav{ width:38px; height:38px; }
+      .pr-page-wrap{ max-width:88vw; }
+    }
+
     /* ---------- GALLERY LIGHTBOX ---------- */
     .gallery-lightbox{
       display:none; position:fixed; inset:0; z-index:6500;
@@ -1861,6 +2057,11 @@
     <div class="label" id="lbl-writing">Stories</div>
     <div class="label" id="lbl-urban">Urban &amp; Spatial Design</div>
   </div>
+
+  <a href="#prints" class="side-tab" id="printsTab" aria-label="Prints">
+    <span class="side-tab-text">Prints</span>
+    <span class="side-tab-line" aria-hidden="true"></span>
+  </a>
 
   <canvas id="heroCanvas" aria-hidden="true"></canvas>
   <div class="hero-draw-controls">
@@ -2857,6 +3058,17 @@
   <div class="po-spine-wrap">
     <div class="po-spine-line"></div>
 
+    <section class="po-section" style="--dot-color:var(--blue);">
+      <span class="po-spine-dot"></span>
+      <h3>Languages</h3>
+      <div class="lang-grid">
+        <div><div class="lk">English</div><div class="lv">Fluent+</div></div>
+        <div><div class="lk">Turkish</div><div class="lv">Fluent</div></div>
+        <div><div class="lk">German</div><div class="lv">B2</div></div>
+        <div><div class="lk">Italian</div><div class="lv">B1</div></div>
+      </div>
+    </section>
+
     <section class="po-section" style="--dot-color:var(--red);">
       <span class="po-spine-dot"></span>
       <h3>About</h3>
@@ -2972,17 +3184,6 @@
         <div>High skill in creative ideation and concept creation through brainstorming and sketching.</div>
         <div>High observational skills and high curiosity in the subject and people.</div>
         <div>Enthusiasm and experience in collaboration and communication with colleagues of all sorts of backgrounds.</div>
-      </div>
-    </section>
-
-    <section class="po-section" style="--dot-color:var(--blue);">
-      <span class="po-spine-dot"></span>
-      <h3>Languages</h3>
-      <div class="lang-grid">
-        <div><div class="lk">English</div><div class="lv">Fluent+</div></div>
-        <div><div class="lk">Turkish</div><div class="lv">Fluent</div></div>
-        <div><div class="lk">German</div><div class="lv">B2</div></div>
-        <div><div class="lk">Italian</div><div class="lv">B1</div></div>
       </div>
     </section>
   </div>
@@ -3107,6 +3308,31 @@
         <div class="cam-vignette"></div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ===================== PRINTS: wooden table page ===================== -->
+<div id="prints-page" aria-hidden="true">
+  <div class="pr-topbar">
+    <a class="pr-brand" href="#top">JEAME</a>
+    <a class="pr-back" href="#top">&larr; Back</a>
+  </div>
+  <div class="pr-table" id="prTable">
+    <p class="pr-empty" id="prEmpty">Booklets coming soon.</p>
+  </div>
+  <p class="pr-hint" id="prHint">Click a booklet to open it.</p>
+
+  <div class="pr-reader" id="prReader" aria-hidden="true">
+    <button type="button" class="pr-reader-close" id="prReaderClose" aria-label="Close booklet">&times;</button>
+    <button type="button" class="pr-reader-nav pr-reader-prev" id="prReaderPrev" aria-label="Previous page">&larr;</button>
+    <div class="pr-page-wrap" id="prPageWrap">
+      <img class="pr-page-img" id="prPageImg" alt="">
+      <div class="pr-flip" id="prFlip" aria-hidden="true">
+        <img class="pr-flip-img" id="prFlipImg" alt="">
+      </div>
+    </div>
+    <button type="button" class="pr-reader-nav pr-reader-next" id="prReaderNext" aria-label="Next page">&rarr;</button>
+    <div class="pr-page-counter" id="prPageCounter">1 / 1</div>
   </div>
 </div>
 
@@ -4751,6 +4977,291 @@ const EE_IKEA_BLOCKS = [
     syncPhotographyPage();
   })();
 
+  // ---------- PRINTS: wooden table page ----------
+  // Booklets are scattered like Sketchbook's sketches (percentage position +
+  // random tilt, forgiving retry-based collision avoidance), but clicking one
+  // opens a page-flip reader instead of zooming it in place. Reuses the
+  // shared getCoverSrc/getGalleryItems probing helpers, keyed 'prints-{n}'
+  // for a booklet's cover (renders/prints-{n}-cover.ext) and 'prints-{n}-{p}'
+  // for its interior pages (renders/prints-{n}-{p}.ext) - shows the
+  // empty-state message until real booklets are dropped in, same as every
+  // other Stories page's placeholder handling.
+  (function(){
+    const page = document.getElementById('prints-page');
+    const table = document.getElementById('prTable');
+    const emptyMsg = document.getElementById('prEmpty');
+    if(!page || !table) return;
+
+    const reader = document.getElementById('prReader');
+    const readerClose = document.getElementById('prReaderClose');
+    const readerPrev = document.getElementById('prReaderPrev');
+    const readerNext = document.getElementById('prReaderNext');
+    const pageWrap = document.getElementById('prPageWrap');
+    const pageImg = document.getElementById('prPageImg');
+    const flip = document.getElementById('prFlip');
+    const flipImg = document.getElementById('prFlipImg');
+    const pageCounter = document.getElementById('prPageCounter');
+
+    const MAX_BOOKLETS = 12;
+    const SCATTER_MARGIN_X = 12, SCATTER_MARGIN_Y = 14;
+    const FLIP_MS = 550;
+    const FLY_MS = 460;
+    // A booklet can easily run past the shared getGalleryItems()'s 24-slot
+    // cap (fine for a small project gallery, not for a scanned book) - so
+    // pages are probed directly via the lower-level resolveGalleryItem()
+    // instead, uncapped up to this many, cached the same way.
+    const PAGE_MAX_CHECK = 150;
+    const bookletPagesCache = new Map();
+    function getBookletPages(n){
+      const key = 'prints-' + n;
+      if(!bookletPagesCache.has(key)){
+        bookletPagesCache.set(key, (async () => {
+          const slots = await Promise.all(
+            Array.from({length: PAGE_MAX_CHECK}, (_, i) => resolveGalleryItem(key, i + 1))
+          );
+          const found = [];
+          let misses = 0;
+          for(const item of slots){
+            if(item){ found.push(item); misses = 0; }
+            else {
+              misses++;
+              if(misses >= (found.length ? 2 : 3)) break;
+            }
+          }
+          return found;
+        })());
+      }
+      return bookletPagesCache.get(key);
+    }
+
+    let loaded = false;
+    let currentPages = [];
+    let currentIndex = 0;
+    let flipping = false;
+
+    function pickPosition(placed){
+      let x, y, tries = 0;
+      do{
+        x = SCATTER_MARGIN_X + Math.random() * (100 - SCATTER_MARGIN_X * 2);
+        y = SCATTER_MARGIN_Y + Math.random() * (100 - SCATTER_MARGIN_Y * 2);
+        tries++;
+      } while(tries < 12 && placed.some(p => Math.hypot(p.x - x, p.y - y) < 20));
+      placed.push({x, y});
+      return {x, y};
+    }
+
+    function updateChrome(){
+      const multi = currentPages.length > 1;
+      readerPrev.style.display = multi ? 'flex' : 'none';
+      readerNext.style.display = multi ? 'flex' : 'none';
+      pageCounter.textContent = (currentIndex + 1) + ' / ' + currentPages.length;
+    }
+
+    // Instant jump, no flip animation - used to open on the cover and to
+    // reset when the reader closes.
+    function showPage(index){
+      if(!currentPages.length) return;
+      currentIndex = (index + currentPages.length) % currentPages.length;
+      pageImg.src = currentPages[currentIndex].src;
+      updateChrome();
+    }
+
+    // Animated page turn for prev/next/swipe/arrow-key navigation. dir is 1
+    // for forward (leaf turns away to the left, origin on the left spine) or
+    // -1 for backward (mirrored). The destination page is swapped into the
+    // static base image *before* the leaf starts rotating, so once the leaf
+    // passes 90deg and its own face disappears (backface-visibility:hidden),
+    // the correct page is already sitting there underneath.
+    function flipTo(index, dir){
+      if(!currentPages.length || flipping) return;
+      const target = (index + currentPages.length) % currentPages.length;
+      if(target === currentIndex) return;
+      flipping = true;
+      flipImg.src = pageImg.src;
+      pageImg.src = currentPages[target].src;
+      flip.style.transformOrigin = dir > 0 ? 'left center' : 'right center';
+      flip.classList.remove('turning');
+      flip.style.transform = 'rotateY(0deg)';
+      flip.classList.add('animating');
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        flip.classList.add('turning');
+        flip.style.transform = dir > 0 ? 'rotateY(-180deg)' : 'rotateY(180deg)';
+      }));
+      setTimeout(() => {
+        flip.classList.remove('animating', 'turning');
+        flip.style.transform = 'rotateY(0deg)';
+        currentIndex = target;
+        updateChrome();
+        flipping = false;
+      }, FLIP_MS);
+    }
+
+    function computeTargetRect(){
+      const maxW = Math.min(window.innerWidth * 0.72, 620);
+      const maxH = window.innerHeight * 0.8;
+      const size = Math.min(maxW, maxH);
+      return {
+        left: (window.innerWidth - size) / 2,
+        top: (window.innerHeight - size) / 2,
+        width: size, height: size
+      };
+    }
+
+    // Clones the clicked cover and flies it from its exact scattered spot on
+    // the table to where the reader's page will land, so the booklet reads
+    // as physically lifting off the table and opening dead centre - the real
+    // reader only appears once this (and the page fetch) has finished.
+    function flyToReader(bookletEl, coverSrc){
+      return new Promise(resolve => {
+        const startRect = bookletEl.getBoundingClientRect();
+        const tilt = bookletEl.style.getPropertyValue('--pr-tilt') || '0deg';
+        const clone = document.createElement('img');
+        clone.src = coverSrc;
+        clone.alt = '';
+        clone.className = 'pr-fly-clone';
+        clone.style.left = startRect.left + 'px';
+        clone.style.top = startRect.top + 'px';
+        clone.style.width = startRect.width + 'px';
+        clone.style.height = startRect.height + 'px';
+        clone.style.transform = 'rotate(' + tilt + ')';
+        document.body.appendChild(clone);
+
+        const target = computeTargetRect();
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          clone.classList.add('flying');
+          clone.style.left = target.left + 'px';
+          clone.style.top = target.top + 'px';
+          clone.style.width = target.width + 'px';
+          clone.style.height = target.height + 'px';
+          clone.style.transform = 'rotate(0deg)';
+        }));
+        setTimeout(() => { clone.remove(); resolve(); }, FLY_MS);
+      });
+    }
+
+    function openBooklet(pages){
+      if(!pages.length) return;
+      currentPages = pages;
+      reader.classList.add('show');
+      reader.setAttribute('aria-hidden', 'false');
+      showPage(0);
+    }
+    function closeReader(){
+      if(!reader.classList.contains('show')) return;
+      reader.classList.remove('show');
+      reader.setAttribute('aria-hidden', 'true');
+      pageImg.removeAttribute('src');
+      flip.classList.remove('animating', 'turning');
+      flip.style.transform = 'rotateY(0deg)';
+      flipping = false;
+      currentPages = [];
+    }
+
+    function scatterBooklets(booklets){
+      const placed = [];
+      booklets.forEach(({n, cover}) => {
+        const el = document.createElement('div');
+        el.className = 'pr-booklet';
+        el.style.setProperty('--pr-tilt', (Math.random() * 12 - 6).toFixed(1) + 'deg');
+        const {x, y} = pickPosition(placed);
+        el.style.left = x + '%';
+        el.style.top = y + '%';
+        const img = document.createElement('img');
+        img.alt = ''; img.loading = 'lazy'; img.src = cover;
+        el.appendChild(img);
+        el.addEventListener('click', () => {
+          const pagesPromise = (async () => [{src: cover, type:'image'}, ...(await getBookletPages(n))])();
+          const flyPromise = flyToReader(el, cover);
+          Promise.all([flyPromise, pagesPromise]).then(([, pages]) => openBooklet(pages));
+        });
+        table.appendChild(el);
+      });
+    }
+
+    // All slots probed in parallel up front (see loadSketches for the same
+    // reasoning) rather than awaited one at a time, which is what would make
+    // the table feel slow to fill in.
+    async function loadBooklets(){
+      if(loaded) return;
+      loaded = true;
+      const slots = await Promise.all(
+        Array.from({length: MAX_BOOKLETS}, (_, i) => getCoverSrc('prints-' + (i + 1)))
+      );
+      const found = [];
+      let misses = 0;
+      for(let i = 0; i < slots.length; i++){
+        if(slots[i]){ found.push({n: i + 1, cover: slots[i]}); misses = 0; }
+        else {
+          misses++;
+          if(misses >= (found.length ? 2 : 3)) break;
+        }
+      }
+      if(found.length){
+        emptyMsg.style.display = 'none';
+        scatterBooklets(found);
+      }
+    }
+
+    readerClose.addEventListener('click', closeReader);
+    readerPrev.addEventListener('click', () => flipTo(currentIndex - 1, -1));
+    readerNext.addEventListener('click', () => flipTo(currentIndex + 1, 1));
+    reader.addEventListener('click', e => { if(e.target === reader) closeReader(); });
+
+    // Swipe left/right to page through, mirroring Photography's viewer.
+    let touchStartX = 0, touchStartY = 0, touchActive = false;
+    const SWIPE_THRESHOLD = 40;
+    reader.addEventListener('touchstart', e => {
+      if(!e.touches[0]) return;
+      touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; touchActive = true;
+    }, {passive:true});
+    reader.addEventListener('touchend', e => {
+      if(!touchActive || !e.changedTouches[0]) return;
+      touchActive = false;
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      if(Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy)){
+        if(dx < 0) flipTo(currentIndex + 1, 1); else flipTo(currentIndex - 1, -1);
+      }
+    });
+
+    window.addEventListener('keydown', e => {
+      if(!page.classList.contains('show') || !reader.classList.contains('show')) return;
+      if(e.key === 'Escape') closeReader();
+      else if(e.key === 'ArrowLeft') flipTo(currentIndex - 1, -1);
+      else if(e.key === 'ArrowRight') flipTo(currentIndex + 1, 1);
+    });
+
+    function syncPrintsPage(){
+      if(location.hash === '#prints'){
+        page.classList.add('show');
+        page.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('pr-open');
+        window.scrollTo(0,0);
+        loadBooklets();
+      } else {
+        page.classList.remove('show');
+        page.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('pr-open');
+        closeReader();
+      }
+    }
+
+    document.querySelector('#prints-page .pr-back').addEventListener('click', function(e){
+      e.preventDefault();
+      if(reader.classList.contains('show')){ closeReader(); return; }
+      page.classList.remove('show');
+      location.hash = '';
+    });
+    document.querySelector('#prints-page .pr-brand').addEventListener('click', function(e){
+      e.preventDefault();
+      page.classList.remove('show');
+      location.hash = '';
+    });
+
+    window.addEventListener('hashchange', syncPrintsPage);
+    syncPrintsPage();
+  })();
+
   // ---------- 3D: sketch globe page ----------
   // A globe assembled from the renders themselves, in real 3D: each tile is
   // rotated to its lat/lon and pushed outward along its own normal
@@ -5040,6 +5551,38 @@ const EE_IKEA_BLOCKS = [
 
     window.addEventListener('hashchange', syncThreedPage);
     syncThreedPage();
+  })();
+</script>
+
+<script>
+  // ---------- PRINTS entry tab: align to hero logo height ----------
+  // The tab's line has to span exactly the logo *graphic's* own rendered box
+  // (from its bottom to its top), which is fluid-sized (clamp()/min()), not a
+  // fixed height - so it's measured rather than hardcoded, same reasoning as
+  // the hero drawing canvas below sizing itself off getBoundingClientRect().
+  // Deliberately measuring svg.logo itself, not #logoWrap: logoWrap has its
+  // own padding-top above the svg (see .logo-wrap CSS) that isn't part of
+  // the visible logo, so measuring the wrapper put the line's top edge
+  // noticeably above where the logo actually starts.
+  (function(){
+    const hero = document.querySelector('.hero');
+    const logoEl = document.querySelector('svg.logo');
+    const tab = document.getElementById('printsTab');
+    if(!hero || !logoEl || !tab) return;
+
+    function alignPrintsTab(){
+      const heroRect = hero.getBoundingClientRect();
+      const logoRect = logoEl.getBoundingClientRect();
+      tab.style.top = (logoRect.top - heroRect.top) + 'px';
+      tab.style.height = logoRect.height + 'px';
+    }
+
+    alignPrintsTab();
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(alignPrintsTab, 200);
+    });
   })();
 </script>
 
