@@ -390,25 +390,31 @@
       body.cursor-preview-mode .cat-preview.show{ opacity:1; }
     }
     @media (max-width:900px){
-      /* Sits directly above the project list itself (moved there in the
-         markup, right before .index) rather than up under the heading -
-         a tap-to-preview panel reads better right next to what it's
-         previewing than stranded above the section's description. */
+      /* A tap-to-preview panel used to sit inline right before .index,
+         pushing the list down - which meant a scrollIntoView() was needed
+         to bring it on screen on a long list, yanking the page's scroll
+         position around. Now it's a fixed panel that drops down from the
+         top edge instead: always on screen the instant it's shown, doesn't
+         move the list or the scroll position at all, and never needs the
+         scroll-into-view trick. */
       .cat-preview{
-        position:static; z-index:auto;
-        width:100%; height:auto; aspect-ratio:4/3;
-        margin:0 0 32px; opacity:1; transform:none;
-        display:none;
-        background:transparent;
+        position:fixed; top:0; left:0; right:0; z-index:500;
+        width:100%; height:auto; aspect-ratio:4/3; max-height:42vh;
+        margin:0; opacity:0; transform:translateY(-100%);
+        box-sizing:border-box;
+        background:var(--paper);
+        box-shadow:0 14px 32px rgba(0,0,0,0.22);
+        transition:transform .32s cubic-bezier(.22,1,.36,1), opacity .2s ease;
+        /* Base rule (desktop) sets pointer-events:none so the floating
+           cursor-preview never blocks clicking the row underneath it. That
+           doesn't apply here - this panel now sits fixed on top of other
+           page content, so it needs to actually catch taps: both to stop
+           them falling through to whatever's underneath, and so tapping the
+           panel itself counts as "outside the list" and dismisses it, same
+           as tapping anywhere else. */
+        pointer-events:auto;
       }
-      /* .cat-preview.show (base rule, above) carries the desktop floating-
-         preview's transform:translateY(-20%) scale(1) - it's more specific
-         than the plain .cat-preview reset just above, so it still wins here
-         unless re-stated. Left unset, the shown preview visually floats up
-         by 20% of its own height while still reserving its full space in
-         the document flow, leaving that reclaimed space as a dead gap
-         before .index - which is exactly the "big empty space" bug. */
-      .cat-preview.show{ display:flex; transform:none; }
+      .cat-preview.show{ opacity:1; transform:translateY(0); }
     }
     section.cat h2{
       font-family:'Arial Black', 'Arial', sans-serif;
@@ -2410,14 +2416,11 @@
             if(tappedRow) tappedRow.classList.remove('row-tapped');
             tappedRow = row;
             row.classList.add('row-tapped');
+            // Fixed to the top of the screen (see .cat-preview's
+            // max-width:900px rules), so it's already on screen the instant
+            // it shows - no need to scroll the list to bring it into view,
+            // and the person's scroll position in the list is left alone.
             showPreviewFor(row);
-            // The preview panel lives up by the section title, so on a long
-            // list it can end up off-screen above whatever row was actually
-            // tapped. Bring it into view instead of leaving the person to
-            // scroll back up and hunt for it.
-            requestAnimationFrame(() => {
-              catPreview.scrollIntoView({ behavior:'smooth', block:'center' });
-            });
           }
           // Already lit from a previous tap: let this second tap navigate.
         });
