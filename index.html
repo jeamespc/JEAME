@@ -1745,9 +1745,13 @@
     .pr-booklet:hover{
       transform:translate(-50%,-50%) rotate(var(--pr-tilt,0deg)) translateY(-8px);
     }
+    /* --pr-aspect is set from the cover's own naturalWidth/naturalHeight once
+       it loads (see scatterBooklets()), so a booklet always sits on the
+       table at its real page shape (square for this square-format
+       portfolio) instead of a fixed portrait crop. Corners are left sharp,
+       like an actual printed book, not rounded. */
     .pr-booklet img{
-      display:block; width:100%; aspect-ratio:3/4; object-fit:cover;
-      border-radius:2px;
+      display:block; width:100%; aspect-ratio:var(--pr-aspect, 1); object-fit:cover;
       box-shadow:
         0 1px 0 1px #f4f1e8, 0 3px 0 2px #e8e3d4, 0 5px 0 3px #ddd6c4,
         0 14px 22px rgba(0,0,0,0.45);
@@ -1767,30 +1771,47 @@
       background:rgba(10,7,4,0.94);
     }
     .pr-reader.show{ display:flex; }
+    /* Width/height are set in px by sizeReader(), from the booklet's real
+       page aspect ratio - not a fixed max-width/height box - so the reader
+       always matches the source material's actual proportions (square for
+       this portfolio) rather than forcing every booklet into one shape. */
     .pr-page-wrap{
       position:relative;
-      max-width:min(72vw, 620px); max-height:80vh;
-      display:flex; align-items:center; justify-content:center;
+      display:flex;
       perspective:2200px;
     }
-    .pr-page-img{
-      max-width:100%; max-height:80vh;
-      object-fit:contain; display:block;
-      box-shadow:0 20px 46px rgba(0,0,0,0.55);
+    /* A thin spine shadow down the centre, like the gutter of an open book. */
+    .pr-page-wrap::after{
+      content:'';
+      position:absolute; top:0; bottom:0; left:50%; width:16px; margin-left:-8px;
+      background:linear-gradient(90deg, rgba(0,0,0,0.28), rgba(0,0,0,0) 45%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.28));
+      pointer-events:none; z-index:2;
+    }
+    /* Left/right page slots. Cover and back cover are the outer covers of
+       the book, so they only ever occupy one slot (right for the cover,
+       left for the back) - the other slot is present in the layout (so the
+       shown page stays on the correct half) but invisible. Every interior
+       spread after the cover fills both. */
+    .pr-slot{
+      flex:0 0 50%; height:100%;
+      object-fit:cover; display:block;
       user-select:none; -webkit-user-drag:none;
     }
+    .pr-slot.empty{ visibility:hidden; }
+    .pr-slot-left{ box-shadow:-6px 0 20px rgba(0,0,0,0.35), 0 20px 46px rgba(0,0,0,0.55); }
+    .pr-slot-right{ box-shadow:6px 0 20px rgba(0,0,0,0.35), 0 20px 46px rgba(0,0,0,0.55); }
     /* The flipping "leaf": one face (the page being left) sitting exactly
-       over the base image, sized to fill the now-known wrap box. Rotating
-       it past 90deg makes its own face disappear (backface-visibility), so
-       the base image underneath - already switched to the destination page
-       before the rotation starts - reads through as the new page settling
-       in. Cheaper than a true two-sided card since nothing needs to be
-       shown once the leaf has turned away. */
+       over whichever slot is the leading edge of the turn (right slot going
+       forward, left slot going back), sized to that one slot. Rotating it
+       past 90deg makes its own face disappear (backface-visibility), so the
+       slots underneath - already switched to the destination spread before
+       the rotation starts - read through as the new spread settling in.
+       Cheaper than a true two-sided card since nothing needs to be shown
+       once the leaf has turned away. */
     .pr-flip{
       display:none;
-      position:absolute; inset:0;
+      position:absolute; top:0; width:50%; height:100%; z-index:3;
       transform-style:preserve-3d;
-      transform-origin:left center;
       transform:rotateY(0deg);
       pointer-events:none;
     }
@@ -1798,25 +1819,25 @@
     .pr-flip.turning{ transition:transform .55s cubic-bezier(.45,.05,.15,1); }
     .pr-flip-img{
       width:100%; height:100%;
-      object-fit:contain; display:block;
+      object-fit:cover; display:block;
       backface-visibility:hidden;
       box-shadow:0 20px 46px rgba(0,0,0,0.55);
       user-select:none; -webkit-user-drag:none;
     }
     /* Booklet-to-reader opening transition: a cloned cover image, fixed to
        the viewport, animated from the clicked booklet's exact position on
-       the table to the centred reader spot - see flyToReader(). */
+       the table to where it'll dock as the reader's right-hand page - see
+       flyToReader(). Sharp corners throughout, to match the real book. */
     .pr-fly-clone{
       position:fixed; z-index:6600;
-      border-radius:2px;
       box-shadow:0 20px 46px rgba(0,0,0,0.55);
       object-fit:cover;
       pointer-events:none;
     }
     .pr-fly-clone.flying{
-      transition:left .46s cubic-bezier(.2,.8,.2,1), top .46s cubic-bezier(.2,.8,.2,1),
-                 width .46s cubic-bezier(.2,.8,.2,1), height .46s cubic-bezier(.2,.8,.2,1),
-                 transform .46s cubic-bezier(.2,.8,.2,1);
+      /* Only transform animates (see flyToReader()) - compositor-only,
+         no per-frame layout/paint. */
+      transition:transform .46s cubic-bezier(.2,.8,.2,1);
     }
     .pr-reader-close{
       position:absolute; top:18px; right:18px; z-index:465;
@@ -1844,7 +1865,6 @@
     @media (max-width:640px){
       .pr-booklet{ width:min(24vw, 130px); }
       .pr-reader-nav{ width:38px; height:38px; }
-      .pr-page-wrap{ max-width:88vw; }
     }
 
     /* ---------- GALLERY LIGHTBOX ---------- */
@@ -3326,7 +3346,8 @@
     <button type="button" class="pr-reader-close" id="prReaderClose" aria-label="Close booklet">&times;</button>
     <button type="button" class="pr-reader-nav pr-reader-prev" id="prReaderPrev" aria-label="Previous page">&larr;</button>
     <div class="pr-page-wrap" id="prPageWrap">
-      <img class="pr-page-img" id="prPageImg" alt="">
+      <img class="pr-slot pr-slot-left" id="prImgLeft" alt="">
+      <img class="pr-slot pr-slot-right" id="prImgRight" alt="">
       <div class="pr-flip" id="prFlip" aria-hidden="true">
         <img class="pr-flip-img" id="prFlipImg" alt="">
       </div>
@@ -4997,7 +5018,8 @@ const EE_IKEA_BLOCKS = [
     const readerPrev = document.getElementById('prReaderPrev');
     const readerNext = document.getElementById('prReaderNext');
     const pageWrap = document.getElementById('prPageWrap');
-    const pageImg = document.getElementById('prPageImg');
+    const imgLeft = document.getElementById('prImgLeft');
+    const imgRight = document.getElementById('prImgRight');
     const flip = document.getElementById('prFlip');
     const flipImg = document.getElementById('prFlipImg');
     const pageCounter = document.getElementById('prPageCounter');
@@ -5008,16 +5030,32 @@ const EE_IKEA_BLOCKS = [
     const FLY_MS = 460;
     // A booklet can easily run past the shared getGalleryItems()'s 24-slot
     // cap (fine for a small project gallery, not for a scanned book) - so
-    // pages are probed directly via the lower-level resolveGalleryItem()
-    // instead, uncapped up to this many, cached the same way.
-    const PAGE_MAX_CHECK = 150;
+    // pages are probed directly, uncapped up to this many, cached the same
+    // way. resolveGalleryItem() tries all 3 GALLERY_EXTENSIONS per slot,
+    // which at this cap meant up to 450 concurrent Image() probes firing in
+    // one burst the first time a booklet was opened (cache empty) - visibly
+    // janking the zoom-in that starts at the same moment. Every page of a
+    // given booklet is exported in one batch and shares one extension, so
+    // it's read once off the already-resolved cover src and reused for
+    // every page slot instead, cutting that burst by 3x.
+    const PAGE_MAX_CHECK = 120;
     const bookletPagesCache = new Map();
-    function getBookletPages(n){
+    function extFromSrc(src){
+      const m = /\.([a-z0-9]+)$/i.exec(src || '');
+      return m ? m[1] : null;
+    }
+    function getBookletPages(n, knownExt){
       const key = 'prints-' + n;
       if(!bookletPagesCache.has(key)){
         bookletPagesCache.set(key, (async () => {
+          const probeOne = knownExt
+            ? async (i) => {
+                const src = 'renders/' + key + '-' + i + '.' + knownExt;
+                return (await probeImage(src)) ? {src, type: 'image'} : null;
+              }
+            : (i) => resolveGalleryItem(key, i);
           const slots = await Promise.all(
-            Array.from({length: PAGE_MAX_CHECK}, (_, i) => resolveGalleryItem(key, i + 1))
+            Array.from({length: PAGE_MAX_CHECK}, (_, i) => probeOne(i + 1))
           );
           const found = [];
           let misses = 0;
@@ -5035,8 +5073,12 @@ const EE_IKEA_BLOCKS = [
     }
 
     let loaded = false;
+    // currentPages = [cover, ...interior pages (even count, split spread
+    // halves), back]. position 0 = cover, 1..N = interior spreads, N+1 =
+    // back - see slotsFor().
     let currentPages = [];
-    let currentIndex = 0;
+    let position = 0;
+    let pageAspect = 1; // width/height of ONE page, read off the real cover
     let flipping = false;
 
     function pickPosition(placed){
@@ -5050,36 +5092,88 @@ const EE_IKEA_BLOCKS = [
       return {x, y};
     }
 
-    function updateChrome(){
-      const multi = currentPages.length > 1;
-      readerPrev.style.display = multi ? 'flex' : 'none';
-      readerNext.style.display = multi ? 'flex' : 'none';
-      pageCounter.textContent = (currentIndex + 1) + ' / ' + currentPages.length;
+    function lastPosition(){
+      const interior = Math.max(0, currentPages.length - 2);
+      const spreads = Math.ceil(interior / 2);
+      return currentPages.length <= 1 ? 0 : (1 + spreads);
     }
 
-    // Instant jump, no flip animation - used to open on the cover and to
-    // reset when the reader closes.
-    function showPage(index){
+    // What belongs in the left/right slot at a given position. The cover
+    // only ever occupies the right slot (like a closed book's front) and
+    // the back cover only the left (like the last thing you see flipping
+    // all the way through) - every position in between is a real spread.
+    function slotsFor(pos){
+      if(currentPages.length <= 1) return {left: null, right: currentPages[0] || null};
+      const last = lastPosition();
+      if(pos === 0) return {left: null, right: currentPages[0]};
+      if(pos === last) return {left: currentPages[currentPages.length - 1], right: null};
+      const l = 1 + (pos - 1) * 2;
+      return {left: currentPages[l], right: currentPages[l + 1] || null};
+    }
+
+    function setSlot(imgEl, item){
+      if(item){
+        imgEl.src = item.src;
+        imgEl.classList.remove('empty');
+      } else {
+        imgEl.removeAttribute('src');
+        imgEl.classList.add('empty');
+      }
+    }
+
+    function updateChrome(){
+      const last = lastPosition();
+      readerPrev.style.display = last > 0 ? 'flex' : 'none';
+      readerNext.style.display = last > 0 ? 'flex' : 'none';
+      pageCounter.textContent = (position + 1) + ' / ' + (last + 1);
+    }
+
+    // Sizes the reader in real px from the booklet's own page aspect ratio
+    // (width:height of ONE page) - a spread is twice as wide as one page -
+    // capped the same way the fly-in target is computed, so opening never
+    // jumps in size. Re-run on resize while a booklet is open.
+    function sizeReader(){
+      const maxW = Math.min(window.innerWidth * 0.88, 1040);
+      const maxH = window.innerHeight * 0.8;
+      let w = maxW, h = w / (pageAspect * 2);
+      if(h > maxH){ h = maxH; w = h * pageAspect * 2; }
+      pageWrap.style.width = w + 'px';
+      pageWrap.style.height = h + 'px';
+    }
+
+    // Instant jump, no flip animation - used to open the reader and to
+    // reset when it closes.
+    function showPosition(pos){
       if(!currentPages.length) return;
-      currentIndex = (index + currentPages.length) % currentPages.length;
-      pageImg.src = currentPages[currentIndex].src;
+      position = Math.max(0, Math.min(lastPosition(), pos));
+      const {left, right} = slotsFor(position);
+      setSlot(imgLeft, left);
+      setSlot(imgRight, right);
       updateChrome();
     }
 
-    // Animated page turn for prev/next/swipe/arrow-key navigation. dir is 1
-    // for forward (leaf turns away to the left, origin on the left spine) or
-    // -1 for backward (mirrored). The destination page is swapped into the
-    // static base image *before* the leaf starts rotating, so once the leaf
-    // passes 90deg and its own face disappears (backface-visibility:hidden),
-    // the correct page is already sitting there underneath.
-    function flipTo(index, dir){
+    // Animated page turn for prev/next/swipe/arrow-key navigation. dir 1 =
+    // forward: the right-hand leaf turns away (origin on the shared spine)
+    // to reveal the next spread. dir -1 = backward: the left-hand leaf turns
+    // the other way. Both destination slots are swapped in *before* the leaf
+    // starts rotating, so once it passes 90deg and its own face disappears
+    // (backface-visibility:hidden), the correct spread is already sitting
+    // there underneath.
+    function flipTo(pos, dir){
       if(!currentPages.length || flipping) return;
-      const target = (index + currentPages.length) % currentPages.length;
-      if(target === currentIndex) return;
+      const target = Math.max(0, Math.min(lastPosition(), pos));
+      if(target === position) return;
       flipping = true;
-      flipImg.src = pageImg.src;
-      pageImg.src = currentPages[target].src;
+
+      const leafImg = dir > 0 ? imgRight : imgLeft;
+      flipImg.src = leafImg.src;
+      flip.style.left = dir > 0 ? '50%' : '0';
       flip.style.transformOrigin = dir > 0 ? 'left center' : 'right center';
+
+      const {left, right} = slotsFor(target);
+      setSlot(imgLeft, left);
+      setSlot(imgRight, right);
+
       flip.classList.remove('turning');
       flip.style.transform = 'rotateY(0deg)';
       flip.classList.add('animating');
@@ -5090,67 +5184,85 @@ const EE_IKEA_BLOCKS = [
       setTimeout(() => {
         flip.classList.remove('animating', 'turning');
         flip.style.transform = 'rotateY(0deg)';
-        currentIndex = target;
+        position = target;
         updateChrome();
         flipping = false;
       }, FLIP_MS);
     }
 
-    function computeTargetRect(){
-      const maxW = Math.min(window.innerWidth * 0.72, 620);
+    // Where the clicked cover should land: docked into the right-hand slot
+    // of the eventual reader box, at that booklet's own aspect ratio.
+    function computeSlotRect(aspect, which){
+      const maxW = Math.min(window.innerWidth * 0.88, 1040);
       const maxH = window.innerHeight * 0.8;
-      const size = Math.min(maxW, maxH);
+      let w = maxW, h = w / (aspect * 2);
+      if(h > maxH){ h = maxH; w = h * aspect * 2; }
+      const slotW = w / 2;
+      const spreadLeft = (window.innerWidth - w) / 2;
+      const top = (window.innerHeight - h) / 2;
       return {
-        left: (window.innerWidth - size) / 2,
-        top: (window.innerHeight - size) / 2,
-        width: size, height: size
+        left: which === 'left' ? spreadLeft : spreadLeft + slotW,
+        top, width: slotW, height: h
       };
     }
 
     // Clones the clicked cover and flies it from its exact scattered spot on
-    // the table to where the reader's page will land, so the booklet reads
-    // as physically lifting off the table and opening dead centre - the real
-    // reader only appears once this (and the page fetch) has finished.
-    function flyToReader(bookletEl, coverSrc){
+    // the table to where the reader's cover slot will land, so the booklet
+    // reads as physically lifting off the table and opening dead centre -
+    // the real reader only appears once this (and the page fetch) has
+    // finished.
+    // The clone's own box (left/top/width/height) is set once, to the
+    // TARGET rect, and never touched again - only its transform animates.
+    // Animating left/top/width/height directly (the first version of this)
+    // forces a layout + paint on every frame; translate+scale is
+    // compositor-only, which is what actually made this smooth instead of
+    // fighting the getBookletPages() probe burst for main-thread time.
+    function flyToReader(bookletEl, coverSrc, aspect){
       return new Promise(resolve => {
         const startRect = bookletEl.getBoundingClientRect();
         const tilt = bookletEl.style.getPropertyValue('--pr-tilt') || '0deg';
+        const target = computeSlotRect(aspect, 'right');
+
         const clone = document.createElement('img');
         clone.src = coverSrc;
         clone.alt = '';
         clone.className = 'pr-fly-clone';
-        clone.style.left = startRect.left + 'px';
-        clone.style.top = startRect.top + 'px';
-        clone.style.width = startRect.width + 'px';
-        clone.style.height = startRect.height + 'px';
-        clone.style.transform = 'rotate(' + tilt + ')';
+        clone.style.left = target.left + 'px';
+        clone.style.top = target.top + 'px';
+        clone.style.width = target.width + 'px';
+        clone.style.height = target.height + 'px';
+        clone.style.transformOrigin = 'top left';
+
+        const dx = startRect.left - target.left;
+        const dy = startRect.top - target.top;
+        const sx = startRect.width / target.width;
+        const sy = startRect.height / target.height;
+        clone.style.transform = `translate(${dx}px, ${dy}px) scale(${sx}, ${sy}) rotate(${tilt})`;
         document.body.appendChild(clone);
 
-        const target = computeTargetRect();
         requestAnimationFrame(() => requestAnimationFrame(() => {
           clone.classList.add('flying');
-          clone.style.left = target.left + 'px';
-          clone.style.top = target.top + 'px';
-          clone.style.width = target.width + 'px';
-          clone.style.height = target.height + 'px';
-          clone.style.transform = 'rotate(0deg)';
+          clone.style.transform = 'translate(0px, 0px) scale(1, 1) rotate(0deg)';
         }));
         setTimeout(() => { clone.remove(); resolve(); }, FLY_MS);
       });
     }
 
-    function openBooklet(pages){
+    function openBooklet(pages, aspect){
       if(!pages.length) return;
       currentPages = pages;
+      pageAspect = aspect || 1;
+      sizeReader();
       reader.classList.add('show');
       reader.setAttribute('aria-hidden', 'false');
-      showPage(0);
+      showPosition(0);
     }
     function closeReader(){
       if(!reader.classList.contains('show')) return;
       reader.classList.remove('show');
       reader.setAttribute('aria-hidden', 'true');
-      pageImg.removeAttribute('src');
+      setSlot(imgLeft, null);
+      setSlot(imgRight, null);
       flip.classList.remove('animating', 'turning');
       flip.style.transform = 'rotateY(0deg)';
       flipping = false;
@@ -5167,12 +5279,22 @@ const EE_IKEA_BLOCKS = [
         el.style.left = x + '%';
         el.style.top = y + '%';
         const img = document.createElement('img');
-        img.alt = ''; img.loading = 'lazy'; img.src = cover;
+        img.alt = ''; img.loading = 'lazy';
+        // The booklet's on-table shape should match its real page ratio
+        // (square for this square-format portfolio) rather than a fixed
+        // portrait crop - read it once the cover has actually loaded.
+        img.addEventListener('load', () => {
+          if(img.naturalWidth && img.naturalHeight){
+            el.style.setProperty('--pr-aspect', (img.naturalWidth / img.naturalHeight).toFixed(4));
+          }
+        });
+        img.src = cover;
         el.appendChild(img);
         el.addEventListener('click', () => {
-          const pagesPromise = (async () => [{src: cover, type:'image'}, ...(await getBookletPages(n))])();
-          const flyPromise = flyToReader(el, cover);
-          Promise.all([flyPromise, pagesPromise]).then(([, pages]) => openBooklet(pages));
+          const pagesPromise = (async () => [{src: cover, type:'image'}, ...(await getBookletPages(n, extFromSrc(cover)))])();
+          const aspect = (img.naturalWidth && img.naturalHeight) ? img.naturalWidth / img.naturalHeight : 1;
+          const flyPromise = flyToReader(el, cover, aspect);
+          Promise.all([flyPromise, pagesPromise]).then(([, pages]) => openBooklet(pages, aspect));
         });
         table.appendChild(el);
       });
@@ -5203,8 +5325,8 @@ const EE_IKEA_BLOCKS = [
     }
 
     readerClose.addEventListener('click', closeReader);
-    readerPrev.addEventListener('click', () => flipTo(currentIndex - 1, -1));
-    readerNext.addEventListener('click', () => flipTo(currentIndex + 1, 1));
+    readerPrev.addEventListener('click', () => flipTo(position - 1, -1));
+    readerNext.addEventListener('click', () => flipTo(position + 1, 1));
     reader.addEventListener('click', e => { if(e.target === reader) closeReader(); });
 
     // Swipe left/right to page through, mirroring Photography's viewer.
@@ -5220,15 +5342,23 @@ const EE_IKEA_BLOCKS = [
       const dx = e.changedTouches[0].clientX - touchStartX;
       const dy = e.changedTouches[0].clientY - touchStartY;
       if(Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy)){
-        if(dx < 0) flipTo(currentIndex + 1, 1); else flipTo(currentIndex - 1, -1);
+        if(dx < 0) flipTo(position + 1, 1); else flipTo(position - 1, -1);
       }
     });
 
     window.addEventListener('keydown', e => {
       if(!page.classList.contains('show') || !reader.classList.contains('show')) return;
       if(e.key === 'Escape') closeReader();
-      else if(e.key === 'ArrowLeft') flipTo(currentIndex - 1, -1);
-      else if(e.key === 'ArrowRight') flipTo(currentIndex + 1, 1);
+      else if(e.key === 'ArrowLeft') flipTo(position - 1, -1);
+      else if(e.key === 'ArrowRight') flipTo(position + 1, 1);
+    });
+
+    let readerResizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(readerResizeTimer);
+      readerResizeTimer = setTimeout(() => {
+        if(reader.classList.contains('show')) sizeReader();
+      }, 200);
     });
 
     function syncPrintsPage(){
