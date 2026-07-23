@@ -156,6 +156,53 @@
       .side-tab{ right:16px; }
       .side-tab-text{ font-size:10px; }
     }
+
+    /* ---------- STORIES quick-jump popup (hero edge) ---------- */
+    /* Shown/hidden from inside the shared onEnter()/onLeave() shape-hover
+       handlers (gated on #storiesShapeTrigger's id), so it works for both
+       mouse hover and the touch two-tap arm/disarm flow with no extra
+       wiring - see the CUSTOM CURSOR script block below. */
+    .stories-popup{
+      position:absolute; left:28px; top:50%; z-index:55;
+      transform:translateY(-50%) translateX(-10px);
+      display:flex; flex-direction:column; gap:2px;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .25s ease, transform .25s cubic-bezier(.2,.8,.2,1);
+    }
+    .stories-popup.show{
+      opacity:1;
+      transform:translateY(-50%) translateX(0);
+      pointer-events:auto;
+    }
+    .hero.drawing .stories-popup{ opacity:0; pointer-events:none; }
+    .stories-popup-title{
+      font-family:'Arial Black','Arial',sans-serif; font-weight:900;
+      font-size:10px; letter-spacing:0.14em; text-transform:uppercase;
+      color:#9a9a9a;
+      margin:0 0 8px;
+    }
+    .stories-popup-item{
+      display:flex; align-items:center; gap:9px;
+      font-family:'Arial Black','Arial',sans-serif; font-weight:900;
+      font-size:13px; letter-spacing:0.01em;
+      color:var(--black);
+      text-decoration:none;
+      padding:5px 0;
+      transition:opacity .2s ease;
+    }
+    .stories-popup-item::before{
+      content:'';
+      width:9px; height:9px;
+      background:var(--sp-color);
+      flex-shrink:0;
+    }
+    .stories-popup-item:hover{ opacity:0.6; }
+    @media (max-width:640px){
+      .stories-popup{ left:16px; }
+      .stories-popup-title{ font-size:9px; }
+      .stories-popup-item{ font-size:12px; }
+    }
     .logo-wrap{
       position:relative;
       /* The 72vh cap is what actually keeps this fitting on short, wide
@@ -2065,7 +2112,7 @@
       </a>
       <!-- orange square -->
       <a href="#stories" aria-label="Written Stories" class="nav-trigger">
-        <g class="shape" tabindex="0" style="--shape-color:#f79e20;" data-label="lbl-writing">
+        <g class="shape" id="storiesShapeTrigger" tabindex="0" style="--shape-color:#f79e20;" data-label="lbl-writing">
           <rect class="fill" data-shape="square" x="168.27" y="324.61" width="139.64" height="139.64" style="animation-delay:320ms;"/>
           <rect class="screen-texture" x="168.27" y="324.61" width="139.64" height="139.64" style="animation-delay:320ms;"/>
         </g>
@@ -2094,6 +2141,15 @@
     <span class="side-tab-text">Prints</span>
     <span class="side-tab-line" aria-hidden="true"></span>
   </a>
+
+  <div class="stories-popup" id="storiesPopup" aria-hidden="true">
+    <p class="stories-popup-title">Stories</p>
+    <a class="stories-popup-item" href="#archives" style="--sp-color:#283583;">Archives</a>
+    <a class="stories-popup-item" href="#sketchbook" style="--sp-color:#AD3745;">Sketchbook</a>
+    <a class="stories-popup-item" href="#graphics" style="--sp-color:#F59D23;">Graphics</a>
+    <a class="stories-popup-item" href="#threed" style="--sp-color:#14672F;">3D</a>
+    <a class="stories-popup-item" href="#photography" style="--sp-color:#0A0A0A;">Photography</a>
+  </div>
 
   <canvas id="heroCanvas" aria-hidden="true"></canvas>
   <div class="hero-draw-controls">
@@ -2770,6 +2826,26 @@
       fillEl._isOverlayActive = false;
     });
     document.querySelectorAll('.label.show').forEach(l => l.classList.remove('show'));
+    hideStoriesPopup();
+  }
+
+  // Quick-jump list for the Stories shape specifically: shown/hidden from
+  // inside onEnter()/onLeave() below (gated on the shape's id), which
+  // already fire for both mouse hover and the touch two-tap arm/disarm
+  // flow, so no separate touch handling is needed here.
+  const storiesPopup = document.getElementById('storiesPopup');
+  function showStoriesPopup(){
+    if(storiesPopup){ storiesPopup.classList.add('show'); storiesPopup.setAttribute('aria-hidden', 'false'); }
+  }
+  function hideStoriesPopup(){
+    if(storiesPopup){ storiesPopup.classList.remove('show'); storiesPopup.setAttribute('aria-hidden', 'true'); }
+  }
+  if(storiesPopup){
+    // Navigating via a popup item skips the shape itself, so nothing else
+    // would otherwise reset its hover state on the way out.
+    storiesPopup.querySelectorAll('.stories-popup-item').forEach(item => {
+      item.addEventListener('click', () => resetAllOverlays());
+    });
   }
 
   // Titles share a single fixed slot above the logo (positioned purely in
@@ -2792,6 +2868,7 @@
     const labelId = g.getAttribute('data-label');
     const label = labelId ? document.getElementById(labelId) : null;
     if(label) label.classList.add('show');
+    if(g.id === 'storiesShapeTrigger') showStoriesPopup();
 
     const groupRect = g.getBoundingClientRect();
     let extendUp = groupRect.top <= (window.innerHeight - groupRect.bottom);
@@ -2875,6 +2952,7 @@
     const labelId = g.getAttribute('data-label');
     const label = labelId ? document.getElementById(labelId) : null;
     if(label) label.classList.remove('show');
+    if(g.id === 'storiesShapeTrigger') hideStoriesPopup();
 
     const fills = g.querySelectorAll('.fill');
     fills.forEach(fillEl => {
