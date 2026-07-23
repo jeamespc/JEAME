@@ -157,12 +157,18 @@
       .side-tab-text{ font-size:10px; }
     }
 
-    /* ---------- STORIES quick-jump popup (hero edge) ---------- */
-    /* Shown/hidden from inside the shared onEnter()/onLeave() shape-hover
-       handlers (gated on #storiesShapeTrigger's id), so it works for both
-       mouse hover and the touch two-tap arm/disarm flow with no extra
-       wiring - see the CUSTOM CURSOR script block below. */
-    .stories-popup{
+    /* ---------- Hero shape quick-jump popup (hero edge) ---------- */
+    /* One shared popup, reused for every hero shape that has more than one
+       destination behind it (Stories, and the three category shapes -
+       Product/Interior/Urban). Content is rebuilt per-hover: a fixed list
+       for Stories, generated from PROJECT_ORDER/PROJECTS for the category
+       shapes so it never needs hand-syncing as projects are added. Shown/
+       hidden from inside the shared onEnter()/onLeave() shape-hover
+       handlers and the "pop"-shape mouse/touch-arm branches (gated on
+       HERO_POPUP_MAP[g.id]), so it works for both mouse hover and the
+       touch two-tap arm/disarm flow with no extra wiring - see the CUSTOM
+       CURSOR script block below. */
+    .hero-popup{
       position:absolute; left:28px; top:50%; z-index:55;
       transform:translateY(-50%) translateX(-10px);
       display:flex; flex-direction:column; gap:2px;
@@ -170,19 +176,19 @@
       pointer-events:none;
       transition:opacity .25s ease, transform .25s cubic-bezier(.2,.8,.2,1);
     }
-    .stories-popup.show{
+    .hero-popup.show{
       opacity:1;
       transform:translateY(-50%) translateX(0);
       pointer-events:auto;
     }
-    .hero.drawing .stories-popup{ opacity:0; pointer-events:none; }
-    .stories-popup-title{
+    .hero.drawing .hero-popup{ opacity:0; pointer-events:none; }
+    .hero-popup-title{
       font-family:'Arial Black','Arial',sans-serif; font-weight:900;
       font-size:10px; letter-spacing:0.14em; text-transform:uppercase;
       color:#9a9a9a;
       margin:0 0 8px;
     }
-    .stories-popup-item{
+    .hero-popup-item{
       display:flex; align-items:center; gap:9px;
       font-family:'Arial Black','Arial',sans-serif; font-weight:900;
       font-size:13px; letter-spacing:0.01em;
@@ -191,17 +197,17 @@
       padding:5px 0;
       transition:opacity .2s ease;
     }
-    .stories-popup-item::before{
+    .hero-popup-item::before{
       content:'';
       width:9px; height:9px;
-      background:var(--sp-color);
+      background:var(--hp-color);
       flex-shrink:0;
     }
-    .stories-popup-item:hover{ opacity:0.6; }
+    .hero-popup-item:hover{ opacity:0.6; }
     @media (max-width:640px){
-      .stories-popup{ left:16px; }
-      .stories-popup-title{ font-size:9px; }
-      .stories-popup-item{ font-size:12px; }
+      .hero-popup{ left:16px; }
+      .hero-popup-title{ font-size:9px; }
+      .hero-popup-item{ font-size:12px; }
     }
     .logo-wrap{
       position:relative;
@@ -2099,7 +2105,7 @@
       </a>
       <!-- blue square with knockout circle -->
       <a href="#interior" aria-label="Interior Design" class="nav-trigger">
-        <g class="shape pop" tabindex="0" style="--shape-color:#283583;" data-label="lbl-interior">
+        <g class="shape pop" id="interiorShapeTrigger" tabindex="0" style="--shape-color:#283583;" data-label="lbl-interior">
           <!-- The visible path below is a square with the center circle cut out
                (nonzero fill-rule), so by default the browser only registers
                hover/click hits on the painted ring, not the hollow middle.
@@ -2119,7 +2125,7 @@
       </a>
       <!-- bars -->
       <a href="#urban" aria-label="Urban &amp; Spatial Design" class="nav-trigger">
-        <g class="shape" tabindex="0" data-label="lbl-urban">
+        <g class="shape" id="urbanShapeTrigger" tabindex="0" data-label="lbl-urban">
           <rect class="fill" data-shape="bar" x="334.22" y=".27" width="33.18" height="463.98" style="--shape-color:#1d1d1b; animation-delay:400ms;"/>
           <rect class="screen-texture" x="334.22" y=".27" width="33.18" height="463.98" style="animation-delay:400ms;"/>
           <rect class="fill" data-shape="bar" x="383.12" y=".27" width="33.18" height="463.98" style="--shape-color:#14672f; animation-delay:480ms;"/>
@@ -2142,13 +2148,9 @@
     <span class="side-tab-line" aria-hidden="true"></span>
   </a>
 
-  <div class="stories-popup" id="storiesPopup" aria-hidden="true">
-    <p class="stories-popup-title">Stories</p>
-    <a class="stories-popup-item" href="#archives" style="--sp-color:#283583;">Archives</a>
-    <a class="stories-popup-item" href="#sketchbook" style="--sp-color:#AD3745;">Sketchbook</a>
-    <a class="stories-popup-item" href="#graphics" style="--sp-color:#F59D23;">Graphics</a>
-    <a class="stories-popup-item" href="#threed" style="--sp-color:#14672F;">3D</a>
-    <a class="stories-popup-item" href="#photography" style="--sp-color:#0A0A0A;">Photography</a>
+  <div class="hero-popup" id="heroPopup" aria-hidden="true">
+    <p class="hero-popup-title" id="heroPopupTitle"></p>
+    <div id="heroPopupItems"></div>
   </div>
 
   <canvas id="heroCanvas" aria-hidden="true"></canvas>
@@ -2766,6 +2768,7 @@
       const labelId = g.getAttribute('data-label');
       const label = labelId ? document.getElementById(labelId) : null;
       if(label) label.classList.add('show');
+      if(HERO_POPUP_MAP[g.id]) showHeroPopup(g);
     } else {
       onEnter(g);
     }
@@ -2779,6 +2782,7 @@
       const labelId = g.getAttribute('data-label');
       const label = labelId ? document.getElementById(labelId) : null;
       if(label) label.classList.remove('show');
+      if(HERO_POPUP_MAP[g.id]) hideHeroPopup();
     } else {
       onLeave(g);
     }
@@ -2826,26 +2830,64 @@
       fillEl._isOverlayActive = false;
     });
     document.querySelectorAll('.label.show').forEach(l => l.classList.remove('show'));
-    hideStoriesPopup();
+    hideHeroPopup();
   }
 
-  // Quick-jump list for the Stories shape specifically: shown/hidden from
-  // inside onEnter()/onLeave() below (gated on the shape's id), which
-  // already fire for both mouse hover and the touch two-tap arm/disarm
-  // flow, so no separate touch handling is needed here.
-  const storiesPopup = document.getElementById('storiesPopup');
-  function showStoriesPopup(){
-    if(storiesPopup){ storiesPopup.classList.add('show'); storiesPopup.setAttribute('aria-hidden', 'false'); }
+  // Quick-jump list, shared by every hero shape that has more than one
+  // destination behind it. Stories' five sub-pages are fixed, hand-written
+  // here; the three category shapes are generated from PROJECT_ORDER/
+  // PROJECTS (see the project data model) so this never needs hand-syncing
+  // as projects are added, renamed, or reordered. Shown/hidden from inside
+  // onEnter()/onLeave() and the "pop"-shape mouse/touch-arm branches below
+  // (all gated on HERO_POPUP_MAP[g.id]), which already fire for both mouse
+  // hover and the touch two-tap arm/disarm flow, so no separate touch
+  // handling is needed here.
+  const STORIES_ITEMS = [
+    { label:'Archives', href:'#archives', color:'#283583' },
+    { label:'Sketchbook', href:'#sketchbook', color:'#AD3745' },
+    { label:'Graphics', href:'#graphics', color:'#F59D23' },
+    { label:'3D', href:'#threed', color:'#14672F' },
+    { label:'Photography', href:'#photography', color:'#0A0A0A' }
+  ];
+  function projectPopupItems(category){
+    return (PROJECT_ORDER[category] || []).map(key => ({
+      label: PROJECTS[key].title,
+      href: '#' + key,
+      color: PROJECTS[key].dotColor || PROJECTS[key].accent || '#0A0A0A'
+    }));
   }
-  function hideStoriesPopup(){
-    if(storiesPopup){ storiesPopup.classList.remove('show'); storiesPopup.setAttribute('aria-hidden', 'true'); }
-  }
-  if(storiesPopup){
-    // Navigating via a popup item skips the shape itself, so nothing else
-    // would otherwise reset its hover state on the way out.
-    storiesPopup.querySelectorAll('.stories-popup-item').forEach(item => {
-      item.addEventListener('click', () => resetAllOverlays());
+  const HERO_POPUP_MAP = {
+    storiesShapeTrigger: () => ({ title: 'Stories', items: STORIES_ITEMS }),
+    'red-circle-trigger': () => ({ title: CATEGORY_META.product.label, items: projectPopupItems('product') }),
+    interiorShapeTrigger: () => ({ title: CATEGORY_META.interior.label, items: projectPopupItems('interior') }),
+    urbanShapeTrigger: () => ({ title: CATEGORY_META.urban.label, items: projectPopupItems('urban') })
+  };
+  const heroPopup = document.getElementById('heroPopup');
+  const heroPopupTitle = document.getElementById('heroPopupTitle');
+  const heroPopupItems = document.getElementById('heroPopupItems');
+  function showHeroPopup(g){
+    const build = HERO_POPUP_MAP[g.id];
+    if(!build || !heroPopup) return;
+    const {title, items} = build();
+    if(!items.length) return; // nothing behind this shape yet - don't pop up an empty box
+    heroPopupTitle.textContent = title;
+    heroPopupItems.innerHTML = '';
+    items.forEach(it => {
+      const a = document.createElement('a');
+      a.className = 'hero-popup-item';
+      a.href = it.href;
+      a.style.setProperty('--hp-color', it.color);
+      a.textContent = it.label;
+      // Navigating via a popup item skips the shape itself, so nothing else
+      // would otherwise reset its hover state on the way out.
+      a.addEventListener('click', () => resetAllOverlays());
+      heroPopupItems.appendChild(a);
     });
+    heroPopup.classList.add('show');
+    heroPopup.setAttribute('aria-hidden', 'false');
+  }
+  function hideHeroPopup(){
+    if(heroPopup){ heroPopup.classList.remove('show'); heroPopup.setAttribute('aria-hidden', 'true'); }
   }
 
   // Titles share a single fixed slot above the logo (positioned purely in
@@ -2868,7 +2910,7 @@
     const labelId = g.getAttribute('data-label');
     const label = labelId ? document.getElementById(labelId) : null;
     if(label) label.classList.add('show');
-    if(g.id === 'storiesShapeTrigger') showStoriesPopup();
+    if(HERO_POPUP_MAP[g.id]) showHeroPopup(g);
 
     const groupRect = g.getBoundingClientRect();
     let extendUp = groupRect.top <= (window.innerHeight - groupRect.bottom);
@@ -2952,7 +2994,7 @@
     const labelId = g.getAttribute('data-label');
     const label = labelId ? document.getElementById(labelId) : null;
     if(label) label.classList.remove('show');
-    if(g.id === 'storiesShapeTrigger') hideStoriesPopup();
+    if(HERO_POPUP_MAP[g.id]) hideHeroPopup();
 
     const fills = g.querySelectorAll('.fill');
     fills.forEach(fillEl => {
@@ -2989,10 +3031,10 @@
     const label = labelId ? document.getElementById(labelId) : null;
 
     if(isPop){
-      g.addEventListener('mouseenter', () => label && label.classList.add('show'));
-      g.addEventListener('mouseleave', () => label && label.classList.remove('show'));
-      g.addEventListener('focus', () => label && label.classList.add('show'));
-      g.addEventListener('blur', () => label && label.classList.remove('show'));
+      g.addEventListener('mouseenter', () => { label && label.classList.add('show'); if(HERO_POPUP_MAP[g.id]) showHeroPopup(g); });
+      g.addEventListener('mouseleave', () => { label && label.classList.remove('show'); if(HERO_POPUP_MAP[g.id]) hideHeroPopup(); });
+      g.addEventListener('focus', () => { label && label.classList.add('show'); if(HERO_POPUP_MAP[g.id]) showHeroPopup(g); });
+      g.addEventListener('blur', () => { label && label.classList.remove('show'); if(HERO_POPUP_MAP[g.id]) hideHeroPopup(); });
       return;
     }
 
