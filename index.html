@@ -1546,8 +1546,8 @@
        not just sliding into place. */
     .gb-fly-clone{
       position:fixed; z-index:6050;
-      border:2px solid #1c1a17; border-radius:4px;
-      object-fit:cover; background:#d9d1c0;
+      border-radius:4px;
+      object-fit:cover;
       box-shadow:0 20px 46px rgba(0,0,0,0.4);
       pointer-events:none;
     }
@@ -1556,34 +1556,45 @@
     }
 
     /* Full-render viewer: the fly-clone hands off into this once it lands.
-       The strip along the bottom holds every render in the gallery so
-       whichever one was tapped, the rest are one click away - no need to
-       close back out to the globe just to see a different render. */
+       Dark lightbox surround (matches .gallery-lightbox's language) so the
+       render reads as the thing in focus. The strip along the bottom holds
+       every render in the gallery so whichever one was tapped, the rest are
+       one click (or arrow key) away - no need to close back out to the
+       globe just to see a different render. */
     .gb-viewer{
       display:none; position:absolute; inset:0; z-index:40;
-      background:#ece6da;
+      background:rgba(8,8,8,0.96);
       flex-direction:column; align-items:center;
     }
     .gb-viewer.show{ display:flex; }
     .gb-viewer-close{
       position:absolute; top:22px; right:max(22px, env(safe-area-inset-right)); z-index:2;
       width:42px; height:42px; border-radius:50%;
-      background:transparent; border:1px solid rgba(28,26,23,0.3);
-      color:#1c1a17; font-size:22px; line-height:1; cursor:pointer;
+      background:transparent; border:1px solid rgba(255,255,255,0.35);
+      color:#fff; font-size:22px; line-height:1; cursor:pointer;
       display:flex; align-items:center; justify-content:center;
       transition:background .2s ease;
     }
-    .gb-viewer-close:hover{ background:rgba(28,26,23,0.08); }
+    .gb-viewer-close:hover{ background:rgba(255,255,255,0.12); }
     .gb-viewer-stage{
       position:relative; width:100%; flex:1 1 auto; min-height:0;
     }
     .gb-viewer-img{
       position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
       max-width:86vw; max-height:82vh;
-      border:2px solid #1c1a17; border-radius:4px;
-      object-fit:cover; background:#d9d1c0;
-      box-shadow:0 20px 46px rgba(0,0,0,0.28);
+      object-fit:contain;
     }
+    .gb-viewer-nav{
+      position:absolute; top:50%; transform:translateY(-50%); z-index:2;
+      width:48px; height:48px; border-radius:50%;
+      background:transparent; border:1px solid rgba(255,255,255,0.35);
+      color:#fff; font-size:20px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      transition:background .2s ease;
+    }
+    .gb-viewer-nav:hover{ background:rgba(255,255,255,0.12); }
+    .gb-viewer-prev{ left:max(20px, env(safe-area-inset-left)); }
+    .gb-viewer-next{ right:max(20px, env(safe-area-inset-right)); }
     .gb-viewer-strip{
       flex:0 0 96px; width:100%; box-sizing:border-box;
       display:flex; align-items:center; gap:10px; overflow-x:auto;
@@ -1592,15 +1603,16 @@
     .gb-viewer-thumb{
       flex:0 0 auto; width:64px; height:64px; padding:0;
       border:2px solid transparent; border-radius:4px;
-      background:#d9d1c0; cursor:pointer; overflow:hidden;
-      opacity:0.6; transition:opacity .2s ease, border-color .2s ease;
+      background:rgba(255,255,255,0.08); cursor:pointer; overflow:hidden;
+      opacity:0.55; transition:opacity .2s ease, border-color .2s ease;
     }
     .gb-viewer-thumb img{ width:100%; height:100%; object-fit:cover; display:block; pointer-events:none; }
-    .gb-viewer-thumb:hover{ opacity:0.85; }
-    .gb-viewer-thumb.active{ opacity:1; border-color:#1c1a17; }
+    .gb-viewer-thumb:hover{ opacity:0.8; }
+    .gb-viewer-thumb.active{ opacity:1; border-color:#fff; }
     @media (max-width:640px){
       .gb-viewer-thumb{ width:48px; height:48px; }
       .gb-viewer-strip{ flex-basis:78px; }
+      .gb-viewer-nav{ width:38px; height:38px; font-size:16px; }
     }
 
     /* ---------- PHOTOGRAPHY: camera-screen page ---------- */
@@ -3594,7 +3606,9 @@
   <div class="gb-viewer" id="gbViewer" aria-hidden="true">
     <button type="button" class="gb-viewer-close" id="gbViewerClose" aria-label="Close">&times;</button>
     <div class="gb-viewer-stage">
+      <button type="button" class="gb-viewer-nav gb-viewer-prev" id="gbViewerPrev" aria-label="Previous render">&larr;</button>
       <img class="gb-viewer-img" id="gbViewerImg" alt="">
+      <button type="button" class="gb-viewer-nav gb-viewer-next" id="gbViewerNext" aria-label="Next render">&rarr;</button>
     </div>
     <div class="gb-viewer-strip" id="gbViewerStrip"></div>
   </div>
@@ -5830,6 +5844,8 @@ const EE_IKEA_BLOCKS = [
     const viewerImg = document.getElementById('gbViewerImg');
     const viewerStrip = document.getElementById('gbViewerStrip');
     const viewerClose = document.getElementById('gbViewerClose');
+    const viewerPrev = document.getElementById('gbViewerPrev');
+    const viewerNext = document.getElementById('gbViewerNext');
     if(!globe || !sphere) return;
 
     const AUTOSPIN = 0.28;   // radians/sec, steady-state yaw the globe eases back to
@@ -6018,6 +6034,9 @@ const EE_IKEA_BLOCKS = [
       for(let k = 0; k < thumbs.length; k++) thumbs[k].classList.toggle('active', k === viewerIndex);
       const active = thumbs[viewerIndex];
       if(active && active.scrollIntoView) active.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+      const multi = galleryItems.length > 1;
+      viewerPrev.style.display = multi ? 'flex' : 'none';
+      viewerNext.style.display = multi ? 'flex' : 'none';
     }
 
     // Clones the tapped tile and flies it from its exact projected spot on
@@ -6083,10 +6102,17 @@ const EE_IKEA_BLOCKS = [
     // stage div, not on .gb-viewer itself - both count as backdrop.
     const viewerStage = viewer.querySelector('.gb-viewer-stage');
     viewerClose.addEventListener('click', closeViewer);
+    viewerPrev.addEventListener('click', () => showViewerImage(viewerIndex - 1));
+    viewerNext.addEventListener('click', () => showViewerImage(viewerIndex + 1));
     viewer.addEventListener('click', (e) => {
       if(e.target === viewer || e.target === viewerStage) closeViewer();
     });
-    window.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeViewer(); });
+    window.addEventListener('keydown', (e) => {
+      if(!viewerOpen) return;
+      if(e.key === 'Escape') closeViewer();
+      else if(e.key === 'ArrowLeft') showViewerImage(viewerIndex - 1);
+      else if(e.key === 'ArrowRight') showViewerImage(viewerIndex + 1);
+    });
 
     // Which front-facing tile (if any) is under a screen point.
     function pickTile(clientX, clientY){
