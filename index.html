@@ -5615,10 +5615,25 @@ const EE_IKEA_BLOCKS = [
         img.src = cover;
         el.appendChild(img);
         el.addEventListener('click', () => {
-          const pagesPromise = (async () => [{src: cover, type:'image'}, ...(await getBookletPages(n, extFromSrc(cover)))])();
           const aspect = (img.naturalWidth && img.naturalHeight) ? img.naturalWidth / img.naturalHeight : 1;
-          const flyPromise = flyToReader(el, cover, aspect);
-          Promise.all([flyPromise, pagesPromise]).then(([, pages]) => openBooklet(pages, aspect, n));
+          // Open with just the cover the instant the fly-in lands (it's
+          // already loaded - same src as the table thumbnail) instead of
+          // also waiting on the full page probe: getBookletPages() can
+          // easily take longer than the fly animation on a cold cache (up
+          // to PAGE_MAX_CHECK parallel requests), and blocking the open on
+          // it left a gap where the clone had already been removed but the
+          // reader hadn't appeared yet - read as the zoomed cover snapping
+          // back to the untouched booklet still sitting on the table. The
+          // rest of the pages fill themselves in live once they're ready.
+          flyToReader(el, cover, aspect).then(() => {
+            openBooklet([{src: cover, type: 'image'}], aspect, n);
+            getBookletPages(n, extFromSrc(cover)).then(interior => {
+              if(currentBookletNum !== n) return;
+              currentPages = [{src: cover, type: 'image'}, ...interior];
+              updateChrome();
+              updateIndexHotspots();
+            });
+          });
         });
         table.appendChild(el);
       });
