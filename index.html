@@ -167,47 +167,49 @@
        handlers and the "pop"-shape mouse/touch-arm branches (gated on
        HERO_POPUP_MAP[g.id]), so it works for both mouse hover and the
        touch two-tap arm/disarm flow with no extra wiring - see the CUSTOM
-       CURSOR script block below. */
+       CURSOR script block below.
+       No title here - the shape's own .label above the logo already names
+       whatever's hovered, so repeating it here would be redundant.
+       left/top/width/height are set by JS (alignHeroPopup(), see the CUSTOM
+       CURSOR script block) to exactly fill the empty grid cell below the
+       red circle (the logo has no shape there), so showing this list reads
+       as completing the logo's own square grid rather than a floating
+       tooltip - recalculated on resize since the logo is fluid-sized. */
     .hero-popup{
-      position:absolute; left:28px; top:50%; z-index:55;
-      transform:translateY(-50%) translateX(-10px);
-      display:flex; flex-direction:column; gap:2px;
+      position:absolute; z-index:55;
+      box-sizing:border-box;
+      display:flex; flex-direction:column; justify-content:center;
+      gap:2px;
       opacity:0;
+      transform:scale(0.96);
       pointer-events:none;
       transition:opacity .25s ease, transform .25s cubic-bezier(.2,.8,.2,1);
     }
     .hero-popup.show{
       opacity:1;
-      transform:translateY(-50%) translateX(0);
+      transform:scale(1);
       pointer-events:auto;
     }
     .hero.drawing .hero-popup{ opacity:0; pointer-events:none; }
-    .hero-popup-title{
-      font-family:'Arial Black','Arial',sans-serif; font-weight:900;
-      font-size:10px; letter-spacing:0.14em; text-transform:uppercase;
-      color:#9a9a9a;
-      margin:0 0 8px;
-    }
     .hero-popup-item{
-      display:flex; align-items:center; gap:9px;
+      display:flex; align-items:center; gap:8px;
       font-family:'Arial Black','Arial',sans-serif; font-weight:900;
-      font-size:13px; letter-spacing:0.01em;
+      font-size:12px; letter-spacing:0.01em; line-height:1.3;
       color:var(--black);
       text-decoration:none;
-      padding:5px 0;
+      padding:4px 0;
       transition:opacity .2s ease;
     }
     .hero-popup-item::before{
       content:'';
-      width:9px; height:9px;
+      width:8px; height:8px;
       background:var(--hp-color);
       flex-shrink:0;
     }
     .hero-popup-item:hover{ opacity:0.6; }
     @media (max-width:640px){
-      .hero-popup{ left:16px; }
-      .hero-popup-title{ font-size:9px; }
-      .hero-popup-item{ font-size:12px; }
+      .hero-popup-item{ font-size:10.5px; gap:6px; }
+      .hero-popup-item::before{ width:7px; height:7px; }
     }
     .logo-wrap{
       position:relative;
@@ -358,16 +360,46 @@
     .label.show{
       opacity:1;
     }
+    /* First-glance nudge toward the interactive shapes, sitting in the exact
+       same slot the .label titles pop into on hover - so it reads as a
+       preview of "titles appear here" rather than a separate callout.
+       Styled distinctly from the (bold, uppercase) labels themselves -
+       italic and muted, same as every other page's small hint text
+       (.sb-hint, .gr-hint, etc) - so it's legible as a hint, not an active
+       title. Dismissed for good the first time any shape is actually
+       hovered/focused/touch-armed (see dismissHeroHint() in the CUSTOM
+       CURSOR script block) and hidden while actively drawing. */
+    .hero-hint{
+      position:absolute;
+      top:0;
+      left:50%;
+      width:100%;
+      transform:translateX(-50%);
+      font-size:clamp(10px, 1.7vw, 13px);
+      font-style:italic;
+      letter-spacing:0.01em;
+      text-align:center;
+      white-space:nowrap;
+      color:#9a9a9a;
+      opacity:1;
+      transition:opacity .4s ease;
+      pointer-events:none;
+    }
+    .hero-hint.fade{ opacity:0; }
+    .hero.drawing .hero-hint{ opacity:0; }
     @media (max-width:640px){
       .label{ font-size:10px; white-space:normal; }
+      .hero-hint{ font-size:10px; white-space:normal; }
     }
     @media (max-height:700px){
       .logo-wrap{ padding-top:clamp(24px, 5vh, 40px); }
       .label{ font-size:11px; }
+      .hero-hint{ font-size:11px; }
     }
     @media (max-height:560px){
       .logo-wrap{ padding-top:clamp(20px, 4vh, 30px); }
       .label{ font-size:10px; }
+      .hero-hint{ font-size:10px; }
     }
     /* ---------- SECTIONS ---------- */
     section.cat{
@@ -2141,6 +2173,7 @@
     <div class="label" id="lbl-interior">Interior Design</div>
     <div class="label" id="lbl-writing">Stories</div>
     <div class="label" id="lbl-urban">Urban &amp; Spatial Design</div>
+    <p class="hero-hint" id="heroHint">Hover or tap a shape to explore.</p>
   </div>
 
   <a href="#prints" class="side-tab" id="printsTab" aria-label="Prints">
@@ -2149,7 +2182,6 @@
   </a>
 
   <div class="hero-popup" id="heroPopup" aria-hidden="true">
-    <p class="hero-popup-title" id="heroPopupTitle"></p>
     <div id="heroPopupItems"></div>
   </div>
 
@@ -2763,6 +2795,7 @@
   function armTrigger(trigger){
     const g = shapeOf(trigger);
     if(!g) return;
+    dismissHeroHint();
     trigger.classList.add('armed');
     if(g.classList.contains('pop')){
       const labelId = g.getAttribute('data-label');
@@ -2857,20 +2890,51 @@
     }));
   }
   const HERO_POPUP_MAP = {
-    storiesShapeTrigger: () => ({ title: 'Stories', items: STORIES_ITEMS }),
-    'red-circle-trigger': () => ({ title: CATEGORY_META.product.label, items: projectPopupItems('product') }),
-    interiorShapeTrigger: () => ({ title: CATEGORY_META.interior.label, items: projectPopupItems('interior') }),
-    urbanShapeTrigger: () => ({ title: CATEGORY_META.urban.label, items: projectPopupItems('urban') })
+    storiesShapeTrigger: () => STORIES_ITEMS,
+    'red-circle-trigger': () => projectPopupItems('product'),
+    interiorShapeTrigger: () => projectPopupItems('interior'),
+    urbanShapeTrigger: () => projectPopupItems('urban')
   };
   const heroPopup = document.getElementById('heroPopup');
-  const heroPopupTitle = document.getElementById('heroPopupTitle');
   const heroPopupItems = document.getElementById('heroPopupItems');
+
+  // Pins the popup over the one empty cell in the logo's own grid - the gap
+  // below the red (Product) circle, above the bottom of the logo - so
+  // showing the list reads as completing that square rather than a floating
+  // tooltip. Measured off the actual rendered shapes (not the viewBox
+  // numbers) since the logo is fluid-sized; re-run on resize.
+  function alignHeroPopup(){
+    const hero = document.querySelector('.hero');
+    const redCircle = document.getElementById('red-circle-trigger');
+    // "The bottom square" of that same left-hand grid row - Stories' orange
+    // square sits one row down from the red circle, so lining the list's
+    // top edge up with *its* top edge (not the red circle's own bottom)
+    // reads as a clean shared row line across the grid instead of hugging
+    // the circle. Height is intentionally left alone: the list opens
+    // downward from that line and just grows with however many items it
+    // has, rather than being squeezed to fit whatever gap happens to be
+    // left above the bottom of the logo.
+    const bottomSquare = document.getElementById('storiesShapeTrigger');
+    if(!hero || !redCircle || !bottomSquare || !heroPopup) return;
+    const heroRect = hero.getBoundingClientRect();
+    const redRect = redCircle.getBoundingClientRect();
+    const rowRect = bottomSquare.getBoundingClientRect();
+    heroPopup.style.left = (redRect.left - heroRect.left) + 'px';
+    heroPopup.style.top = (rowRect.top - heroRect.top) + 'px';
+    heroPopup.style.width = redRect.width + 'px';
+  }
+  alignHeroPopup();
+  let heroPopupResizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(heroPopupResizeTimer);
+    heroPopupResizeTimer = setTimeout(alignHeroPopup, 200);
+  });
+
   function showHeroPopup(g){
     const build = HERO_POPUP_MAP[g.id];
     if(!build || !heroPopup) return;
-    const {title, items} = build();
+    const items = build();
     if(!items.length) return; // nothing behind this shape yet - don't pop up an empty box
-    heroPopupTitle.textContent = title;
     heroPopupItems.innerHTML = '';
     items.forEach(it => {
       const a = document.createElement('a');
@@ -2890,6 +2954,13 @@
     if(heroPopup){ heroPopup.classList.remove('show'); heroPopup.setAttribute('aria-hidden', 'true'); }
   }
 
+  // First-glance hint toward the interactive shapes, dismissed for good the
+  // first time any of them is actually hovered/focused/touch-armed.
+  const heroHint = document.getElementById('heroHint');
+  function dismissHeroHint(){
+    if(heroHint) heroHint.classList.add('fade');
+  }
+
   // Titles share a single fixed slot above the logo (positioned purely in
   // CSS), so each shape only needs to toggle its own label's visibility.
 
@@ -2907,6 +2978,7 @@
   }
 
   function onEnter(g){
+    dismissHeroHint();
     const labelId = g.getAttribute('data-label');
     const label = labelId ? document.getElementById(labelId) : null;
     if(label) label.classList.add('show');
@@ -3031,9 +3103,9 @@
     const label = labelId ? document.getElementById(labelId) : null;
 
     if(isPop){
-      g.addEventListener('mouseenter', () => { label && label.classList.add('show'); if(HERO_POPUP_MAP[g.id]) showHeroPopup(g); });
+      g.addEventListener('mouseenter', () => { dismissHeroHint(); label && label.classList.add('show'); if(HERO_POPUP_MAP[g.id]) showHeroPopup(g); });
       g.addEventListener('mouseleave', () => { label && label.classList.remove('show'); if(HERO_POPUP_MAP[g.id]) hideHeroPopup(); });
-      g.addEventListener('focus', () => { label && label.classList.add('show'); if(HERO_POPUP_MAP[g.id]) showHeroPopup(g); });
+      g.addEventListener('focus', () => { dismissHeroHint(); label && label.classList.add('show'); if(HERO_POPUP_MAP[g.id]) showHeroPopup(g); });
       g.addEventListener('blur', () => { label && label.classList.remove('show'); if(HERO_POPUP_MAP[g.id]) hideHeroPopup(); });
       return;
     }
