@@ -1921,6 +1921,26 @@
       box-shadow:0 20px 46px rgba(0,0,0,0.55);
       user-select:none; -webkit-user-drag:none;
     }
+    /* Invisible click targets over a booklet's own index/contents page,
+       jumping straight to that chapter - positioned in percentages (see
+       INDEX_HOTSPOTS) against this container, which exactly matches the
+       right slot's own box, since that's where both booklets' index pages
+       land. Only populated and shown while the currently open booklet is
+       actually sitting on its index position - see updateIndexHotspots(). */
+    .pr-index-hotspots{
+      display:none;
+      position:absolute; top:0; right:0; width:50%; height:100%;
+      z-index:4;
+    }
+    .pr-index-hotspot{
+      position:absolute;
+      cursor:pointer;
+      border-radius:2px;
+      transition:background .15s ease;
+    }
+    .pr-index-hotspot:hover{
+      background:rgba(0,0,0,0.06);
+    }
     /* Booklet-to-reader opening transition: a cloned cover image, fixed to
        the viewport, animated from the clicked booklet's exact position on
        the table to where it'll dock as the reader's right-hand page - see
@@ -1959,6 +1979,24 @@
       text-align:center; color:#fff; opacity:0.75;
       font-size:11px; letter-spacing:0.08em;
     }
+    /* Jumps straight back to the booklet's own index/contents position (see
+       INDEX_HOTSPOTS) - only shown for booklets that have one, and hidden
+       once you're already there, same reasoning as prev/next hiding when
+       there's nowhere to go. */
+    .pr-index-btn{
+      display:none;
+      position:absolute; bottom:42px; left:50%; z-index:465;
+      transform:translateX(-50%);
+      font-family:'Arial', sans-serif;
+      font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+      padding:6px 14px;
+      border:1px solid rgba(255,255,255,0.35); border-radius:999px;
+      background:transparent; color:#fff;
+      cursor:pointer;
+      transition:background .2s ease, opacity .2s ease;
+    }
+    .pr-index-btn.show{ display:block; }
+    .pr-index-btn:hover{ background:rgba(255,255,255,0.12); }
     @media (max-width:640px){
       .pr-booklet{ width:min(24vw, 130px); }
       .pr-reader-nav{ width:38px; height:38px; }
@@ -3556,8 +3594,10 @@
         <div class="pr-flip-face pr-flip-front"><img id="prFlipFront" alt=""></div>
         <div class="pr-flip-face pr-flip-back"><img id="prFlipBack" alt=""></div>
       </div>
+      <div class="pr-index-hotspots" id="prIndexHotspots" aria-hidden="true"></div>
     </div>
     <button type="button" class="pr-reader-nav pr-reader-next" id="prReaderNext" aria-label="Next page">&rarr;</button>
+    <button type="button" class="pr-index-btn" id="prIndexBtn">Go to Index</button>
     <div class="pr-page-counter" id="prPageCounter">1 / 1</div>
   </div>
 </div>
@@ -5229,6 +5269,40 @@ const EE_IKEA_BLOCKS = [
     const flipFront = document.getElementById('prFlipFront');
     const flipBack = document.getElementById('prFlipBack');
     const pageCounter = document.getElementById('prPageCounter');
+    const indexHotspotsEl = document.getElementById('prIndexHotspots');
+    const indexBtn = document.getElementById('prIndexBtn');
+
+    // Per-booklet index/contents pages, made clickable: each entry jumps
+    // straight to that chapter's opening position (see showPosition() -
+    // an instant jump, not an animated flip, same as opening the reader -
+    // flipping through dozens of pages one at a time would be absurd for a
+    // table-of-contents click). Positions and the index's own position were
+    // hand-derived by matching each chapter-title spread in the source PDF
+    // to its split page number (p = (S-2)*2+1 or +2 for the left/right half
+    // of PDF spread page S, then position = which pair {2k-1,2k} that page
+    // number falls in) - not from the printed page numbers themselves,
+    // which turned out inconsistent with a few unnumbered decorative
+    // spreads in booklet 2. top/bottom/left/right are percentages against
+    // #prIndexHotspots, which exactly matches the right slot's box (both
+    // booklets' index pages land on the right side of their spread).
+    const INDEX_HOTSPOTS = {
+      1: { indexPosition: 3, items: [ // portfolio: CHAPTER I/II contents
+        { top:24.5, bottom:29.5, left:33, right:93, target:5 },  // The Craft
+        { top:29.5, bottom:34.5, left:33, right:93, target:12 }, // Immersive Isolation
+        { top:34.5, bottom:39.5, left:33, right:93, target:21 }, // Mechanisma
+        { top:48,   bottom:54,   left:33, right:93, target:34 }  // RML Link
+      ]},
+      2: { indexPosition: 2, items: [ // DEMY: INDEX
+        { top:13.5, bottom:17,   left:48, right:93, target:4 },  // Introduction
+        { top:22.5, bottom:26,   left:48, right:93, target:9 },  // Context
+        { top:45.5, bottom:49,   left:48, right:93, target:26 }, // Closer Look
+        { top:57,   bottom:60.5, left:48, right:93, target:42 }, // Design Ideology
+        { top:70,   bottom:73.5, left:48, right:93, target:54 }, // Design Development
+        { top:73.5, bottom:77,   left:48, right:93, target:61 }, // DEMY - Hub for All
+        { top:87,   bottom:90.5, left:48, right:93, target:82 }  // References
+      ]}
+    };
+    let currentBookletNum = null;
 
     const MAX_BOOKLETS = 12;
     const SCATTER_MARGIN_X = 12, SCATTER_MARGIN_Y = 14;
@@ -5244,7 +5318,7 @@ const EE_IKEA_BLOCKS = [
     // given booklet is exported in one batch and shares one extension, so
     // it's read once off the already-resolved cover src and reused for
     // every page slot instead, cutting that burst by 3x.
-    const PAGE_MAX_CHECK = 120;
+    const PAGE_MAX_CHECK = 250;
     const bookletPagesCache = new Map();
     function extFromSrc(src){
       const m = /\.([a-z0-9]+)$/i.exec(src || '');
@@ -5349,6 +5423,32 @@ const EE_IKEA_BLOCKS = [
 
     // Instant jump, no flip animation - used to open the reader and to
     // reset when it closes.
+    function updateIndexHotspots(){
+      const spec = INDEX_HOTSPOTS[currentBookletNum];
+      // "Back to Index" button: shown for any booklet that has one, hidden
+      // once you're already sitting on it.
+      if(indexBtn) indexBtn.classList.toggle('show', !!spec && position !== spec.indexPosition);
+
+      if(!indexHotspotsEl) return;
+      if(!spec || position !== spec.indexPosition){
+        indexHotspotsEl.style.display = 'none';
+        indexHotspotsEl.innerHTML = '';
+        return;
+      }
+      indexHotspotsEl.innerHTML = '';
+      spec.items.forEach(it => {
+        const hot = document.createElement('div');
+        hot.className = 'pr-index-hotspot';
+        hot.style.top = it.top + '%';
+        hot.style.height = (it.bottom - it.top) + '%';
+        hot.style.left = it.left + '%';
+        hot.style.width = (it.right - it.left) + '%';
+        hot.addEventListener('click', () => showPosition(it.target));
+        indexHotspotsEl.appendChild(hot);
+      });
+      indexHotspotsEl.style.display = 'block';
+    }
+
     function showPosition(pos){
       if(!currentPages.length) return;
       position = Math.max(0, Math.min(lastPosition(), pos));
@@ -5356,6 +5456,7 @@ const EE_IKEA_BLOCKS = [
       setSlot(imgLeft, left);
       setSlot(imgRight, right);
       updateChrome();
+      updateIndexHotspots();
     }
 
     // Animated page turn for prev/next/swipe/arrow-key navigation. dir 1 =
@@ -5405,6 +5506,7 @@ const EE_IKEA_BLOCKS = [
         flip.style.transform = 'rotateY(0deg)';
         position = target;
         updateChrome();
+        updateIndexHotspots();
         flipping = false;
       }, FLIP_MS);
     }
@@ -5467,10 +5569,11 @@ const EE_IKEA_BLOCKS = [
       });
     }
 
-    function openBooklet(pages, aspect){
+    function openBooklet(pages, aspect, bookletNum){
       if(!pages.length) return;
       currentPages = pages;
       pageAspect = aspect || 1;
+      currentBookletNum = bookletNum;
       sizeReader();
       reader.classList.add('show');
       reader.setAttribute('aria-hidden', 'false');
@@ -5486,6 +5589,8 @@ const EE_IKEA_BLOCKS = [
       flip.style.transform = 'rotateY(0deg)';
       flipping = false;
       currentPages = [];
+      currentBookletNum = null;
+      updateIndexHotspots();
     }
 
     function scatterBooklets(booklets){
@@ -5513,7 +5618,7 @@ const EE_IKEA_BLOCKS = [
           const pagesPromise = (async () => [{src: cover, type:'image'}, ...(await getBookletPages(n, extFromSrc(cover)))])();
           const aspect = (img.naturalWidth && img.naturalHeight) ? img.naturalWidth / img.naturalHeight : 1;
           const flyPromise = flyToReader(el, cover, aspect);
-          Promise.all([flyPromise, pagesPromise]).then(([, pages]) => openBooklet(pages, aspect));
+          Promise.all([flyPromise, pagesPromise]).then(([, pages]) => openBooklet(pages, aspect, n));
         });
         table.appendChild(el);
       });
@@ -5546,6 +5651,12 @@ const EE_IKEA_BLOCKS = [
     readerClose.addEventListener('click', closeReader);
     readerPrev.addEventListener('click', () => flipTo(position - 1, -1));
     readerNext.addEventListener('click', () => flipTo(position + 1, 1));
+    if(indexBtn){
+      indexBtn.addEventListener('click', () => {
+        const spec = INDEX_HOTSPOTS[currentBookletNum];
+        if(spec) showPosition(spec.indexPosition);
+      });
+    }
     reader.addEventListener('click', e => { if(e.target === reader) closeReader(); });
 
     // Swipe left/right to page through, mirroring Photography's viewer.
