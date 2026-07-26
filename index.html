@@ -1531,15 +1531,76 @@
       will-change:transform, filter;
     }
     .gb-tile img{ display:block; width:100%; height:100%; object-fit:cover; pointer-events:none; }
-    /* Transforms are driven per-frame while spinning (no transition); this
-       class is flipped on only for the explode / reassemble throws. */
-    .gb-tile.animating{
-      transition:transform .95s cubic-bezier(.22,.68,.32,1), opacity .5s ease;
-    }
 
     @media (max-width:720px){
       .gb-globe{ width:min(80vmin, 400px); height:min(80vmin, 400px); }
       .gb-stage{ inset:54px 0 18px; gap:16px; }
+    }
+
+    /* Tapped-tile-to-viewer transition: a cloned tile image, fixed to the
+       viewport, flown from the tapped tile's exact projected screen position
+       (its transform is 3D but getBoundingClientRect() still reports the
+       real projected 2D box) to where it'll land in the viewer - see
+       flyTileToViewer(). A little rotation unwinds over the flight so the
+       render reads as peeling off the globe and turning to face the viewer,
+       not just sliding into place. */
+    .gb-fly-clone{
+      position:fixed; z-index:6050;
+      border:2px solid #1c1a17; border-radius:4px;
+      object-fit:cover; background:#d9d1c0;
+      box-shadow:0 20px 46px rgba(0,0,0,0.4);
+      pointer-events:none;
+    }
+    .gb-fly-clone.flying{
+      transition:transform .5s cubic-bezier(.2,.8,.2,1);
+    }
+
+    /* Full-render viewer: the fly-clone hands off into this once it lands.
+       The strip along the bottom holds every render in the gallery so
+       whichever one was tapped, the rest are one click away - no need to
+       close back out to the globe just to see a different render. */
+    .gb-viewer{
+      display:none; position:absolute; inset:0; z-index:40;
+      background:#ece6da;
+      flex-direction:column; align-items:center;
+    }
+    .gb-viewer.show{ display:flex; }
+    .gb-viewer-close{
+      position:absolute; top:22px; right:max(22px, env(safe-area-inset-right)); z-index:2;
+      width:42px; height:42px; border-radius:50%;
+      background:transparent; border:1px solid rgba(28,26,23,0.3);
+      color:#1c1a17; font-size:22px; line-height:1; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      transition:background .2s ease;
+    }
+    .gb-viewer-close:hover{ background:rgba(28,26,23,0.08); }
+    .gb-viewer-stage{
+      position:relative; width:100%; flex:1 1 auto; min-height:0;
+    }
+    .gb-viewer-img{
+      position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+      max-width:86vw; max-height:82vh;
+      border:2px solid #1c1a17; border-radius:4px;
+      object-fit:cover; background:#d9d1c0;
+      box-shadow:0 20px 46px rgba(0,0,0,0.28);
+    }
+    .gb-viewer-strip{
+      flex:0 0 96px; width:100%; box-sizing:border-box;
+      display:flex; align-items:center; gap:10px; overflow-x:auto;
+      padding:0 6vw 22px;
+    }
+    .gb-viewer-thumb{
+      flex:0 0 auto; width:64px; height:64px; padding:0;
+      border:2px solid transparent; border-radius:4px;
+      background:#d9d1c0; cursor:pointer; overflow:hidden;
+      opacity:0.6; transition:opacity .2s ease, border-color .2s ease;
+    }
+    .gb-viewer-thumb img{ width:100%; height:100%; object-fit:cover; display:block; pointer-events:none; }
+    .gb-viewer-thumb:hover{ opacity:0.85; }
+    .gb-viewer-thumb.active{ opacity:1; border-color:#1c1a17; }
+    @media (max-width:640px){
+      .gb-viewer-thumb{ width:48px; height:48px; }
+      .gb-viewer-strip{ flex-basis:78px; }
     }
 
     /* ---------- PHOTOGRAPHY: camera-screen page ---------- */
@@ -3530,7 +3591,13 @@
       <div class="gb-sphere" id="gbSphere"></div>
     </div>
   </div>
-  <div class="gb-flat-gallery" id="gbFlatGallery" hidden></div>
+  <div class="gb-viewer" id="gbViewer" aria-hidden="true">
+    <button type="button" class="gb-viewer-close" id="gbViewerClose" aria-label="Close">&times;</button>
+    <div class="gb-viewer-stage">
+      <img class="gb-viewer-img" id="gbViewerImg" alt="">
+    </div>
+    <div class="gb-viewer-strip" id="gbViewerStrip"></div>
+  </div>
 </div>
 
 <!-- ===================== PHOTOGRAPHY: camera-screen page ===================== -->
@@ -5743,9 +5810,12 @@ const EE_IKEA_BLOCKS = [
   // (rotateY/rotateX + translateZ inside a preserve-3d cloud), so the images
   // form a hollow sphere - the far side reads through mirrored, paper-globe
   // style. The cloud spins continuously and can be dragged on BOTH axes
-  // (yaw + pitch) to turn it to any side. A tap (as opposed to a drag) blows
-  // the whole formation apart and opens the tapped render in the shared
-  // lightbox; closing the lightbox pulls the sphere back together.
+  // (yaw + pitch) to turn it to any side. A tap (as opposed to a drag) flies
+  // the tapped render's tile straight into a full-size viewer (see
+  // flyTileToViewer()); the rest of the globe is untouched underneath and
+  // just keeps its exact spun position, ready to resume when the viewer
+  // closes. The viewer carries every render in the gallery along its bottom
+  // edge so any other one is a click away without closing back out.
   //
   // Which tile a tap hit is worked out geometrically (projecting every tile's
   // current position to the screen and taking the nearest front-facing one),
@@ -5756,13 +5826,15 @@ const EE_IKEA_BLOCKS = [
     if(!page) return;
     const globe = document.getElementById('gbGlobe');
     const sphere = document.getElementById('gbSphere');
-    const flatGallery = document.getElementById('gbFlatGallery');
-    const lightbox = document.getElementById('gallery-lightbox');
+    const viewer = document.getElementById('gbViewer');
+    const viewerImg = document.getElementById('gbViewerImg');
+    const viewerStrip = document.getElementById('gbViewerStrip');
+    const viewerClose = document.getElementById('gbViewerClose');
     if(!globe || !sphere) return;
 
     const AUTOSPIN = 0.28;   // radians/sec, steady-state yaw the globe eases back to
     const PERSP = 1100;      // must match the .gb-globe CSS perspective
-    const EXPLODE_MS = 980;  // just past .gb-tile.animating's transform time
+    const GB_FLY_MS = 500;   // must match .gb-fly-clone.flying's transition time
     const DRAG_K = 0.007;    // radians of rotation per px dragged
 
     let R = 200;             // sphere radius in px, from the globe's box
@@ -5771,7 +5843,8 @@ const EE_IKEA_BLOCKS = [
     let dragging = false, moved = false;
     let lastX = 0, lastY = 0, lastT = 0, downX = 0, downY = 0;
     let rafId = null, lastFrame = 0;
-    let photosRequested = false, exploded = false;
+    let photosRequested = false, viewerOpen = false;
+    let galleryItems = [], viewerIndex = 0, viewerAspect = 1;
     let cloud = null;
     const tileEls = [];
 
@@ -5790,7 +5863,7 @@ const EE_IKEA_BLOCKS = [
         el.style.height = th + 'px';
         el.style.marginLeft = (-tw / 2) + 'px';
         el.style.marginTop = (-th / 2) + 'px';
-        if(!exploded) el.style.transform = el._base + ' translateZ(' + R.toFixed(0) + 'px)';
+        el.style.transform = el._base + ' translateZ(' + R.toFixed(0) + 'px)';
       }
     }
 
@@ -5831,10 +5904,10 @@ const EE_IKEA_BLOCKS = [
         getGalleryItems('threed-interiors'),
         getGalleryItems('threed-mountainside')
       ]);
-      const items = [...interiors, ...mountainside];
-      if(!items.length) return;
-      renderGalleryTiles(flatGallery, items, '#d9d1c0');
-      placeTiles(items);
+      galleryItems = [...interiors, ...mountainside];
+      if(!galleryItems.length) return;
+      buildViewerStrip();
+      placeTiles(galleryItems);
     }
 
     // A tile's centre, projected to screen space relative to the globe centre,
@@ -5889,35 +5962,131 @@ const EE_IKEA_BLOCKS = [
     function startLoop(){ if(rafId == null){ lastFrame = 0; rafId = requestAnimationFrame(frame); } }
     function stopLoop(){ if(rafId != null){ cancelAnimationFrame(rafId); rafId = null; } }
 
-    // ---- explode / reassemble ----
-    function explode(){
-      if(exploded || !tileEls.length) return;
-      exploded = true;
-      stopLoop();
-      tileEls.forEach(el => {
-        // each tile is thrown further out along its own normal, so the
-        // formation bursts radially with every piece keeping its facing
-        const throwZ = R * (2.6 + Math.random() * 1.4);
-        const rz = (Math.random() * 40 - 20).toFixed(1);
-        el.classList.add('animating');
-        el.style.filter = 'brightness(1)';
-        el.style.transform = el._base + ' translateZ(' + throwZ.toFixed(0) + 'px) rotateZ(' + rz + 'deg)';
-      });
-      setTimeout(() => tileEls.forEach(el => el.classList.remove('animating')), EXPLODE_MS);
+    // ---- viewer: fly a tapped tile in, browse the rest from its strip ----
+    // The bottom strip's flex-basis shrinks under 640px (see the CSS media
+    // query) - mirrored here so the fly target and the landed image agree
+    // with the actual space left for the stage on small screens.
+    function stripH(){ return window.innerWidth <= 640 ? 78 : 96; }
+
+    // Same box a tile will land in, however it's reached (mid-flight clone,
+    // or a straight jump from the strip) - keeps every route into the
+    // viewer sizing the image identically, so nothing ever visibly resizes
+    // when the clone hands off to the real <img>.
+    function computeViewerTarget(aspect){
+      const availH = window.innerHeight - stripH();
+      const maxW = window.innerWidth * 0.86;
+      const maxH = availH * 0.82;
+      let w = maxW, h = w / aspect;
+      if(h > maxH){ h = maxH; w = h * aspect; }
+      return { width: w, height: h, left: (window.innerWidth - w) / 2, top: (availH - h) / 2 };
     }
 
-    function reassemble(){
-      if(!exploded) return;
-      exploded = false;
-      tileEls.forEach(el => {
-        el.classList.add('animating');
-        el.style.transform = el._base + ' translateZ(' + R.toFixed(0) + 'px)';
-      });
-      setTimeout(() => {
-        tileEls.forEach(el => el.classList.remove('animating'));
-        if(!exploded && page.classList.contains('show')) startLoop();
-      }, EXPLODE_MS);
+    function sizeViewerImg(){
+      const t = computeViewerTarget(viewerAspect);
+      viewerImg.style.width = t.width + 'px';
+      viewerImg.style.height = t.height + 'px';
     }
+
+    function buildViewerStrip(){
+      viewerStrip.innerHTML = '';
+      galleryItems.forEach((item, i) => {
+        const thumb = document.createElement('button');
+        thumb.type = 'button';
+        thumb.className = 'gb-viewer-thumb';
+        thumb.setAttribute('aria-label', 'View render ' + (i + 1));
+        const img = document.createElement('img');
+        img.alt = ''; img.loading = 'lazy'; img.src = item.src;
+        thumb.appendChild(img);
+        thumb.addEventListener('click', () => showViewerImage(i));
+        viewerStrip.appendChild(thumb);
+      });
+    }
+
+    // Jumps the viewer straight to render i, no fly animation - used both
+    // for the initial reveal (after the clone lands) and for every strip
+    // click after that. Aspect comes off the matching globe tile's own
+    // <img>, which is already loaded (it's rendering as part of the sphere),
+    // so this never has to wait on a fresh load event.
+    function showViewerImage(i){
+      viewerIndex = (i + galleryItems.length) % galleryItems.length;
+      const tileImg = tileEls[viewerIndex] && tileEls[viewerIndex].querySelector('img');
+      viewerAspect = (tileImg && tileImg.naturalWidth && tileImg.naturalHeight)
+        ? tileImg.naturalWidth / tileImg.naturalHeight : 1;
+      viewerImg.src = galleryItems[viewerIndex].src;
+      sizeViewerImg();
+      const thumbs = viewerStrip.children;
+      for(let k = 0; k < thumbs.length; k++) thumbs[k].classList.toggle('active', k === viewerIndex);
+      const active = thumbs[viewerIndex];
+      if(active && active.scrollIntoView) active.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+    }
+
+    // Clones the tapped tile and flies it from its exact projected spot on
+    // the globe to where it'll land in the viewer, zooming and un-twisting
+    // in one motion - the real viewer only appears once this has finished,
+    // so the clone is standing in for it the whole time (same handoff
+    // trick as Prints' flyToReader()).
+    function flyTileToViewer(tile){
+      return new Promise(resolve => {
+        const img = tile.querySelector('img');
+        const startRect = tile.getBoundingClientRect();
+        const aspect = (img.naturalWidth && img.naturalHeight)
+          ? img.naturalWidth / img.naturalHeight : startRect.width / startRect.height;
+        const target = computeViewerTarget(aspect);
+
+        const clone = document.createElement('img');
+        clone.src = img.currentSrc || img.src;
+        clone.alt = '';
+        clone.className = 'gb-fly-clone';
+        clone.style.left = target.left + 'px';
+        clone.style.top = target.top + 'px';
+        clone.style.width = target.width + 'px';
+        clone.style.height = target.height + 'px';
+        clone.style.transformOrigin = 'center center';
+
+        const dx = (startRect.left + startRect.width / 2) - (target.left + target.width / 2);
+        const dy = (startRect.top + startRect.height / 2) - (target.top + target.height / 2);
+        const sx = startRect.width / target.width;
+        const sy = startRect.height / target.height;
+        const rz = (Math.random() < 0.5 ? -1 : 1) * (10 + Math.random() * 10);
+        clone.style.transform = `translate(${dx}px, ${dy}px) scale(${sx}, ${sy}) rotate(${rz}deg)`;
+        document.body.appendChild(clone);
+
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          clone.classList.add('flying');
+          clone.style.transform = 'translate(0px, 0px) scale(1, 1) rotate(0deg)';
+        }));
+        setTimeout(() => { clone.remove(); resolve(); }, GB_FLY_MS);
+      });
+    }
+
+    function openViewerFromTile(tile){
+      viewerOpen = true;
+      stopLoop();
+      const i = tile._i;
+      flyTileToViewer(tile).then(() => {
+        if(!viewerOpen) return; // closed mid-flight - don't pop back open
+        showViewerImage(i);
+        viewer.classList.add('show');
+        viewer.setAttribute('aria-hidden', 'false');
+      });
+    }
+
+    function closeViewer(){
+      if(!viewerOpen) return;
+      viewerOpen = false;
+      viewer.classList.remove('show');
+      viewer.setAttribute('aria-hidden', 'true');
+      if(page.classList.contains('show')) startLoop();
+    }
+    // .gb-viewer-stage fills the whole area around the (smaller, centred)
+    // image, so a real click on empty space around the photo lands on the
+    // stage div, not on .gb-viewer itself - both count as backdrop.
+    const viewerStage = viewer.querySelector('.gb-viewer-stage');
+    viewerClose.addEventListener('click', closeViewer);
+    viewer.addEventListener('click', (e) => {
+      if(e.target === viewer || e.target === viewerStage) closeViewer();
+    });
+    window.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeViewer(); });
 
     // Which front-facing tile (if any) is under a screen point.
     function pickTile(clientX, clientY){
@@ -5938,7 +6107,7 @@ const EE_IKEA_BLOCKS = [
 
     // ---- drag on both axes (trackball) ----
     function onDown(e){
-      if(exploded) return;
+      if(viewerOpen) return;
       dragging = true; moved = false;
       lastX = downX = e.clientX;
       lastY = downY = e.clientY;
@@ -5963,28 +6132,15 @@ const EE_IKEA_BLOCKS = [
       if(!dragging) return;
       dragging = false;
       sphere.classList.remove('dragging');
-      // a tap (barely moved) on a tile explodes the globe and zooms that render
-      if(!moved && !exploded){
+      // a tap (barely moved) on a tile flies it straight into the viewer
+      if(!moved && !viewerOpen){
         const tile = pickTile(e.clientX, e.clientY);
-        if(tile){
-          explode();
-          setTimeout(() => openLightboxFromGallery(flatGallery, tile._i), 430);
-        }
+        if(tile) openViewerFromTile(tile);
       }
     }
     sphere.addEventListener('pointerdown', onDown);
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
-
-    // Reassemble when the lightbox is dismissed - but only while this page is
-    // up and blown apart (the observer sees every lightbox use site-wide).
-    if(lightbox){
-      new MutationObserver(() => {
-        if(exploded && page.classList.contains('show') && !lightbox.classList.contains('show')){
-          reassemble();
-        }
-      }).observe(lightbox, { attributes:true, attributeFilter:['class'] });
-    }
 
     function syncThreedPage(){
       if(location.hash === '#threed'){
@@ -6000,18 +6156,16 @@ const EE_IKEA_BLOCKS = [
         page.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('gb-open');
         stopLoop();
-        // snap straight back to a clean sphere for the next visit
-        if(exploded){
-          exploded = false;
-          tileEls.forEach(el => {
-            el.classList.remove('animating');
-            el.style.transform = el._base + ' translateZ(' + R.toFixed(0) + 'px)';
-          });
-        }
+        // leaving the page with the viewer still open - close it outright,
+        // no fly-back, so the next visit starts clean
+        if(viewerOpen) closeViewer();
       }
     }
 
-    window.addEventListener('resize', () => { if(page.classList.contains('show')) measure(); });
+    window.addEventListener('resize', () => {
+      if(page.classList.contains('show')) measure();
+      if(viewerOpen) sizeViewerImg();
+    });
 
     document.querySelector('#threed-page .gb-back').addEventListener('click', function(e){
       e.preventDefault();
