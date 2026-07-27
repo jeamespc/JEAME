@@ -70,7 +70,13 @@
     .hero{
       height:100vh;
       height:100dvh;
-      width: 100vw;
+      /* 100% (of body), not 100vw - once the page has a scrollbar (any
+         section visited, even once - body.unlocked never gets removed
+         again), 100vw includes the scrollbar's own width while the
+         actually-visible page doesn't, so flex-centering inside a 100vw
+         box lands everything a few px right of true screen-centre. 100%
+         tracks body's real content width, which already excludes it. */
+      width: 100%;
       display:flex;
       flex-direction:column;
       align-items:center;
@@ -342,7 +348,13 @@
     .label{
       position:absolute;
       top:0;
-      left:50%;
+      /* +1.18% to match .logo-wrap's own -1.18% nudge (see its comment) -
+         this text is centred on the wrapper's box, which is the SVG's own
+         bounding box, but the wrapper itself has been shifted left so the
+         *squares column* (not the SVG's geometric centre) sits on the hero
+         centreline. Without this offset the title would drift 1.18% left
+         of the squares/Draw-button centreline instead of sharing it. */
+      left:calc(50% + 1.18%);
       width:100%;
       transform:translateX(-50%);
       font-family:'Arial Black', 'Arial', sans-serif;
@@ -372,7 +384,7 @@
     .hero-hint{
       position:absolute;
       top:0;
-      left:50%;
+      left:calc(50% + 1.18%); /* matches .label's own offset - see its comment */
       width:100%;
       transform:translateX(-50%);
       font-size:clamp(10px, 1.7vw, 13px);
