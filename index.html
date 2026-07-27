@@ -4256,15 +4256,25 @@
       setPointerTarget(e.clientX, e.clientY);
       hideHintOnce();
     });
+    // Tapping a sketch is about to focus it (see focusSketch() below), which
+    // re-aims the spotlight to dead centre itself. Without this guard,
+    // touchstart/touchmove would aim it at the raw touch point first (which
+    // can land anywhere on the sketch, not its centre), then the click's
+    // re-aim to 50/50 landed a moment later - the light visibly darted to
+    // the tap spot and snapped back to centre instead of zooming straight
+    // in, only on touch since there's no continuous hover to have already
+    // parked it nearby the way a mouse would.
     page.addEventListener('touchmove', e => {
       if(focusedEl || !e.touches[0]) return;
-      setPointerTarget(e.touches[0].clientX, e.touches[0].clientY);
       hideHintOnce();
+      if(e.target.closest('.sb-sketch')) return;
+      setPointerTarget(e.touches[0].clientX, e.touches[0].clientY);
     }, {passive:true});
     page.addEventListener('touchstart', e => {
       if(focusedEl || !e.touches[0]) return;
-      setPointerTarget(e.touches[0].clientX, e.touches[0].clientY);
       hideHintOnce();
+      if(e.target.closest('.sb-sketch')) return;
+      setPointerTarget(e.touches[0].clientX, e.touches[0].clientY);
     }, {passive:true});
 
     function focusSketch(el){
@@ -4456,15 +4466,25 @@
       setPointerTarget(e.clientX, e.clientY);
       hint.classList.add('fade');
     });
+    // Tapping a poster is about to focus it (see the click handler below),
+    // which re-aims the spotlight to dead centre itself. Without this guard,
+    // touchstart/touchmove would aim it at the raw touch point first (which
+    // can land anywhere on the poster, not its centre), then the click's
+    // re-aim to 50/50 landed a moment later - the light visibly darted to
+    // the tap spot and snapped back to centre instead of zooming straight
+    // in, only on touch since there's no continuous hover to have already
+    // parked it nearby the way a mouse would.
     page.addEventListener('touchmove', e => {
       if(focusedEl || !e.touches[0]) return;
-      setPointerTarget(e.touches[0].clientX, e.touches[0].clientY);
       hint.classList.add('fade');
+      if(e.target.closest('.gr-poster')) return;
+      setPointerTarget(e.touches[0].clientX, e.touches[0].clientY);
     }, {passive:true});
     page.addEventListener('touchstart', e => {
       if(focusedEl || !e.touches[0]) return;
-      setPointerTarget(e.touches[0].clientX, e.touches[0].clientY);
       hint.classList.add('fade');
+      if(e.target.closest('.gr-poster')) return;
+      setPointerTarget(e.touches[0].clientX, e.touches[0].clientY);
     }, {passive:true});
 
     function pickPosition(){
