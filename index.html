@@ -966,6 +966,8 @@
     .po-body{max-width:640px;font-size:16px;line-height:1.75;color:#222;}
     .po-body p{margin-bottom:20px;}
     .po-body p:last-child{margin-bottom:0;}
+    .po-body a{color:var(--po-accent,var(--red));font-weight:700;text-decoration:underline;text-underline-offset:2px;}
+    .po-body a:hover{opacity:0.65;}
     .po-gallery{
       display:flex; gap:10px; overflow-x:auto; overflow-y:hidden;
       background:transparent; padding:0;
@@ -1015,8 +1017,25 @@
       pointer-events:none;
     }
     .po-gallery .po-gallery-tile.has-img:hover .gt-expand{ opacity:1; }
+    /* Booklet tile (see PROJECT_BOOKLETS/prependBookletTile()): sits first in
+       the strip, opens straight into Prints instead of the shared lightbox -
+       its badge stays visible at rest (rather than the .gt-expand icon's
+       hover-only opacity) since it's a different action than every other
+       tile in the row and shouldn't need a hover to be discovered, which
+       also matters on touch where hover never fires at all. */
+    .po-gallery-booklet-badge{
+      position:absolute; left:0; right:0; bottom:0;
+      padding:10px 12px 9px;
+      background:linear-gradient(to top, rgba(10,10,10,0.85) 0%, rgba(10,10,10,0.4) 70%, rgba(10,10,10,0) 100%);
+      color:#fff; font-size:11px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase;
+      display:flex; align-items:center; gap:5px;
+      pointer-events:none;
+    }
+    .po-gallery-booklet-arrow{ display:inline-block; transition:transform .2s ease; }
+    .po-gallery .po-gallery-tile.po-gallery-booklet:hover .po-gallery-booklet-arrow{ transform:translateX(4px); }
     @media (max-width:640px){
       .po-gallery .po-gallery-tile{ height:150px; width:calc(150px * 4 / 3); }
+      .po-gallery-booklet-badge{ font-size:10px; padding:8px 9px 7px; }
     }
 
     /* ---------- SKETCHBOOK: spotlight page ---------- */
@@ -3805,7 +3824,8 @@
       </svg>`,
       paragraphs: [
         "DEMY takes the Argelati swimming pool in Milan and pushes it past its single summer purpose, reviving Arrighetti's original vision of an organic, landscaped urban beach, and asking what that ground could mean for the artists and young people who live around it the rest of the year. The site is read as a third place: somewhere to simply be, wrapped in fresh air and framed by the possibility of showing your own work.",
-        "Layered over the beach is a cinema, a theatre, and an exhibition space, so one ground can hold very different people and interests at once without losing its original reason for existing. Pool, stage, library, and seating are choreographed as a single continuous landscape, open and in use across all seasons, rather than shuttered the moment summer ends."
+        "Layered over the beach is a cinema, a theatre, and an exhibition space, so one ground can hold very different people and interests at once without losing its original reason for existing. Pool, stage, library, and seating are choreographed as a single continuous landscape, open and in use across all seasons, rather than shuttered the moment summer ends.",
+        "The complete thesis booklet can be flipped through page by page in <a href=\"#prints\">Prints</a>."
       ]
     },
     'rml-link': {
@@ -3828,6 +3848,12 @@
     product:  { hash: 'product',  label: 'Product Design' },
     urban:    { hash: 'urban',    label: 'Urban and Spatial' }
   };
+  // Project keys that have a real printed booklet sitting in Prints, keyed
+  // to that booklet's number there (see PROJECTS['prints-{n}'] convention
+  // in the Prints script block below) - a project page with an entry here
+  // gets an extra tile at the front of its gallery linking straight into
+  // that booklet (see prependBookletTile()/openPrintsBooklet()).
+  const PROJECT_BOOKLETS = { demy: 2 };
   // Same newest-finished-first rule as the visible row order (see
   // parseEndDateStr above), computed straight from each project's own `time`
   // field so prev/next navigation always matches what's on the section page -
@@ -3907,7 +3933,13 @@
       tile.style.background = data.accent;
       galleryEl.appendChild(tile);
     }
-    loadGallery(galleryEl, key, data.accent, loadToken);
+    loadGallery(galleryEl, key, data.accent, loadToken).then(() => {
+      // Bail out silently if the person has since opened a different
+      // project, same staleness guard loadGallery() itself uses.
+      if(galleryEl.dataset.loadToken !== loadToken) return;
+      const bookletNum = PROJECT_BOOKLETS[key];
+      if(bookletNum) prependBookletTile(galleryEl, bookletNum, loadToken);
+    });
 
     document.getElementById('poNextTitle').textContent = next.title;
     document.getElementById('poNextLink').href = '#' + nextKey;
@@ -4028,6 +4060,30 @@
     // Bail out silently if the person has since opened a different project.
     if(galleryEl.dataset.loadToken !== loadToken) return;
     renderGalleryTiles(galleryEl, found, accent);
+  }
+
+  // Booklet tile for the handful of projects with a real printed companion
+  // in Prints (see PROJECT_BOOKLETS) - shares the booklet's own cover image
+  // (getCoverSrc('prints-{n}'), the exact same shared probe Prints itself
+  // uses) so there's nothing new to upload, just a distinct badge and a
+  // click that jumps into that booklet instead of the shared lightbox.
+  // Called after loadGallery() has finished and inserted at the front, so
+  // it survives renderGalleryTiles()'s own innerHTML wipe rather than
+  // racing it.
+  async function prependBookletTile(galleryEl, n, loadToken){
+    const cover = await getCoverSrc('prints-' + n);
+    if(!cover || galleryEl.dataset.loadToken !== loadToken) return;
+    const tile = document.createElement('div');
+    tile.className = 'po-gallery-tile has-img po-gallery-booklet';
+    const img = document.createElement('img');
+    img.alt = ''; img.src = cover;
+    tile.appendChild(img);
+    const badge = document.createElement('span');
+    badge.className = 'po-gallery-booklet-badge';
+    badge.innerHTML = 'Read the booklet <span class="po-gallery-booklet-arrow">→</span>';
+    tile.appendChild(badge);
+    tile.addEventListener('click', () => window.openPrintsBooklet(n));
+    galleryEl.insertBefore(tile, galleryEl.firstChild);
   }
 
   // ---- Preload on intent: warm the cover + gallery caches as soon as a
@@ -5711,6 +5767,7 @@ const EE_IKEA_BLOCKS = [
       booklets.forEach(({n, cover}) => {
         const el = document.createElement('div');
         el.className = 'pr-booklet';
+        el.dataset.n = n; // looked up by openPrintsBooklet() for deep-linking in from a project page
         el.style.setProperty('--pr-tilt', (Math.random() * 12 - 6).toFixed(1) + 'deg');
         const {x, y} = pickPosition(placed);
         el.style.left = x + '%';
@@ -5775,6 +5832,29 @@ const EE_IKEA_BLOCKS = [
         scatterBooklets(found);
       }
     }
+
+    // Deep-links into a specific booklet from elsewhere on the site (see
+    // PROJECT_BOOKLETS/prependBookletTile() in the project-overlay script -
+    // currently just DEMY, pointing at booklet 2). Rather than duplicating
+    // the open sequence, this jumps to Prints and, once its table has
+    // scattered, clicks straight through the real booklet element so it
+    // gets the exact same fly-to-reader animation as opening it there by
+    // hand. Polls with setTimeout rather than requestAnimationFrame - this
+    // isn't a rendering task, and rAF callbacks get held entirely while the
+    // tab is backgrounded, which would strand the poll instead of just
+    // running it a little late. Gives up once loadBooklets() has finished
+    // without ever placing a booklet with this number, rather than polling
+    // forever.
+    window.openPrintsBooklet = function(n){
+      location.hash = 'prints';
+      const tryOpen = () => {
+        const el = table.querySelector('.pr-booklet[data-n="' + n + '"]');
+        if(el){ el.click(); return; }
+        if(loaded) return;
+        setTimeout(tryOpen, 50);
+      };
+      setTimeout(tryOpen, 50);
+    };
 
     readerClose.addEventListener('click', closeReader);
     readerPrev.addEventListener('click', () => flipTo(position - 1, -1));
