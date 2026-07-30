@@ -66,6 +66,82 @@
       overflow-y: auto;
     }
 
+    /* ---------- SITE HEADER ---------- */
+    /* Only makes sense once the hero (which already carries the full nav via
+       its own logo shapes) has scrolled fully out of view - toggled by an
+       IntersectionObserver on the hero itself (see the SITE HEADER script
+       block), not a scroll-position threshold, so it tracks "hero visible at
+       all" exactly rather than an approximated pixel count. Sits at a
+       z-index well below every full-page overlay (all 2000+) so those cover
+       it automatically - it never needs to know an overlay is open. */
+    .site-header{
+      position:fixed; top:0; left:0; right:0; z-index:900;
+      display:flex; align-items:center; justify-content:space-between;
+      gap:20px;
+      padding:18px 5.4vw;
+      background:rgba(250,250,247,0.92);
+      backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+      border-bottom:1px solid rgba(10,10,10,0.08);
+      opacity:0; pointer-events:none;
+      transform:translateY(-6px);
+      transition:opacity .3s ease, transform .3s ease;
+    }
+    .site-header.show{
+      opacity:1; pointer-events:auto; transform:translateY(0);
+    }
+    .site-header-brand{
+      font-family:'Arial',sans-serif; font-weight:700;
+      font-size:14px; letter-spacing:-0.02em; text-transform:uppercase;
+      color:var(--black); text-decoration:none; flex-shrink:0;
+      transition:opacity .2s ease;
+    }
+    .site-header-brand:hover{ opacity:0.7; }
+    .site-header-nav{
+      display:flex; align-items:center; gap:clamp(18px,3vw,40px);
+      overflow-x:auto; -webkit-overflow-scrolling:touch;
+      scrollbar-width:none;
+    }
+    .site-header-nav::-webkit-scrollbar{ display:none; }
+    .site-header-item{ position:relative; flex-shrink:0; }
+    .site-header-link{
+      display:block;
+      font-family:'Arial',sans-serif; font-weight:400;
+      font-size:11px; letter-spacing:0.06em; text-transform:uppercase;
+      white-space:nowrap;
+      color:var(--black); text-decoration:none;
+      padding:6px 0;
+      transition:opacity .2s ease;
+    }
+    .site-header-link:hover{ opacity:0.65; }
+    /* Popdown: opens on hover (desktop) - on touch, where hover never
+       fires, the link above just navigates straight to the category
+       section instead, which already lists every project in it, so
+       nothing is unreachable, just one tap longer. */
+    .site-header-dropdown{
+      position:absolute; top:100%; left:50%;
+      transform:translateX(-50%) translateY(4px);
+      margin-top:12px;
+      min-width:210px;
+      padding:14px 18px;
+      background:var(--paper);
+      box-shadow:0 14px 30px rgba(0,0,0,0.16);
+      border:1px solid rgba(10,10,10,0.08);
+      display:flex; flex-direction:column; gap:2px;
+      opacity:0; pointer-events:none;
+      transition:opacity .2s ease, transform .2s ease;
+    }
+    .site-header-item:hover .site-header-dropdown,
+    .site-header-item:focus-within .site-header-dropdown{
+      opacity:1; pointer-events:auto;
+      transform:translateX(-50%) translateY(0);
+    }
+    @media (max-width:640px){
+      .site-header{ padding:14px 4vw; gap:12px; }
+      .site-header-brand{ font-size:12px; }
+      .site-header-nav{ gap:16px; }
+      .site-header-link{ font-size:10px; }
+    }
+
     /* ---------- HERO ---------- */
     .hero{
       height:100vh;
@@ -2244,6 +2320,12 @@
   </style>
 </head>
 <body>
+
+<!-- ===================== SITE HEADER (shown once past the hero) ===================== -->
+<header class="site-header" id="siteHeader" aria-hidden="true">
+  <a class="site-header-brand" href="#top">JEAME</a>
+  <nav class="site-header-nav" id="siteHeaderNav"></nav>
+</header>
 
 <!-- ===================== HERO ===================== -->
 <section class="hero" id="top">
@@ -6318,6 +6400,77 @@ const EE_IKEA_BLOCKS = [
 
     window.addEventListener('hashchange', syncThreedPage);
     syncThreedPage();
+  })();
+</script>
+
+<script>
+  // ---------- SITE HEADER: sticky nav, shown once the hero is fully
+  // scrolled out of view ----------
+  // Dropdowns are built from the exact same live data the hero's own
+  // quick-jump popup uses (PROJECT_ORDER/PROJECTS via projectPopupItems(),
+  // STORIES_ITEMS - both defined earlier in the page) and reuse its
+  // .hero-popup-item styling for each row, so a project added, renamed, or
+  // reordered later never needs hand-syncing here either.
+  (function(){
+    const header = document.getElementById('siteHeader');
+    const nav = document.getElementById('siteHeaderNav');
+    const hero = document.getElementById('top');
+    if(!header || !nav || !hero) return;
+
+    const NAV_ITEMS = [
+      { label: 'Interior Design', href: '#interior', items: () => projectPopupItems('interior') },
+      { label: 'Product Design', href: '#product', items: () => projectPopupItems('product') },
+      { label: 'Urban and Spatial', href: '#urban', items: () => projectPopupItems('urban') },
+      { label: 'Stories', href: '#stories', items: () => STORIES_ITEMS }
+    ];
+
+    NAV_ITEMS.forEach(entry => {
+      const wrap = document.createElement('div');
+      wrap.className = 'site-header-item';
+
+      const link = document.createElement('a');
+      link.className = 'site-header-link';
+      link.href = entry.href;
+      link.textContent = entry.label;
+      wrap.appendChild(link);
+
+      const dropdown = document.createElement('div');
+      dropdown.className = 'site-header-dropdown';
+      // Built once, on first hover/focus rather than up front for every
+      // item at page load - the header itself is hidden at the hero
+      // anyway, so there's no rush, and this keeps initial load from
+      // walking every category's project list before it's ever seen.
+      let built = false;
+      function build(){
+        if(built) return;
+        built = true;
+        entry.items().forEach(it => {
+          const a = document.createElement('a');
+          a.className = 'hero-popup-item';
+          a.href = it.href;
+          a.style.setProperty('--hp-color', it.color);
+          a.textContent = it.label;
+          dropdown.appendChild(a);
+        });
+      }
+      wrap.addEventListener('mouseenter', build);
+      wrap.addEventListener('focusin', build);
+      wrap.appendChild(dropdown);
+      nav.appendChild(wrap);
+    });
+
+    // "Completely disappeared" is tracked with an IntersectionObserver on
+    // the hero itself rather than a scroll-position/height threshold - it
+    // fires exactly when the hero has zero visible pixels left (either
+    // direction), no resize-driven recalculation needed, and it's already
+    // correct the instant layout changes (e.g. the hero's own height is
+    // fluid/clamp()-based).
+    const observer = new IntersectionObserver(([entry]) => {
+      const heroGone = entry.intersectionRatio === 0;
+      header.classList.toggle('show', heroGone);
+      header.setAttribute('aria-hidden', heroGone ? 'false' : 'true');
+    }, { threshold: 0 });
+    observer.observe(hero);
   })();
 </script>
 
