@@ -2070,10 +2070,13 @@
       transition:transform .2s ease;
       z-index:5;
     }
-    .pr-booklet:hover{ transform:translateY(-8px); }
-    /* Name of the booklet (BOOKLET_LABELS in the script), fading in under it
-       on hover. Absolutely placed so it never nudges the row's spacing.
-       Touch screens have no hover, so there it's simply always shown. */
+    /* Name of the booklet (BOOKLET_LABELS in the script), fading in under it.
+       Absolutely placed so it never nudges the row's spacing. With a mouse it
+       follows hover; on a touch screen (no hover) it appears when the booklet
+       has been tapped once - the "armed" state set in scatterBooklets(),
+       where a second tap then opens it. The lift and label are tied to
+       (hover:hover) so a touch browser's sticky :hover can't leave one
+       stuck on after tapping elsewhere. */
     .pr-booklet-label{
       position:absolute; top:100%; left:50%; margin-top:20px;
       transform:translate(-50%, 4px);
@@ -2082,28 +2085,27 @@
       opacity:0; pointer-events:none;
       transition:opacity .2s ease, transform .2s ease;
     }
-    .pr-booklet:hover .pr-booklet-label{ opacity:1; transform:translate(-50%, 0); }
-    @media (hover:none){
-      .pr-booklet-label{ opacity:1; transform:translate(-50%, 0); }
+    .pr-booklet.armed{ transform:translateY(-8px); }
+    .pr-booklet.armed .pr-booklet-label{ opacity:1; transform:translate(-50%, 0); }
+    @media (hover:hover){
+      .pr-booklet:hover{ transform:translateY(-8px); }
+      .pr-booklet:hover .pr-booklet-label{ opacity:1; transform:translate(-50%, 0); }
     }
     /* --pr-aspect comes from the booklet's real width:height in cm
        (BOOKLET_SIZES_CM) - or, for a booklet with no size listed, from the
        cover's own naturalWidth/naturalHeight once it loads (see
        scatterBooklets()) - so a booklet always shows at its real page shape
        instead of a fixed crop. Corners are left sharp, like an actual
-       printed book, not rounded. The stacked edge lines read as a thickness
-       of pages and the drop shadow is kept soft for a white ground. */
+       printed book, not rounded. Depth is kept to a small, soft drop shadow
+       - no stacked page edges - which grows a touch when lifted. */
     .pr-booklet img{
       display:block; width:100%; aspect-ratio:var(--pr-aspect, 1); object-fit:cover;
-      box-shadow:
-        0 1px 0 1px #ece9e0, 0 3px 0 2px #dfdbcf, 0 5px 0 3px #d2cdbf,
-        0 12px 18px rgba(0,0,0,0.16);
+      box-shadow:0 2px 6px rgba(0,0,0,0.18);
       transition:box-shadow .2s ease;
     }
-    .pr-booklet:hover img{
-      box-shadow:
-        0 1px 0 1px #ece9e0, 0 3px 0 2px #dfdbcf, 0 5px 0 3px #d2cdbf,
-        0 18px 26px rgba(0,0,0,0.2);
+    .pr-booklet.armed img{ box-shadow:0 5px 12px rgba(0,0,0,0.2); }
+    @media (hover:hover){
+      .pr-booklet:hover img{ box-shadow:0 5px 12px rgba(0,0,0,0.2); }
     }
 
     /* Reader: page-flip viewer for whichever booklet was opened. */
@@ -2205,7 +2207,7 @@
        flyToReader(). Sharp corners throughout, to match the real book. */
     .pr-fly-clone{
       position:fixed; z-index:6600;
-      box-shadow:0 20px 46px rgba(0,0,0,0.55);
+      box-shadow:0 5px 12px rgba(0,0,0,0.2);
       object-fit:cover;
       pointer-events:none;
     }
@@ -6041,7 +6043,11 @@ const EE_IKEA_BLOCKS = [
           label.textContent = BOOKLET_LABELS[n];
           el.appendChild(label);
         }
-        el.addEventListener('click', () => {
+        // The actual open, kept separate from the click handler so a tap that
+        // only "arms" a booklet (below) and a deep link (openPrintsBooklet)
+        // can each choose whether to go through the tap gate.
+        const openThis = () => {
+          el.classList.remove('armed');
           const aspect = (img.naturalWidth && img.naturalHeight) ? img.naturalWidth / img.naturalHeight : 1;
           // Open with just the cover the instant the fly-in lands (it's
           // already loaded - same src as the table thumbnail) instead of
@@ -6065,10 +6071,32 @@ const EE_IKEA_BLOCKS = [
               updateIndexHotspots();
             });
           });
+        };
+        el._openBooklet = openThis;
+        el.addEventListener('click', () => {
+          // On a touch screen there's no hover to reveal the booklet's name,
+          // so the first tap shows it (and lifts the booklet) and a second tap
+          // on the same one opens it. Tapping a different booklet moves the
+          // name over to that one. A booklet with no name just opens.
+          if(touchOnly() && BOOKLET_LABELS[n] && !el.classList.contains('armed')){
+            disarmBooklets();
+            el.classList.add('armed');
+            return;
+          }
+          openThis();
         });
         table.appendChild(el);
       });
     }
+
+    const touchOnly = () => window.matchMedia('(hover: none)').matches;
+    function disarmBooklets(){
+      table.querySelectorAll('.pr-booklet.armed').forEach(b => b.classList.remove('armed'));
+    }
+    // Tapping anywhere that isn't a booklet puts the name away again.
+    table.addEventListener('click', e => {
+      if(!e.target.closest('.pr-booklet')) disarmBooklets();
+    });
 
     // All slots probed in parallel up front (see loadSketches for the same
     // reasoning) rather than awaited one at a time, which is what would make
@@ -6119,7 +6147,9 @@ const EE_IKEA_BLOCKS = [
       location.hash = 'prints';
       const tryOpen = () => {
         const el = table.querySelector('.pr-booklet[data-n="' + n + '"]');
-        if(el){ el.click(); return; }
+        // Straight to the open (not el.click()): a deep link is already an
+        // explicit choice, so it shouldn't stop at the touch "arm" step.
+        if(el){ el._openBooklet(); return; }
         if(loaded) return;
         setTimeout(tryOpen, 50);
       };
@@ -6180,6 +6210,7 @@ const EE_IKEA_BLOCKS = [
         page.classList.remove('show');
         page.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('pr-open');
+        disarmBooklets();
         closeReader();
       }
     }
