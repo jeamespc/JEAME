@@ -1115,22 +1115,26 @@
     }
 
     /* ---------- Shared "Loading" indicator ----------
-       The word plus three dot-sized squares that each turn 90deg right, then
-       back left, in a staggered wave. One component for every feature that
-       has to fetch content before it can show anything (see showLoading() /
-       loadImg() in the script) - just recoloured per page below. */
+       Three squares that each turn 90deg right, then back left, in a
+       staggered wave, centred in whatever is loading (no wording - the
+       container carries an aria-label instead). One component for every
+       feature that has to fetch content before it can show anything (see
+       showLoading() / loadImg() in the script) - just recoloured per page
+       below. */
     .jm-loading{
       position:absolute; inset:0; z-index:40;
-      display:flex; align-items:center; justify-content:center; gap:0.8em;
+      display:flex; align-items:center; justify-content:center;
       pointer-events:none;
-      font-family:'Arial',sans-serif; font-size:11px; font-weight:700;
-      letter-spacing:0.28em; text-transform:uppercase; white-space:nowrap;
       color:#fff;
     }
-    .jm-loading-squares{ display:inline-flex; align-items:center; gap:0.55em; }
+    .jm-loading-squares{ display:inline-flex; align-items:center; gap:12px; }
     .jm-loading-squares i{
-      display:block; width:0.42em; height:0.42em; background:currentColor;
+      display:block; width:16px; height:16px; background:currentColor;
       animation:jmSquareTurn 1.5s ease-in-out infinite;
+    }
+    @media (max-width:640px){
+      .jm-loading-squares{ gap:9px; }
+      .jm-loading-squares i{ width:12px; height:12px; }
     }
     .jm-loading-squares i:nth-child(2){ animation-delay:.16s; }
     .jm-loading-squares i:nth-child(3){ animation-delay:.32s; }
@@ -1145,22 +1149,24 @@
       .jm-loading-squares i{ animation:none; }
     }
     /* Placement / colour variants */
-    .jm-loading.jm-top{ align-items:flex-start; padding-top:4.5vh; }
     .jm-loading.jm-static{ position:static; inset:auto; justify-content:flex-start; }
     #archives-page .jm-loading, #threed-page .jm-loading, #prints-page .jm-loading{ color:#1c1a17; }
-    #prints-page .pr-reader .jm-loading{ color:#fff; }
+    /* In the booklet reader it sits dead centre over the cover that's showing
+       while the pages load - a difference blend keeps it visible on a light
+       or a dark cover alike. */
+    #prints-page .pr-reader .jm-loading{ color:#fff; mix-blend-mode:difference; }
     /* The sketchbook's spotlight opens on a white hole dead centre, right
        where this sits - a difference blend keeps it readable over both the
        white and the black around it (same trick as .sb-empty). */
     #sketchbook-page .jm-loading{ mix-blend-mode:difference; }
     #graphics-page .jm-loading{ color:#f1e9dd; }
-    #photography-page .jm-loading{ font-family:'Courier New',Courier,monospace; color:#e8f5ec; }
-    /* Over the pulsing accent-coloured placeholder tiles: a small white label
-       with dark text, so it reads the same whatever the project's colour is
-       (and doesn't fade with the tiles' own pulse). */
+    #photography-page .jm-loading{ color:#e8f5ec; }
+    /* Over the pulsing accent-coloured placeholder tiles: a small white chip
+       with dark squares, so it reads the same whatever the project's colour
+       is (and doesn't fade with the tiles' own pulse). */
     .po-gallery > .jm-loading{
       inset:auto; top:50%; left:50%; transform:translate(-50%,-50%);
-      padding:9px 16px; background:#fff; color:#1c1a17;
+      padding:16px 20px; background:#fff; color:#1c1a17;
       box-shadow:0 1px 8px rgba(0,0,0,0.12);
     }
 
@@ -4133,8 +4139,9 @@
   // ---- Shared "Loading" indicator (see the .jm-loading CSS). Ref-counted per
   // container so several overlapping waits on the same thing (e.g. two probes
   // feeding one page) share a single indicator that only goes away once the
-  // last of them settles. extraClass picks a placement variant (jm-top,
-  // jm-static); the container is made a positioning context if it isn't one.
+  // last of them settles. extraClass picks a placement variant (jm-static, for
+  // sitting in flow instead of centred); the container is made a positioning
+  // context if it isn't one.
   function showLoading(container, extraClass){
     if(!container) return;
     let st = container._jmLoad;
@@ -4143,7 +4150,8 @@
       el.className = 'jm-loading' + (extraClass ? ' ' + extraClass : '');
       el.setAttribute('role', 'status');
       el.setAttribute('aria-live', 'polite');
-      el.innerHTML = 'Loading<span class="jm-loading-squares" aria-hidden="true"><i></i><i></i><i></i></span>';
+      el.setAttribute('aria-label', 'Loading');
+      el.innerHTML = '<span class="jm-loading-squares" aria-hidden="true"><i></i><i></i><i></i></span>';
       st = container._jmLoad = { el, n: 0 };
     }
     if(!st.el.isConnected){
@@ -6047,8 +6055,8 @@ const EE_IKEA_BLOCKS = [
           flyToReader(el, cover, aspect).then(() => {
             openBooklet([{src: cover, type: 'image'}], aspect, n);
             // Only the cover is on screen until the page probe lands, so say
-            // so at the top of the reader (out of the way of the cover itself).
-            showLoading(reader, 'jm-top');
+            // so, centred over it.
+            showLoading(reader);
             getBookletPages(n, extFromSrc(cover)).then(interior => {
               if(currentBookletNum !== n) return;
               clearLoading(reader);
