@@ -1093,26 +1093,36 @@
       pointer-events:none;
     }
     .po-gallery .po-gallery-tile.has-img:hover .gt-expand{ opacity:1; }
-    /* Booklet tile (see PROJECT_BOOKLETS/prependBookletTile()): sits first in
-       the strip, opens straight into Prints instead of the shared lightbox -
-       its badge stays visible at rest (rather than the .gt-expand icon's
-       hover-only opacity) since it's a different action than every other
-       tile in the row and shouldn't need a hover to be discovered, which
-       also matters on touch where hover never fires at all. */
-    .po-gallery-booklet-badge{
+    @media (max-width:640px){
+      .po-gallery .po-gallery-tile{ height:150px; width:calc(150px * 4 / 3); }
+    }
+    /* Booklet cover between ABOUT and OVERVIEW (see PROJECT_BOOKLETS /
+       setupProjectBooklet()): a third column of the section grid, opening
+       straight into Prints. On wide screens layoutProjectBooklet() sizes it
+       so its top and bottom line up with the top of the "About" heading and
+       the last line of the About text; below 900px the grid stacks and it
+       simply sits between the two blocks. The badge stays visible at rest
+       since hover never fires on touch. */
+    .po-booklet-link{
+      display:none; position:relative; align-self:start;
+      padding:0; border:0; background:none; cursor:pointer;
+      box-shadow:0 2px 6px rgba(0,0,0,0.18);
+      transition:box-shadow .2s ease;
+    }
+    .po-booklet-link:focus-visible{ outline:2px solid var(--black); outline-offset:3px; }
+    .po-section-grid.has-booklet .po-booklet-link{ display:block; }
+    .po-booklet-link img{ display:block; width:100%; height:100%; object-fit:cover; }
+    .po-booklet-badge{
       position:absolute; left:0; right:0; bottom:0;
-      padding:10px 12px 9px;
+      padding:10px 12px 9px; text-align:left;
       background:linear-gradient(to top, rgba(10,10,10,0.85) 0%, rgba(10,10,10,0.4) 70%, rgba(10,10,10,0) 100%);
       color:#fff; font-size:11px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase;
       display:flex; align-items:center; gap:5px;
       pointer-events:none;
     }
-    .po-gallery-booklet-arrow{ display:inline-block; transition:transform .2s ease; }
-    .po-gallery .po-gallery-tile.po-gallery-booklet:hover .po-gallery-booklet-arrow{ transform:translateX(4px); }
-    @media (max-width:640px){
-      .po-gallery .po-gallery-tile{ height:150px; width:calc(150px * 4 / 3); }
-      .po-gallery-booklet-badge{ font-size:10px; padding:8px 9px 7px; }
-    }
+    .po-booklet-arrow{ display:inline-block; transition:transform .2s ease; }
+    .po-booklet-link:hover .po-booklet-arrow{ transform:translateX(4px); }
+    @media (hover:hover){ .po-booklet-link:hover{ box-shadow:0 5px 12px rgba(0,0,0,0.2); } }
 
     /* ---------- Shared "Loading" indicator ----------
        Three squares that each turn 90deg right, then back left, in a
@@ -2422,8 +2432,18 @@
     @media (max-width:900px){ .cv-grid-2{grid-template-columns:1fr;gap:36px;} }
     @media (max-width:640px){ .cv-title-row{padding-left:6vw;padding-right:6vw;} }
 
+    .po-section-grid.has-booklet{
+      grid-template-columns:var(--po-cols, minmax(0,1.4fr) 260px minmax(220px,320px));
+      gap:40px;
+    }
+    /* Medium windows: booklet beside the About text, Overview on its own row. */
+    .po-section-grid.has-booklet.booklet-2col > :nth-child(3){ grid-column:1 / -1; }
+    /* Narrow windows: About, booklet, Overview in one column. */
+    .po-section-grid.has-booklet.booklet-stack{ grid-template-columns:1fr; gap:56px; }
+    .po-section-grid.has-booklet.booklet-stack .po-booklet-link{ width:min(100%, 320px); }
     @media (max-width:900px){
-      .po-section-grid{grid-template-columns:1fr;}
+      .po-section-grid, .po-section-grid.has-booklet{grid-template-columns:1fr; gap:56px;}
+      .po-section-grid.has-booklet .po-booklet-link{ width:min(100%, 320px); }
     }
     @media (max-width:640px){
       .po-topbar,.po-title-row,.po-next,.po-footer{padding-left:6vw;padding-right:6vw;}
@@ -3553,11 +3573,15 @@
 
     <section class="po-section" style="--dot-color:var(--red);">
       <span class="po-spine-dot"></span>
-      <div class="po-section-grid">
+      <div class="po-section-grid" id="poSectionGrid">
         <div>
           <h3>About</h3>
           <div class="po-body" id="poBody"></div>
         </div>
+        <button type="button" class="po-booklet-link" id="poBooklet" aria-label="Read the thesis booklet">
+          <img alt="">
+          <span class="po-booklet-badge">Read the booklet <span class="po-booklet-arrow">&rarr;</span></span>
+        </button>
         <div>
           <h3>Overview</h3>
           <div class="po-overview-list">
@@ -4020,9 +4044,8 @@
         <path fill="#cba4cc" d="M351.96,64.5l-2.38.2c-3.32,8.6-9.39,16.51-18.7,22.5-25.5,16.39-46.76,33.24-59.03,49.36-53.63,70.42-6.14,209.94-30.64,289.61-5.02,16.29-12.87,30.71-22.17,43.37,11.39,15.72,32.84,19.58,48.2,5.6,16.59-15.1,33.38-36.36,41.05-64.37,17.72-64.75-16.62-178.16,22.15-235.38,8.88-13.1,24.26-26.79,42.69-40.12,29.82-21.55,14.19-73.66-21.17-70.75"/>
       </svg>`,
       paragraphs: [
-        "DEMY takes the Argelati swimming pool in Milan and pushes it past its single summer purpose, reviving Arrighetti's original vision of an organic, landscaped urban beach, and asking what that ground could mean for the artists and young people who live around it the rest of the year. The site is read as a third place: somewhere to simply be, wrapped in fresh air and framed by the possibility of showing your own work.",
-        "Layered over the beach is a cinema, a theatre, and an exhibition space, so one ground can hold very different people and interests at once without losing its original reason for existing. Pool, stage, library, and seating are choreographed as a single continuous landscape, open and in use across all seasons, rather than shuttered the moment summer ends.",
-        "The complete thesis booklet can be flipped through page by page in <a href=\"#prints\">Prints</a>."
+        "DEMY thoroughly explores and analyses Milan and the now abandoned site of <em>Piscina Argelati</em>, in order to create the design solution that offers an organic flow and multifunction throughout the space. Through careful analysis and thorough creation, it suggests a design that interacts directly with the people, both physically and psychologically, by communicating and creating in collaboration with them. As a hub of divine inspiration and connection, the proposal for the space explores alternative ways to think about third places.",
+        "<strong>This project has been proudly awarded 10/10 points by the esteemed jury of Nuova Accademia di Belle Arti.</strong>"
       ]
     },
     'rml-link': {
@@ -4048,8 +4071,8 @@
   // Project keys that have a real printed booklet sitting in Prints, keyed
   // to that booklet's number there (see PROJECTS['prints-{n}'] convention
   // in the Prints script block below) - a project page with an entry here
-  // gets an extra tile at the front of its gallery linking straight into
-  // that booklet (see prependBookletTile()/openPrintsBooklet()).
+  // shows that booklet's cover between ABOUT and OVERVIEW, linking straight
+  // into it (see setupProjectBooklet()/openPrintsBooklet()).
   const PROJECT_BOOKLETS = { demy: 2 };
   // Same newest-finished-first rule as the visible row order (see
   // parseEndDateStr above), computed straight from each project's own `time`
@@ -4134,13 +4157,8 @@
     // when the real tiles replace the placeholders.
     clearLoading(galleryEl);
     showLoading(galleryEl);
-    loadGallery(galleryEl, key, data.accent, loadToken).then(() => {
-      // Bail out silently if the person has since opened a different
-      // project, same staleness guard loadGallery() itself uses.
-      if(galleryEl.dataset.loadToken !== loadToken) return;
-      const bookletNum = PROJECT_BOOKLETS[key];
-      if(bookletNum) prependBookletTile(galleryEl, bookletNum, loadToken);
-    });
+    loadGallery(galleryEl, key, data.accent, loadToken);
+    setupProjectBooklet(key, loadToken);
 
     document.getElementById('poNextTitle').textContent = next.title;
     document.getElementById('poNextLink').href = '#' + nextKey;
@@ -4322,28 +4340,92 @@
     renderGalleryTiles(galleryEl, found, accent);
   }
 
-  // Booklet tile for the handful of projects with a real printed companion
-  // in Prints (see PROJECT_BOOKLETS) - shares the booklet's own cover image
-  // (getCoverSrc('prints-{n}'), the exact same shared probe Prints itself
-  // uses) so there's nothing new to upload, just a distinct badge and a
-  // click that jumps into that booklet instead of the shared lightbox.
-  // Called after loadGallery() has finished and inserted at the front, so
-  // it survives renderGalleryTiles()'s own innerHTML wipe rather than
-  // racing it.
-  async function prependBookletTile(galleryEl, n, loadToken){
+  // Booklet cover for the handful of projects with a real printed companion
+  // in Prints (see PROJECT_BOOKLETS): shown between ABOUT and OVERVIEW,
+  // sharing the booklet's own cover image (getCoverSrc('prints-{n}'), the
+  // exact same shared probe Prints itself uses), and a click jumps straight
+  // into that booklet.
+  async function setupProjectBooklet(key, loadToken){
+    const grid = document.getElementById('poSectionGrid');
+    const btn = document.getElementById('poBooklet');
+    const img = btn.querySelector('img');
+    grid.classList.remove('has-booklet', 'booklet-2col', 'booklet-stack');
+    grid.style.removeProperty('--po-cols');
+    btn.style.width = ''; btn.style.height = '';
+    btn.onclick = null;
+    const n = PROJECT_BOOKLETS[key];
+    if(!n) return;
     const cover = await getCoverSrc('prints-' + n);
-    if(!cover || galleryEl.dataset.loadToken !== loadToken) return;
-    const tile = document.createElement('div');
-    tile.className = 'po-gallery-tile has-img po-gallery-booklet';
-    const img = document.createElement('img');
-    img.alt = ''; img.src = cover;
-    tile.appendChild(img);
-    const badge = document.createElement('span');
-    badge.className = 'po-gallery-booklet-badge';
-    badge.innerHTML = 'Read the booklet <span class="po-gallery-booklet-arrow">→</span>';
-    tile.appendChild(badge);
-    tile.addEventListener('click', () => window.openPrintsBooklet(n));
-    galleryEl.insertBefore(tile, galleryEl.firstChild);
+    // Bail out if the person has since opened a different project.
+    if(!cover || document.getElementById('poGallery').dataset.loadToken !== loadToken) return;
+    btn.onclick = () => window.openPrintsBooklet(n);
+    img.onload = layoutProjectBooklet;
+    img.src = cover;
+    grid.classList.add('has-booklet');
+    if(img.complete && img.naturalWidth) layoutProjectBooklet();
+  }
+
+  // Sizes the booklet so its top lines up with the "About" heading and its
+  // bottom with the last line of the About text. The text's height depends on
+  // how wide its column is, and the booklet's width depends on that height, so
+  // each candidate text width (widest comfortable one first) is measured in the
+  // real layout, and the first that leaves room wins. Three layouts are tried
+  // in order, so the booklet is always exactly as tall as the About text:
+  //   1. three columns: About | booklet | Overview
+  //   2. About | booklet side by side, Overview on its own row underneath
+  //   3. stacked: About, booklet, Overview (narrow windows and phones)
+  function layoutProjectBooklet(){
+    const grid = document.getElementById('poSectionGrid');
+    const btn = document.getElementById('poBooklet');
+    const img = btn.querySelector('img');
+    if(!grid.classList.contains('has-booklet') || !img.naturalWidth || !grid.clientWidth) return;
+    const a = img.naturalWidth / img.naturalHeight;
+    const setMode = mode => {
+      grid.classList.toggle('booklet-2col', mode === '2col');
+      grid.classList.toggle('booklet-stack', mode === 'stack');
+    };
+    const stack = () => {
+      setMode('stack');
+      grid.style.removeProperty('--po-cols');
+      btn.style.width = ''; btn.style.height = '';
+      // CSS gives the width, so just match the height to it.
+      btn.style.height = (btn.getBoundingClientRect().width / a) + 'px';
+    };
+    if(window.matchMedia('(max-width:900px)').matches){ stack(); return; }
+
+    setMode('3col');
+    btn.style.width = ''; btn.style.height = '';
+    const about = grid.children[0];
+    const G = grid.clientWidth, gap = 40;
+    const Wo = Math.min(300, Math.max(220, G * 0.24));
+    const MIN_TEXT = 320, MAX_TEXT = 640;
+    const cands = [];
+    for(let Wt = MAX_TEXT; Wt >= MIN_TEXT; Wt -= 8){
+      grid.style.setProperty('--po-cols', Wt + 'px 0px ' + Wo + 'px');
+      cands.push({Wt, H: about.getBoundingClientRect().height});
+    }
+    const c3 = cands.find(c => c.Wt + c.H * a + Wo + 2 * gap <= G);
+    const c2 = c3 ? null : cands.find(c => c.Wt + c.H * a + gap <= G);
+    const c = c3 || c2;
+    if(!c){ stack(); return; }
+    const w = c.H * a;
+    setMode(c3 ? '3col' : '2col');
+    grid.style.setProperty('--po-cols', c3 ? c.Wt + 'px ' + w + 'px ' + Wo + 'px' : c.Wt + 'px ' + w + 'px');
+    btn.style.width = w + 'px';
+    btn.style.height = c.H + 'px';
+  }
+  // Re-run whenever the grid's width changes - a window resize, but also the
+  // project overlay first becoming visible (its grid measures 0 wide while
+  // hidden, so a layout attempted then has nothing to measure).
+  {
+    const poGridEl = document.getElementById('poSectionGrid');
+    let lastW = 0;
+    new ResizeObserver(() => {
+      const w = poGridEl.clientWidth;
+      if(w === lastW) return;
+      lastW = w;
+      layoutProjectBooklet();
+    }).observe(poGridEl);
   }
 
   // ---- Preload on intent: warm the cover + gallery caches as soon as a
@@ -6176,7 +6258,7 @@ const EE_IKEA_BLOCKS = [
     }
 
     // Deep-links into a specific booklet from elsewhere on the site (see
-    // PROJECT_BOOKLETS/prependBookletTile() in the project-overlay script -
+    // PROJECT_BOOKLETS/setupProjectBooklet() in the project-overlay script -
     // currently just DEMY, pointing at booklet 2). Rather than duplicating
     // the open sequence, this jumps to Prints and, once its table has
     // scattered, clicks straight through the real booklet element so it
