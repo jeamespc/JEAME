@@ -16,12 +16,12 @@
   <link rel="canonical" href="https://jeame.space/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="JEAME">
-  <meta property="og:title" content="JEAME — Cem Izgi | Spatial & Product Design">
+  <meta property="og:title" content="JEAME | Cem Izgi">
   <meta property="og:description" content="JEAME is the design portfolio of Cem Izgi, a spatial designer working across interior, product, and urban design - spaces built around storytelling and human interaction.">
   <meta property="og:url" content="https://jeame.space/">
   <meta property="og:image" content="https://jeame.space/smalliconjeame.png">
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="JEAME — Cem Izgi | Spatial & Product Design">
+  <meta name="twitter:title" content="JEAME | Cem Izgi">
   <meta name="twitter:description" content="JEAME is the design portfolio of Cem Izgi, a spatial designer working across interior, product, and urban design - spaces built around storytelling and human interaction.">
   <meta name="twitter:image" content="https://jeame.space/smalliconjeame.png">
   <script type="application/ld+json">
@@ -2038,6 +2038,9 @@
       opacity:0.65; pointer-events:none;
       mix-blend-mode:difference;
     }
+    /* The reader overlay is 94% opaque, so this line would ghost through
+       behind the page counter while a booklet is open. */
+    #prints-page:has(.pr-reader.show) .pr-hint{ visibility:hidden; }
     /* One horizontal row, vertically centred, a little air between covers.
        The first/last booklet carry auto side margins (set in
        scatterBooklets()) rather than justify-content:center, so a row that's
@@ -2125,11 +2128,29 @@
       display:flex;
       perspective:2200px;
     }
-    /* A thin spine shadow down the centre, like the gutter of an open book. */
+    /* The gutter of an open book: one soft shade that is darkest right on
+       the spine and eases out into both pages, with no hard edge anywhere.
+       The stops follow a smooth bell-like curve (slow start, no kink at the
+       centre) so it reads as the paper curving into the binding. */
     .pr-page-wrap::after{
       content:'';
-      position:absolute; top:0; bottom:0; left:50%; width:16px; margin-left:-8px;
-      background:linear-gradient(90deg, rgba(0,0,0,0.28), rgba(0,0,0,0) 45%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.28));
+      position:absolute; top:0; bottom:0; left:50%; width:22%; margin-left:-11%;
+      background:linear-gradient(90deg,
+        rgba(0,0,0,0) 0%,
+        rgba(0,0,0,0.006) 8%,
+        rgba(0,0,0,0.02) 16%,
+        rgba(0,0,0,0.045) 24%,
+        rgba(0,0,0,0.085) 32%,
+        rgba(0,0,0,0.14) 40%,
+        rgba(0,0,0,0.2) 46%,
+        rgba(0,0,0,0.24) 50%,
+        rgba(0,0,0,0.2) 54%,
+        rgba(0,0,0,0.14) 60%,
+        rgba(0,0,0,0.085) 68%,
+        rgba(0,0,0,0.045) 76%,
+        rgba(0,0,0,0.02) 84%,
+        rgba(0,0,0,0.006) 92%,
+        rgba(0,0,0,0) 100%);
       pointer-events:none; z-index:2;
     }
     /* Left/right page slots. Cover and back cover are the outer covers of
@@ -2143,8 +2164,11 @@
       user-select:none; -webkit-user-drag:none;
     }
     .pr-slot.empty, .pr-flip-face img.empty{ visibility:hidden; }
-    .pr-slot-left{ box-shadow:-6px 0 20px rgba(0,0,0,0.35), 0 20px 46px rgba(0,0,0,0.55); }
-    .pr-slot-right{ box-shadow:6px 0 20px rgba(0,0,0,0.35), 0 20px 46px rgba(0,0,0,0.55); }
+    /* Each page's drop shadow is clipped on the side facing the spine, so the
+       right page's shadow can't bleed across the gutter and darken the left
+       page (which is what made the middle look like two separate bands). */
+    .pr-slot-left{ box-shadow:-6px 0 20px rgba(0,0,0,0.35), 0 20px 46px rgba(0,0,0,0.55); clip-path:inset(-90px 0 -90px -90px); }
+    .pr-slot-right{ box-shadow:6px 0 20px rgba(0,0,0,0.35), 0 20px 46px rgba(0,0,0,0.55); clip-path:inset(-90px -90px -90px 0); }
     /* The flipping "leaf": a real two-sided card sitting exactly over
        whichever slot is the leading edge of the turn (right slot going
        forward, left slot going back), sized to that one slot. Its front
@@ -2257,6 +2281,17 @@
     }
     .pr-index-btn.show{ display:block; }
     .pr-index-btn:hover{ background:rgba(255,255,255,0.12); }
+    /* Small nudge shown only while the booklet sits on its index page, in
+       the spot the "Go to Index" button takes everywhere else. */
+    .pr-index-hint{
+      display:none;
+      position:absolute; bottom:44px; left:0; right:0; z-index:465;
+      margin:0; padding:0 16px;
+      text-align:center; color:#fff; opacity:0.7;
+      font-size:11px; font-style:italic; letter-spacing:0.04em;
+      pointer-events:none;
+    }
+    .pr-index-hint.show{ display:block; }
     @media (max-width:640px){
       .pr-reader-nav{ width:38px; height:38px; }
     }
@@ -3871,6 +3906,7 @@
     </div>
     <button type="button" class="pr-reader-nav pr-reader-next" id="prReaderNext" aria-label="Next page">&rarr;</button>
     <button type="button" class="pr-index-btn" id="prIndexBtn">Go to Index</button>
+    <p class="pr-index-hint" id="prIndexHint" aria-hidden="true"></p>
     <div class="pr-page-counter" id="prPageCounter">1 / 1</div>
   </div>
 </div>
@@ -5688,6 +5724,7 @@ const EE_IKEA_BLOCKS = [
     const flipBack = document.getElementById('prFlipBack');
     const pageCounter = document.getElementById('prPageCounter');
     const indexHotspotsEl = document.getElementById('prIndexHotspots');
+    const indexHintEl = document.getElementById('prIndexHint');
     const indexBtn = document.getElementById('prIndexBtn');
 
     // Per-booklet index/contents pages, made clickable: each entry jumps
@@ -5842,6 +5879,13 @@ const EE_IKEA_BLOCKS = [
       // "Back to Index" button: shown for any booklet that has one, hidden
       // once you're already sitting on it.
       if(indexBtn) indexBtn.classList.toggle('show', !!spec && position !== spec.indexPosition);
+
+      // On the index page itself, hint that the chapters are clickable.
+      if(indexHintEl){
+        const onIndex = !!spec && position === spec.indexPosition;
+        if(onIndex) indexHintEl.textContent = (touchOnly() ? 'Tap' : 'Click') + ' any chapter to jump to it';
+        indexHintEl.classList.toggle('show', onIndex);
+      }
 
       if(!indexHotspotsEl) return;
       if(!spec || position !== spec.indexPosition){
