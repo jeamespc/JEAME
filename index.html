@@ -1126,16 +1126,19 @@
 
     /* ---------- Shared "Loading" indicator ----------
        Three squares that each turn 90deg right, then back left, in a
-       staggered wave, centred in whatever is loading (no wording - the
-       container carries an aria-label instead). One component for every
-       feature that has to fetch content before it can show anything (see
-       showLoading() / loadImg() in the script) - just recoloured per page
-       below. */
+       staggered wave. There is exactly one of them and it is pinned to the
+       centre of the screen (not to whatever area is loading), so it reads as
+       "the page isn't fully here yet" wherever you happen to be looking or
+       scrolled to. No wording - it carries an aria-label instead. Every
+       feature that has to fetch content reports to it through showLoading() /
+       loadImg() in the script. A white difference blend keeps it readable
+       over light and dark pages alike (dark squares on white, light squares
+       on black). */
     .jm-loading{
-      position:absolute; inset:0; z-index:40;
+      position:fixed; inset:0; z-index:9000;
       display:flex; align-items:center; justify-content:center;
       pointer-events:none;
-      color:#fff;
+      color:#fff; mix-blend-mode:difference;
     }
     .jm-loading-squares{ display:inline-flex; align-items:center; gap:12px; }
     .jm-loading-squares i{
@@ -1157,27 +1160,6 @@
     }
     @media (prefers-reduced-motion: reduce){
       .jm-loading-squares i{ animation:none; }
-    }
-    /* Placement / colour variants */
-    .jm-loading.jm-static{ position:static; inset:auto; justify-content:flex-start; }
-    #archives-page .jm-loading, #threed-page .jm-loading, #prints-page .jm-loading{ color:#1c1a17; }
-    /* In the booklet reader it sits dead centre over the cover that's showing
-       while the pages load - a difference blend keeps it visible on a light
-       or a dark cover alike. */
-    #prints-page .pr-reader .jm-loading{ color:#fff; mix-blend-mode:difference; }
-    /* The sketchbook's spotlight opens on a white hole dead centre, right
-       where this sits - a difference blend keeps it readable over both the
-       white and the black around it (same trick as .sb-empty). */
-    #sketchbook-page .jm-loading{ mix-blend-mode:difference; }
-    #graphics-page .jm-loading{ color:#f1e9dd; }
-    #photography-page .jm-loading{ color:#e8f5ec; }
-    /* Over the pulsing accent-coloured placeholder tiles: a small white chip
-       with dark squares, so it reads the same whatever the project's colour
-       is (and doesn't fade with the tiles' own pulse). */
-    .po-gallery > .jm-loading{
-      inset:auto; top:50%; left:50%; transform:translate(-50%,-50%);
-      padding:16px 20px; background:#fff; color:#1c1a17;
-      box-shadow:0 1px 8px rgba(0,0,0,0.12);
     }
 
     /* ---------- SKETCHBOOK: spotlight page ---------- */
@@ -4192,44 +4174,60 @@
     });
   }
 
-  // ---- Shared "Loading" indicator (see the .jm-loading CSS). Ref-counted per
-  // container so several overlapping waits on the same thing (e.g. two probes
-  // feeding one page) share a single indicator that only goes away once the
-  // last of them settles. extraClass picks a placement variant (jm-static, for
-  // sitting in flow instead of centred); the container is made a positioning
-  // context if it isn't one.
-  function showLoading(container, extraClass){
+  // ---- Shared "Loading" indicator (see the .jm-loading CSS). There is one
+  // indicator for the whole site, fixed to the centre of the screen. Callers
+  // still report per container (the thing that is waiting), ref-counted so
+  // several overlapping waits on the same thing (e.g. two probes feeding one
+  // page) count as one and only end once the last of them settles. The
+  // indicator is up whenever at least one container is still waiting *and is
+  // on screen at all* - a wait belonging to a page you've since left (display
+  // none) doesn't keep it showing.
+  const jmActive = new Set();
+  let jmLoadingEl = null, jmLoadingTimer = null;
+  function jmContainerShown(c){
+    return c.isConnected && c.getClientRects().length > 0;
+  }
+  function jmSyncLoading(){
+    let any = false;
+    jmActive.forEach(c => { if(jmContainerShown(c)) any = true; });
+    if(any){
+      if(!jmLoadingEl){
+        jmLoadingEl = document.createElement('div');
+        jmLoadingEl.className = 'jm-loading';
+        jmLoadingEl.setAttribute('role', 'status');
+        jmLoadingEl.setAttribute('aria-live', 'polite');
+        jmLoadingEl.setAttribute('aria-label', 'Loading');
+        jmLoadingEl.innerHTML = '<span class="jm-loading-squares" aria-hidden="true"><i></i><i></i><i></i></span>';
+      }
+      if(!jmLoadingEl.isConnected) document.body.appendChild(jmLoadingEl);
+    } else if(jmLoadingEl && jmLoadingEl.isConnected){
+      jmLoadingEl.remove();
+    }
+    // Visibility can change without any load starting or finishing (a page
+    // being navigated away from), so keep re-checking while anything waits.
+    if(jmActive.size && !jmLoadingTimer) jmLoadingTimer = setInterval(jmSyncLoading, 250);
+    if(!jmActive.size && jmLoadingTimer){ clearInterval(jmLoadingTimer); jmLoadingTimer = null; }
+  }
+  function showLoading(container){
     if(!container) return;
-    let st = container._jmLoad;
-    if(!st){
-      const el = document.createElement('div');
-      el.className = 'jm-loading' + (extraClass ? ' ' + extraClass : '');
-      el.setAttribute('role', 'status');
-      el.setAttribute('aria-live', 'polite');
-      el.setAttribute('aria-label', 'Loading');
-      el.innerHTML = '<span class="jm-loading-squares" aria-hidden="true"><i></i><i></i><i></i></span>';
-      st = container._jmLoad = { el, n: 0 };
-    }
-    if(!st.el.isConnected){
-      if(getComputedStyle(container).position === 'static') container.style.position = 'relative';
-      container.appendChild(st.el);
-    }
-    st.n++;
+    container._jmLoadN = (container._jmLoadN || 0) + 1;
+    jmActive.add(container);
+    jmSyncLoading();
   }
   function hideLoading(container){
-    const st = container && container._jmLoad;
-    if(!st) return;
-    st.n = Math.max(0, st.n - 1);
-    if(st.n === 0) st.el.remove();
+    if(!container || !container._jmLoadN) return;
+    container._jmLoadN--;
+    if(container._jmLoadN === 0) jmActive.delete(container);
+    jmSyncLoading();
   }
-  // Drops the indicator regardless of how many waits are outstanding - for
+  // Drops the container's waits regardless of how many are outstanding - for
   // when whatever was being waited on has been abandoned (a viewer closed
   // mid-load, say), so its own completion will never come to release it.
   function clearLoading(container){
-    const st = container && container._jmLoad;
-    if(!st) return;
-    st.n = 0;
-    st.el.remove();
+    if(!container) return;
+    container._jmLoadN = 0;
+    jmActive.delete(container);
+    jmSyncLoading();
   }
   // Sets an <img>'s src and shows the indicator in `container` until that
   // image has actually arrived (or failed). A per-image token makes a stale
@@ -5415,7 +5413,7 @@ const EE_IKEA_BLOCKS = [
       clearLoading(corner);
       corner.innerHTML = '';
       if(!piece.imagesKey) return;
-      showLoading(corner, 'jm-static');
+      showLoading(corner);
       getGalleryItems(piece.imagesKey).then(items => {
         if(token !== cornerToken) return;
         clearLoading(corner);
