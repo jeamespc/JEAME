@@ -2109,17 +2109,46 @@
       position:absolute; inset:0; z-index:450;
       align-items:center; justify-content:center;
       background:rgba(10,7,4,0.94);
+      /* Zoom/pan is handled entirely by our own JS (see the zoom section of
+         the Prints script) - this stops a phone's native pinch-zoom and
+         double-tap-zoom from grabbing the gesture instead, which is what
+         used to visually break the reader (a real page-zoom of a full-screen
+         fixed overlay blurs it and knocks its buttons out of place). */
+      touch-action:none;
     }
     .pr-reader.show{ display:flex; }
     /* Width/height are set in px by sizeReader(), from the booklet's real
        page aspect ratio - not a fixed max-width/height box - so the reader
        always matches the source material's actual proportions (square for
-       this portfolio) rather than forcing every booklet into one shape. */
+       this portfolio) rather than forcing every booklet into one shape.
+       transform-origin is pinned to the top-left corner (rather than the
+       default centre) so the zoom math in the script only has to reason
+       about one coordinate system - see setZoom(). will-change hints the
+       browser to keep this on its own compositor layer, which is what
+       keeps zooming and panning smooth instead of janky. */
     .pr-page-wrap{
       position:relative;
       display:flex;
       perspective:2200px;
+      transform-origin:0 0;
+      will-change:transform;
     }
+    .pr-page-wrap.pannable{ cursor:grab; }
+    .pr-page-wrap.panning{ cursor:grabbing; }
+    /* Only the zoom button (and double-click/double-tap, and the safety
+       reset on resize) animate the zoom - dragging to pan sets the
+       transform directly, with no transition, so it tracks the input with
+       no added lag. */
+    .pr-page-wrap.zoom-anim{ transition:transform .25s ease; }
+    /* Turning pages still works while zoomed (the arrows, the keyboard, and
+       a fast swipe all stay live - see flipTo()'s callers in the script),
+       keeping the same zoom level and pan position on the page that
+       arrives. Jumping to the index is a bigger, less predictable jump
+       though, so that one's still hidden until you zoom back out with
+       Escape, the zoom button, or a double-click/tap. */
+    .pr-reader.zoomed .pr-index-btn,
+    .pr-reader.zoomed .pr-index-hint{ display:none !important; }
+    .pr-reader.zoomed .pr-index-hotspots{ pointer-events:none; }
     /* The gutter of an open book: one soft shade that is darkest right on
        the spine and eases out into both pages, with no hard edge anywhere.
        The stops follow a smooth bell-like curve (slow start, no kink at the
@@ -2240,11 +2269,27 @@
       display:flex; align-items:center; justify-content:center;
     }
     .pr-reader-close:hover{ background:rgba(255,255,255,0.12); }
+    /* Sits just above "Go to Index" (bottom:42px, see .pr-index-btn) - the
+       button that turns the fixed zoom level on and off (double-click/
+       double-tap are a shortcut for the same thing, see toggleZoomAt() in
+       the script). The vertical stroke in the lens disappears once zoomed,
+       turning the "+" into a "-" to read as "zoom out" instead. Unlike the
+       index button, it stays up while zoomed - it's the way back out. */
+    .pr-zoom-btn{
+      position:absolute; bottom:88px; left:50%; z-index:465;
+      transform:translateX(-50%);
+      width:38px; height:38px; border-radius:50%;
+      background:transparent; border:1px solid rgba(255,255,255,0.35);
+      color:#fff; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .pr-zoom-btn:hover{ background:rgba(255,255,255,0.12); }
+    .pr-zoom-btn.is-zoomed .pr-zoom-btn-v{ display:none; }
     .pr-reader-nav{
       position:absolute; top:50%; transform:translateY(-50%); z-index:465;
-      width:44px; height:44px; border-radius:50%;
+      width:60px; height:60px; border-radius:50%;
       background:transparent; border:1px solid rgba(255,255,255,0.35);
-      color:#fff; font-size:18px; cursor:pointer;
+      color:#fff; font-size:26px; cursor:pointer;
       display:flex; align-items:center; justify-content:center;
     }
     .pr-reader-nav:hover{ background:rgba(255,255,255,0.12); }
@@ -2285,7 +2330,7 @@
     }
     .pr-index-hint.show{ display:block; }
     @media (max-width:640px){
-      .pr-reader-nav{ width:38px; height:38px; }
+      .pr-reader-nav{ width:48px; height:48px; font-size:20px; }
     }
 
     /* ---------- GALLERY LIGHTBOX ---------- */
@@ -3647,9 +3692,9 @@
       <span class="po-spine-dot"></span>
       <h3>Education</h3>
       <div class="cv-entry">
-        <div class="et">Bachelor of Arts in Design (Interior), 171+ CFA</div>
-        <div class="es">Nuova Accademia di Belle Arti (NABA), Milan, IT (28.42/30 avg)</div>
-        <div class="ed">September 2023 to Ongoing</div>
+        <div class="et">Bachelor of Arts in Design (Interior), 110/110 with Lode</div>
+        <div class="es">Nuova Accademia di Belle Arti (NABA), Milan, IT (181 CFA)</div>
+        <div class="ed">September 2023 to September 2026</div>
       </div>
       <div class="cv-entry">
         <div class="et">International Baccalaureate (IB) 33 + IGCSE</div>
@@ -3900,6 +3945,14 @@
 
   <div class="pr-reader" id="prReader" aria-hidden="true">
     <button type="button" class="pr-reader-close" id="prReaderClose" aria-label="Close booklet">&times;</button>
+    <button type="button" class="pr-zoom-btn" id="prZoomBtn" aria-label="Zoom in">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="10" cy="10" r="7"></circle>
+        <line x1="20" y1="20" x2="15" y2="15"></line>
+        <line class="pr-zoom-btn-v" x1="10" y1="7" x2="10" y2="13"></line>
+        <line x1="7" y1="10" x2="13" y2="10"></line>
+      </svg>
+    </button>
     <button type="button" class="pr-reader-nav pr-reader-prev" id="prReaderPrev" aria-label="Previous page">&larr;</button>
     <div class="pr-page-wrap" id="prPageWrap">
       <img class="pr-slot pr-slot-left" id="prImgLeft" alt="">
@@ -5939,18 +5992,197 @@ const EE_IKEA_BLOCKS = [
       pageCounter.textContent = (position + 1) + ' / ' + (last + 1);
     }
 
-    // Sizes the reader in real px from the booklet's own page aspect ratio
-    // (width:height of ONE page) - a spread is twice as wide as one page -
+    // Shared by sizeReader() and computeSlotRect() below, so the fly-in
+    // target and the reader's own resting size are always identical (and
+    // only need changing in one place) - w/h from a page aspect ratio
+    // (width:height of ONE page - a spread is twice as wide as one page),
+    // capped so it never runs into the surrounding chrome.
+    function readerBoxSize(aspect){
+      const maxW = Math.min(window.innerWidth * 0.94, 1280);
+      const maxH = window.innerHeight * 0.88;
+      let w = maxW, h = w / (aspect * 2);
+      if(h > maxH){ h = maxH; w = h * aspect * 2; }
+      return {w, h};
+    }
+
+    // Sizes the reader in real px from the booklet's own page aspect ratio -
     // capped the same way the fly-in target is computed, so opening never
     // jumps in size. Re-run on resize while a booklet is open.
     function sizeReader(){
-      const maxW = Math.min(window.innerWidth * 0.88, 1040);
-      const maxH = window.innerHeight * 0.8;
-      let w = maxW, h = w / (pageAspect * 2);
-      if(h > maxH){ h = maxH; w = h * pageAspect * 2; }
+      const {w, h} = readerBoxSize(pageAspect);
       pageWrap.style.width = w + 'px';
       pageWrap.style.height = h + 'px';
     }
+
+    // ---- Zoom & pan ----
+    // One fixed zoom level, turned on and off by the zoom button (also
+    // double-click / double-tap, as a shortcut) - not continuous, so there's
+    // no scroll-wheel or pinch involved. Whichever way it's triggered, the
+    // point that was clicked/tapped is what the zoom centres on; drag (mouse
+    // or one finger) pans once zoomed; one finger still turns the page as
+    // before when not zoomed. See the CSS above for how native browser zoom
+    // is kept out of the way on touch regardless.
+    //
+    // Turning zoom on first makes sure the page(s) actually on screen have
+    // finished loading and decoding at full quality (see ensurePagesLoaded())
+    // - zooming into an image that's still arriving, or that the browser
+    // hasn't finished decoding at full resolution yet, is what used to make
+    // the zoomed view look soft.
+    //
+    // The page wrap's own transform-origin is pinned to its top-left corner
+    // (see .pr-page-wrap CSS), so a point at local coordinates (lx, ly) -
+    // measured from that corner, in the box's own unscaled px - always
+    // lands on screen at (base.left + zTx + lx*zScale, base.top + zTy +
+    // ly*zScale). base.left/top is where that corner sits when the wrap is
+    // shown at scale 1 with no pan - i.e. flex-centred in the full-screen
+    // reader - which transform never moves, so it's recomputed from the
+    // window size rather than measured (measuring would read back the
+    // already-transformed, zoomed box instead).
+    const ZOOM_LEVEL = 2;
+    let zScale = 1, zTx = 0, zTy = 0;
+    let zoomPending = false; // guards against a second toggle while the load-gate below is still waiting
+
+    function getWrapBase(){
+      const w = pageWrap.offsetWidth, h = pageWrap.offsetHeight;
+      return { left: (window.innerWidth - w) / 2, top: (window.innerHeight - h) / 2, width: w, height: h };
+    }
+
+    // A soft leash rather than a hard "no gaps" clamp - it only stops a page
+    // from being dragged so far that it's lost off the edge of the screen
+    // entirely, keeping at least a small margin of it always in view.
+    // Anything short of that is left alone: forcing the page to stay
+    // centred whenever it's smaller than the screen (a first version of
+    // this did that) fights the whole point of zooming toward the clicked/
+    // tapped point, since the fixed zoom level still leaves it smaller than
+    // the screen on one axis or both.
+    function clampAxis(t, origin, size, viewport){
+      const margin = Math.min(size, viewport, 160);
+      return Math.min(viewport - margin - origin, Math.max(margin - size - origin, t));
+    }
+    function clampPan(tx, ty, scale, base){
+      return {
+        tx: clampAxis(tx, base.left, base.width * scale, window.innerWidth),
+        ty: clampAxis(ty, base.top, base.height * scale, window.innerHeight)
+      };
+    }
+
+    function applyZoom(animate){
+      pageWrap.classList.toggle('zoom-anim', !!animate);
+      pageWrap.style.transform = 'translate(' + zTx + 'px,' + zTy + 'px) scale(' + zScale + ')';
+      const zoomed = zScale > 1.001;
+      reader.classList.toggle('zoomed', zoomed);
+      pageWrap.classList.toggle('pannable', zoomed);
+      if(zoomBtn){
+        zoomBtn.classList.toggle('is-zoomed', zoomed);
+        zoomBtn.setAttribute('aria-label', zoomed ? 'Zoom out' : 'Zoom in');
+      }
+    }
+
+    // Zooms so that the point currently under (px, py) - a click, a tap, or
+    // the zoom button's own centre - stays under that same point once the
+    // new scale is applied, so it feels like zooming "into" that spot
+    // rather than the whole page just growing from its centre.
+    function setZoom(newScale, px, py, animate){
+      const base = getWrapBase();
+      newScale = Math.max(1, Math.min(ZOOM_LEVEL, newScale));
+      const lx = (px - base.left - zTx) / zScale;
+      const ly = (py - base.top - zTy) / zScale;
+      const p = clampPan(px - base.left - lx * newScale, py - base.top - ly * newScale, newScale, base);
+      zScale = newScale; zTx = p.tx; zTy = p.ty;
+      applyZoom(animate);
+    }
+    function panBy(tx, ty){
+      const p = clampPan(tx, ty, zScale, getWrapBase());
+      zTx = p.tx; zTy = p.ty;
+      applyZoom(false);
+    }
+    function resetZoom(animate){
+      zScale = 1; zTx = 0; zTy = 0;
+      applyZoom(animate);
+    }
+
+    // Resolves once a page slot's image is fully downloaded AND decoded at
+    // full resolution (decode(), not just the 'load' event, so the browser
+    // has actually finished rasterizing it rather than still showing a
+    // lower-quality intermediate pass) - or straightaway if that slot is
+    // empty (nothing to wait for, e.g. the cover's blank left side).
+    function imgReady(imgEl){
+      if(!imgEl || imgEl.classList.contains('empty') || !imgEl.getAttribute('src')) return Promise.resolve();
+      // decode() can reportedly hang indefinitely rather than reject in some
+      // browsers (e.g. a backgrounded tab) - raced against a short timeout
+      // so a stalled decode can never leave the zoom button stuck waiting
+      // forever; the 'load' event below already guarantees the full image
+      // has actually arrived, decode() is only an extra effort to also have
+      // it fully rasterized before the zoom reveals it.
+      const decodeOrSkip = () => imgEl.decode
+        ? Promise.race([imgEl.decode().catch(() => {}), new Promise(r => setTimeout(r, 800))])
+        : Promise.resolve();
+      if(imgEl.complete && imgEl.naturalWidth > 0) return decodeOrSkip();
+      return new Promise(resolve => {
+        imgEl.addEventListener('load', resolve, {once:true});
+        imgEl.addEventListener('error', resolve, {once:true});
+      }).then(decodeOrSkip);
+    }
+
+    // Turns zoom on at (px, py) - waiting first, with the shared loading
+    // indicator up, for the pages currently on screen to be fully ready -
+    // or off if it's already on (an instant reset, nothing to wait for).
+    async function toggleZoomAt(px, py, animate){
+      if(!currentPages.length || zoomPending) return;
+      if(zScale > 1.001){ resetZoom(animate); return; }
+      zoomPending = true;
+      showLoading(reader);
+      try{
+        // A second, longer safety net on the whole wait, not just each
+        // image's own decode() - belt and braces so nothing can ever leave
+        // the zoom button stuck saying "loading" forever.
+        await Promise.race([
+          Promise.all([imgReady(imgLeft), imgReady(imgRight)]),
+          new Promise(r => setTimeout(r, 6000))
+        ]);
+      } finally {
+        hideLoading(reader);
+        zoomPending = false;
+      }
+      // The reader could have been closed, or the page turned, while that
+      // was loading - bail rather than zoom into whatever's there now.
+      if(!reader.classList.contains('show') || flipping) return;
+      setZoom(ZOOM_LEVEL, px, py, animate);
+    }
+
+    const zoomBtn = document.getElementById('prZoomBtn');
+    if(zoomBtn){
+      zoomBtn.addEventListener('click', () => {
+        const r = pageWrap.getBoundingClientRect();
+        toggleZoomAt(r.left + r.width / 2, r.top + r.height / 2, true);
+      });
+    }
+    pageWrap.addEventListener('dblclick', e => {
+      e.preventDefault();
+      toggleZoomAt(e.clientX, e.clientY, true);
+    });
+
+    // Mouse drag panning, only once zoomed in (see .pr-page-wrap.pannable) -
+    // a plain click at scale 1 falls through untouched, so index-hotspot
+    // clicks and the like keep working exactly as before.
+    let dragging = false, dragX = 0, dragY = 0, dragTx0 = 0, dragTy0 = 0;
+    pageWrap.addEventListener('mousedown', e => {
+      if(zScale <= 1.001 || e.button !== 0) return;
+      dragging = true;
+      dragX = e.clientX; dragY = e.clientY;
+      dragTx0 = zTx; dragTy0 = zTy;
+      pageWrap.classList.add('panning');
+      e.preventDefault();
+    });
+    window.addEventListener('mousemove', e => {
+      if(!dragging) return;
+      panBy(dragTx0 + (e.clientX - dragX), dragTy0 + (e.clientY - dragY));
+    });
+    window.addEventListener('mouseup', () => {
+      if(!dragging) return;
+      dragging = false;
+      pageWrap.classList.remove('panning');
+    });
 
     // Instant jump, no flip animation - used to open the reader and to
     // reset when it closes.
@@ -6052,10 +6284,7 @@ const EE_IKEA_BLOCKS = [
     // Where the clicked cover should land: docked into the right-hand slot
     // of the eventual reader box, at that booklet's own aspect ratio.
     function computeSlotRect(aspect, which){
-      const maxW = Math.min(window.innerWidth * 0.88, 1040);
-      const maxH = window.innerHeight * 0.8;
-      let w = maxW, h = w / (aspect * 2);
-      if(h > maxH){ h = maxH; w = h * aspect * 2; }
+      const {w, h} = readerBoxSize(aspect);
       const slotW = w / 2;
       const spreadLeft = (window.innerWidth - w) / 2;
       const top = (window.innerHeight - h) / 2;
@@ -6112,6 +6341,7 @@ const EE_IKEA_BLOCKS = [
       currentPages = pages;
       pageAspect = aspect || 1;
       currentBookletNum = bookletNum;
+      resetZoom(false);
       sizeReader();
       reader.classList.add('show');
       reader.setAttribute('aria-hidden', 'false');
@@ -6129,6 +6359,7 @@ const EE_IKEA_BLOCKS = [
       flipping = false;
       currentPages = [];
       currentBookletNum = null;
+      resetZoom(false);
       updateIndexHotspots();
     }
 
@@ -6289,28 +6520,82 @@ const EE_IKEA_BLOCKS = [
         if(spec) showPosition(spec.indexPosition);
       });
     }
-    reader.addEventListener('click', e => { if(e.target === reader) closeReader(); });
+    // Closing the booklet is deliberately only the close (x) button and
+    // Escape now - clicking the dark space around the pages used to close
+    // it too, which was too easy to trigger by accident (e.g. an errant
+    // click near the nav arrows).
 
-    // Swipe left/right to page through, mirroring Photography's viewer.
-    let touchStartX = 0, touchStartY = 0, touchActive = false;
+    // Touch: one finger swipes to turn the page, at any zoom level - once
+    // zoomed, the same finger also pans while it's moving (so a slow drag
+    // to look around a page still works), but a quick flick past the
+    // threshold still turns the page on release either way, same as a
+    // desktop swipe when not zoomed. A tap that lands twice in roughly the
+    // same spot within a third of a second is a double-tap, mirroring the
+    // desktop double-click - there's no pinch gesture, matching the single
+    // fixed zoom level; a two-finger touch is simply left alone (touch-
+    // action:none on the reader already keeps it from triggering the
+    // browser's own zoom).
     const SWIPE_THRESHOLD = 40;
+    const SWIPE_MAX_MS = 400; // only relevant once zoomed - see touchend
+    const TAP_MOVE_MAX = 10;
+    const DOUBLE_TAP_MS = 320, DOUBLE_TAP_PX = 40;
+    let touchMode = null; // 'swipe' | 'pan'
+    let touchStartX = 0, touchStartY = 0, touchStartAt = 0;
+    let panX0 = 0, panY0 = 0, panTx0 = 0, panTy0 = 0;
+    let lastTapAt = 0, lastTapX = 0, lastTapY = 0;
+
     reader.addEventListener('touchstart', e => {
-      if(!e.touches[0]) return;
-      touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; touchActive = true;
-    }, {passive:true});
-    reader.addEventListener('touchend', e => {
-      if(!touchActive || !e.changedTouches[0]) return;
-      touchActive = false;
-      const dx = e.changedTouches[0].clientX - touchStartX;
-      const dy = e.changedTouches[0].clientY - touchStartY;
-      if(Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy)){
-        if(dx < 0) flipTo(position + 1, 1); else flipTo(position - 1, -1);
+      if(e.touches.length !== 1){ touchMode = null; return; }
+      const t = e.touches[0];
+      touchStartX = t.clientX; touchStartY = t.clientY; touchStartAt = Date.now();
+      if(zScale > 1.001){
+        touchMode = 'pan';
+        panX0 = t.clientX; panY0 = t.clientY;
+        panTx0 = zTx; panTy0 = zTy;
+      } else {
+        touchMode = 'swipe';
       }
+    }, {passive:true});
+
+    reader.addEventListener('touchmove', e => {
+      if(touchMode === 'pan' && e.touches.length === 1){
+        e.preventDefault();
+        const t = e.touches[0];
+        panBy(panTx0 + (t.clientX - panX0), panTy0 + (t.clientY - panY0));
+      }
+      // 'swipe' mode: left alone here, same as before - decided on touchend.
+    }, {passive:false});
+
+    reader.addEventListener('touchend', e => {
+      // A tap is judged the same way whether the finger started in 'swipe'
+      // mode (not zoomed yet) or 'pan' mode (already zoomed).
+      if((touchMode === 'swipe' || touchMode === 'pan') && e.changedTouches[0]){
+        const t = e.changedTouches[0];
+        const dx = t.clientX - touchStartX, dy = t.clientY - touchStartY;
+        // Once zoomed the same distance can just as easily be a deliberate,
+        // slower pan around the page - only a quick flick (like the swipe
+        // always was when not zoomed) counts as a page turn there.
+        const fastEnough = touchMode === 'swipe' || (Date.now() - touchStartAt) < SWIPE_MAX_MS;
+        if(fastEnough && Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy)){
+          if(dx < 0) flipTo(position + 1, 1); else flipTo(position - 1, -1);
+        } else if(Math.hypot(dx, dy) < TAP_MOVE_MAX){
+          const now = Date.now();
+          if(now - lastTapAt < DOUBLE_TAP_MS && Math.hypot(t.clientX - lastTapX, t.clientY - lastTapY) < DOUBLE_TAP_PX){
+            lastTapAt = 0;
+            toggleZoomAt(t.clientX, t.clientY, true);
+          } else {
+            lastTapAt = now; lastTapX = t.clientX; lastTapY = t.clientY;
+          }
+        }
+      }
+      touchMode = null;
     });
 
     window.addEventListener('keydown', e => {
       if(!page.classList.contains('show') || !reader.classList.contains('show')) return;
-      if(e.key === 'Escape') closeReader();
+      if(e.key === 'Escape'){ if(zScale > 1.001) resetZoom(true); else closeReader(); }
+      // The arrow keys still turn the page at any zoom level - the zoom and
+      // pan carry over onto whichever page arrives.
       else if(e.key === 'ArrowLeft') flipTo(position - 1, -1);
       else if(e.key === 'ArrowRight') flipTo(position + 1, 1);
     });
@@ -6319,7 +6604,7 @@ const EE_IKEA_BLOCKS = [
     window.addEventListener('resize', () => {
       clearTimeout(readerResizeTimer);
       readerResizeTimer = setTimeout(() => {
-        if(reader.classList.contains('show')) sizeReader();
+        if(reader.classList.contains('show')){ resetZoom(false); sizeReader(); }
       }, 200);
     });
 
