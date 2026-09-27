@@ -2031,8 +2031,11 @@
       mix-blend-mode:difference;
     }
     /* The reader overlay is 94% opaque, so this line would ghost through
-       behind the page counter while a booklet is open. */
-    #prints-page:has(.pr-reader.show) .pr-hint{ visibility:hidden; }
+       behind the page counter while a booklet is open - the reader now
+       lives outside #prints-page (see .pr-reader below, it opens the same
+       way from other pages too, e.g. DEMY's own booklet cover), hence the
+       body-wide :has() rather than one scoped to this page. */
+    body:has(.pr-reader.show) #prints-page .pr-hint{ visibility:hidden; }
     /* One horizontal row, vertically centred, a little air between covers.
        The first/last booklet carry auto side margins (set in
        scatterBooklets()) rather than justify-content:center, so a row that's
@@ -2045,11 +2048,11 @@
       gap:clamp(18px, 2.6vw, 36px);
       padding:0 8vw;
       overflow-x:auto; overflow-y:hidden;
-      /* The scale: 1 cm of real booklet = 6.5px on a desktop screen, easing
-         down proportionally on narrower ones (never below 3.4px/cm) so the
+      /* The scale: 1 cm of real booklet = 8.5px on a desktop screen, easing
+         down proportionally on narrower ones (never below 4.4px/cm) so the
          booklets always keep their true size relative to each other. Each
          booklet's own size in cm is BOOKLET_SIZES_CM in the script. */
-      --pr-px-per-cm: clamp(3.4px, 0.64vw, 6.5px);
+      --pr-px-per-cm: clamp(4.4px, 0.84vw, 8.5px);
     }
     .pr-empty{
       position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
@@ -2103,12 +2106,24 @@
       .pr-booklet:hover img{ box-shadow:0 5px 12px rgba(0,0,0,0.2); }
     }
 
-    /* Reader: page-flip viewer for whichever booklet was opened. */
+    /* Reader: page-flip viewer for whichever booklet was opened - lives at
+       the top level (a sibling of every page, like .gallery-lightbox)
+       rather than inside #prints-page, since it can now open directly from
+       a project page's own booklet cover (see setupProjectBooklet()) as
+       well as from the Prints table, without navigating to Prints first.
+       z-index sits above every page's own 6000 (and the gallery lightbox's
+       6500), below the fly-in clone's 6600 so a fly-in animation that
+       overlaps its opening is never covered by it. */
     .pr-reader{
       display:none;
-      position:absolute; inset:0; z-index:450;
+      position:fixed; inset:0; z-index:6550;
       align-items:center; justify-content:center;
       background:rgba(10,7,4,0.94);
+      /* Self-contained clipping for the zoomed page (rather than relying on
+         whichever page it happens to be opened over) - at the fixed zoom
+         level the page can be wider/taller than the screen, and this is what
+         keeps that from spilling out into a scrollable mess. */
+      overflow:hidden;
       /* Zoom/pan is handled entirely by our own JS (see the zoom section of
          the Prints script) - this stops a phone's native pinch-zoom and
          double-tap-zoom from grabbing the gesture instead, which is what
@@ -3942,32 +3957,35 @@
     <p class="pr-empty" id="prEmpty">Booklets coming soon.</p>
   </div>
   <p class="pr-hint" id="prHint">Click a booklet to open it.</p>
+</div>
 
-  <div class="pr-reader" id="prReader" aria-hidden="true">
-    <button type="button" class="pr-reader-close" id="prReaderClose" aria-label="Close booklet">&times;</button>
-    <button type="button" class="pr-zoom-btn" id="prZoomBtn" aria-label="Zoom in">
-      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <circle cx="10" cy="10" r="7"></circle>
-        <line x1="20" y1="20" x2="15" y2="15"></line>
-        <line class="pr-zoom-btn-v" x1="10" y1="7" x2="10" y2="13"></line>
-        <line x1="7" y1="10" x2="13" y2="10"></line>
-      </svg>
-    </button>
-    <button type="button" class="pr-reader-nav pr-reader-prev" id="prReaderPrev" aria-label="Previous page">&larr;</button>
-    <div class="pr-page-wrap" id="prPageWrap">
-      <img class="pr-slot pr-slot-left" id="prImgLeft" alt="">
-      <img class="pr-slot pr-slot-right" id="prImgRight" alt="">
-      <div class="pr-flip" id="prFlip" aria-hidden="true">
-        <div class="pr-flip-face pr-flip-front"><img id="prFlipFront" alt=""></div>
-        <div class="pr-flip-face pr-flip-back"><img id="prFlipBack" alt=""></div>
-      </div>
-      <div class="pr-index-hotspots" id="prIndexHotspots" aria-hidden="true"></div>
+<!-- Reader lives at the top level, not inside #prints-page - see the
+     .pr-reader CSS comment - so it can open directly over any page
+     (currently: the Prints table itself, and DEMY's own booklet cover). -->
+<div class="pr-reader" id="prReader" aria-hidden="true">
+  <button type="button" class="pr-reader-close" id="prReaderClose" aria-label="Close booklet">&times;</button>
+  <button type="button" class="pr-zoom-btn" id="prZoomBtn" aria-label="Zoom in">
+    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="10" cy="10" r="7"></circle>
+      <line x1="20" y1="20" x2="15" y2="15"></line>
+      <line class="pr-zoom-btn-v" x1="10" y1="7" x2="10" y2="13"></line>
+      <line x1="7" y1="10" x2="13" y2="10"></line>
+    </svg>
+  </button>
+  <button type="button" class="pr-reader-nav pr-reader-prev" id="prReaderPrev" aria-label="Previous page">&larr;</button>
+  <div class="pr-page-wrap" id="prPageWrap">
+    <img class="pr-slot pr-slot-left" id="prImgLeft" alt="">
+    <img class="pr-slot pr-slot-right" id="prImgRight" alt="">
+    <div class="pr-flip" id="prFlip" aria-hidden="true">
+      <div class="pr-flip-face pr-flip-front"><img id="prFlipFront" alt=""></div>
+      <div class="pr-flip-face pr-flip-back"><img id="prFlipBack" alt=""></div>
     </div>
-    <button type="button" class="pr-reader-nav pr-reader-next" id="prReaderNext" aria-label="Next page">&rarr;</button>
-    <button type="button" class="pr-index-btn" id="prIndexBtn">Go to Index</button>
-    <p class="pr-index-hint" id="prIndexHint" aria-hidden="true"></p>
-    <div class="pr-page-counter" id="prPageCounter">1 / 1</div>
+    <div class="pr-index-hotspots" id="prIndexHotspots" aria-hidden="true"></div>
   </div>
+  <button type="button" class="pr-reader-nav pr-reader-next" id="prReaderNext" aria-label="Next page">&rarr;</button>
+  <button type="button" class="pr-index-btn" id="prIndexBtn">Go to Index</button>
+  <p class="pr-index-hint" id="prIndexHint" aria-hidden="true"></p>
+  <div class="pr-page-counter" id="prPageCounter">1 / 1</div>
 </div>
 
 <!-- ===================== GALLERY LIGHTBOX ===================== -->
@@ -4394,8 +4412,9 @@
   // Booklet cover for the handful of projects with a real printed companion
   // in Prints (see PROJECT_BOOKLETS): shown between ABOUT and OVERVIEW,
   // sharing the booklet's own cover image (getCoverSrc('prints-{n}'), the
-  // exact same shared probe Prints itself uses), and a click jumps straight
-  // into that booklet.
+  // exact same shared probe Prints itself uses), and a click opens the
+  // reader right here (window.openBookletHere() below) rather than jumping
+  // over to the Prints page.
   async function setupProjectBooklet(key, loadToken){
     const grid = document.getElementById('poSectionGrid');
     const btn = document.getElementById('poBooklet');
@@ -4409,7 +4428,9 @@
     const cover = await getCoverSrc('prints-' + n);
     // Bail out if the person has since opened a different project.
     if(!cover || document.getElementById('poGallery').dataset.loadToken !== loadToken) return;
-    btn.onclick = () => window.openPrintsBooklet(n);
+    // Opens right here, over this project page - not a jump to Prints (see
+    // openBookletHere()) - flying in from this very cover image.
+    btn.onclick = () => window.openBookletHere(n, btn, img.naturalWidth / img.naturalHeight);
     img.onload = layoutProjectBooklet;
     img.src = cover;
     grid.classList.add('has-booklet');
@@ -6363,6 +6384,34 @@ const EE_IKEA_BLOCKS = [
       updateIndexHotspots();
     }
 
+    // Shared by every way of opening a booklet (the Prints table itself,
+    // and openBookletHere() below, used by other pages' own booklet covers):
+    // flies a clone of it in from sourceEl to the reader, then shows the
+    // reader with just the cover while the rest of the pages load.
+    function openBookletUI(n, sourceEl, cover, aspect){
+      // Open with just the cover the instant the fly-in lands (it's already
+      // loaded) instead of also waiting on the full page probe:
+      // getBookletPages() can easily take longer than the fly animation on
+      // a cold cache (up to PAGE_MAX_CHECK parallel requests), and blocking
+      // the open on it left a gap where the clone had already been removed
+      // but the reader hadn't appeared yet - read as the zoomed cover
+      // snapping back to wherever it flew in from. The rest of the pages
+      // fill themselves in live once they're ready.
+      flyToReader(sourceEl, cover, aspect).then(() => {
+        openBooklet([{src: cover, type: 'image'}], aspect, n);
+        // Only the cover is on screen until the page probe lands, so say
+        // so, centred over it.
+        showLoading(reader);
+        getBookletPages(n, extFromSrc(cover)).then(interior => {
+          if(currentBookletNum !== n) return;
+          clearLoading(reader);
+          currentPages = [{src: cover, type: 'image'}, ...interior];
+          updateChrome();
+          updateIndexHotspots();
+        });
+      });
+    }
+
     // Lays the booklets out in a single row, in numeric order (the table is a
     // flex row - see .pr-table). The first and last get auto side margins so
     // the row sits centred when it fits, yet still scrolls from its left edge
@@ -6404,28 +6453,7 @@ const EE_IKEA_BLOCKS = [
         const openThis = () => {
           el.classList.remove('armed');
           const aspect = (img.naturalWidth && img.naturalHeight) ? img.naturalWidth / img.naturalHeight : 1;
-          // Open with just the cover the instant the fly-in lands (it's
-          // already loaded - same src as the table thumbnail) instead of
-          // also waiting on the full page probe: getBookletPages() can
-          // easily take longer than the fly animation on a cold cache (up
-          // to PAGE_MAX_CHECK parallel requests), and blocking the open on
-          // it left a gap where the clone had already been removed but the
-          // reader hadn't appeared yet - read as the zoomed cover snapping
-          // back to the untouched booklet still sitting on the table. The
-          // rest of the pages fill themselves in live once they're ready.
-          flyToReader(el, cover, aspect).then(() => {
-            openBooklet([{src: cover, type: 'image'}], aspect, n);
-            // Only the cover is on screen until the page probe lands, so say
-            // so, centred over it.
-            showLoading(reader);
-            getBookletPages(n, extFromSrc(cover)).then(interior => {
-              if(currentBookletNum !== n) return;
-              clearLoading(reader);
-              currentPages = [{src: cover, type: 'image'}, ...interior];
-              updateChrome();
-              updateIndexHotspots();
-            });
-          });
+          openBookletUI(n, el, cover, aspect);
         };
         el._openBooklet = openThis;
         el.addEventListener('click', () => {
@@ -6511,6 +6539,19 @@ const EE_IKEA_BLOCKS = [
       setTimeout(tryOpen, 50);
     };
 
+    // Opens a booklet directly over whatever page is currently showing, with
+    // the same fly-in-from-its-cover animation as opening one from the
+    // Prints table - just sourced from sourceEl (some other page's own
+    // booklet cover element) instead of a table row, and without navigating
+    // to Prints at all. The reader (see its CSS) sits above every page, and
+    // the existing sitewide hashchange listener already closes it again the
+    // moment the visitor navigates elsewhere, same as leaving Prints does.
+    window.openBookletHere = function(n, sourceEl, aspect){
+      getCoverSrc('prints-' + n).then(cover => {
+        if(cover) openBookletUI(n, sourceEl, cover, aspect);
+      });
+    };
+
     readerClose.addEventListener('click', closeReader);
     readerPrev.addEventListener('click', () => flipTo(position - 1, -1));
     readerNext.addEventListener('click', () => flipTo(position + 1, 1));
@@ -6592,7 +6633,9 @@ const EE_IKEA_BLOCKS = [
     });
 
     window.addEventListener('keydown', e => {
-      if(!page.classList.contains('show') || !reader.classList.contains('show')) return;
+      // Not gated on the Prints page's own .show any more - the reader can
+      // now be open from other pages too (see openBookletHere()).
+      if(!reader.classList.contains('show')) return;
       if(e.key === 'Escape'){ if(zScale > 1.001) resetZoom(true); else closeReader(); }
       // The arrow keys still turn the page at any zoom level - the zoom and
       // pan carry over onto whichever page arrives.
