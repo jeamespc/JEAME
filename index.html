@@ -252,11 +252,14 @@
        CURSOR script block below.
        No title here - the shape's own .label above the logo already names
        whatever's hovered, so repeating it here would be redundant.
-       left/top/width/height are set by JS (alignHeroPopup(), see the CUSTOM
-       CURSOR script block) to exactly fill the empty grid cell below the
-       red circle (the logo has no shape there), so showing this list reads
-       as completing the logo's own square grid rather than a floating
-       tooltip - recalculated on resize since the logo is fluid-sized. */
+       left/top/width/height are set by JS (positionHeroPopup(), see the
+       CUSTOM CURSOR script block) to exactly fill the empty grid cell below
+       the red circle (the logo has no shape there), so showing this list
+       reads as completing the logo's own square grid rather than a
+       floating tooltip - recalculated on resize since the logo is
+       fluid-sized. Text is centred within that cell's width, lining names
+       up under the black/red circle column above it, same as the circles
+       themselves are centred in their own column. */
     .hero-popup{
       position:absolute; z-index:55;
       box-sizing:border-box;
@@ -274,24 +277,19 @@
     }
     .hero.drawing .hero-popup{ opacity:0; pointer-events:none; }
     .hero-popup-item{
-      display:flex; align-items:center; gap:8px;
-      font-family:'Arial Black','Arial',sans-serif; font-weight:900;
+      display:block;
+      text-align:center;
+      font-family:'Arial',sans-serif; font-weight:700;
+      text-transform:uppercase;
       font-size:12px; letter-spacing:0.01em; line-height:1.3;
       color:var(--black);
       text-decoration:none;
       padding:4px 0;
       transition:opacity .2s ease;
     }
-    .hero-popup-item::before{
-      content:'';
-      width:8px; height:8px;
-      background:var(--hp-color);
-      flex-shrink:0;
-    }
     .hero-popup-item:hover{ opacity:0.6; }
     @media (max-width:640px){
-      .hero-popup-item{ font-size:10.5px; gap:6px; }
-      .hero-popup-item::before{ width:7px; height:7px; }
+      .hero-popup-item{ font-size:10.5px; }
     }
     .logo-wrap{
       position:relative;
@@ -2576,14 +2574,14 @@
     <p class="hero-hint" id="heroHint">Hover or tap a shape to explore.</p>
   </div>
 
+  <div class="hero-popup" id="heroPopup" aria-hidden="true">
+    <div id="heroPopupItems"></div>
+  </div>
+
   <a href="#prints" class="side-tab" id="printsTab" aria-label="Prints">
     <span class="side-tab-text">Prints</span>
     <span class="side-tab-line" aria-hidden="true"></span>
   </a>
-
-  <div class="hero-popup" id="heroPopup" aria-hidden="true">
-    <div id="heroPopupItems"></div>
-  </div>
 
   <canvas id="heroCanvas" aria-hidden="true"></canvas>
   <div class="hero-draw-controls">
@@ -3340,7 +3338,6 @@
       const a = document.createElement('a');
       a.className = 'hero-popup-item';
       a.href = it.href;
-      a.style.setProperty('--hp-color', it.color);
       a.textContent = it.label;
       // Navigating via a popup item skips the shape itself, so nothing else
       // would otherwise reset its hover state on the way out.
