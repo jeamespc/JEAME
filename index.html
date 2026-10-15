@@ -840,12 +840,17 @@
       font-size:clamp(15px,1.35vw,26px);
       line-height:1.25;
     }
+    /* The mark is sized from the title's own font-size (Arial Black cap height
+       = 0.716em) and centred on the first line box, so it stays level with the
+       capitals at every font-size and on wrapped titles. Phone browsers' text
+       auto-inflation is switched off here so only the text can't outgrow it. */
+    .index{ -webkit-text-size-adjust:100%; text-size-adjust:100%; }
     .row .titleblock .tt svg{
-      width:clamp(14px,1.01vw,20px);
-      height:clamp(14px,1.01vw,20px);
+      width:0.73em;
+      height:0.73em;
       flex:none;
       display:block;
-      margin-top:0.2em;
+      margin-top:calc((1.25em - 0.73em) / 2);
     }
     .row .titleblock .row-desc{
       font-size:clamp(11px,0.61vw,12px);
